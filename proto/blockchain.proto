@@ -1,0 +1,81 @@
+syntax = "proto3";
+option java_multiple_files = true;//以非外部类模式生成
+package BlockChain;
+
+/*
+ 需要实现的服务;
+    1. 区块打包验证
+    2. 区块同步(比如某个节点数据滞后于其它节点。该节点获取当前最新区块的时间戳，然后与其它节点相比较，然后同步该时间戳之后的区块)
+    3. 数据查询(比如b节点草稿中有某个数据(还没写入链中，所以在a节点中查询不到)，用户请求a，a是找不到的所以要去询问其它节点)
+
+*/
+
+/*
+设计原则:
+        1. header 与 follower 是双向流式的
+        2. follower 与 client  仅响应式流式的
+*/
+// option java_package = "com.liangchen.DMQFollowerProto";
+// option java_outer_classname = "DMQFollowerProto";
+service BlockChainService{
+
+    // 区块打包验证
+    rpc PackBlockValidation(Block)returns(ResPackBlock){}
+
+    // 区块同步
+    rpc BlockSynchronization(ReqBlock)returns(ResBlocks){}
+
+    // 数据查询
+    rpc DataQuery(QueryInfo)returns(ResQuery){}
+    // // 客户端向 follower 发送数据
+    // rpc ClientYieldMsgDataRequest(stream MessageData)returns (Response){}
+
+    // // 客户端消费数据
+    // rpc ClientConsumeData(ClientRegistToFollower)returns(stream Response){}
+
+    // // 客户端关闭管道
+    // rpc ClientCloseChannel(ClientRegistToFollower)returns(Response){}
+}
+
+
+message TxInfo{
+    string key = 1; 
+    bytes value = 2;  // []byte
+    string data_type = 3;
+    string time = 4;  // 时间错
+    bool del_mark = 5; // 是否删除
+    bytes public_key = 6; // 用户公钥
+    string hash = 7; // 交易 hash
+    string pre_block_hash = 8;// 在链中，用户相同交易所在前一个区块hahs
+    string signature = 9; // 用户对交易的签名
+}
+message Block{
+    string hash = 1; // 块 hash
+    string pre_block_hash = 2; // 区块链中前一个区块hash
+    repeated TxInfo TxInfos = 3;// 所要打包的交易
+}
+
+// 区块同步
+message ReqBlock{
+    string hash = 1; // 本地节点最新区块hash
+}
+
+message ResBlocks{
+    string latest_block_hash = 1; // 同步过来的最新区块hash
+    repeated Block  blocks = 2; // 同步过来的区块数据
+}
+
+message QueryInfo{
+    string key = 1; // 查询关键字
+    string User_public_key_hash = 2;// 用户公钥hash；也就是地址
+}
+message ResPackBlock{
+    bool code = 1; // 区块校验是否成功
+}
+message PackBlock{
+    string hash = 1; // 区块hash
+}
+message ResQuery{
+    bool code = 1; // 查找状态
+    TxInfo datas = 2; // 数据(如果找到的)
+}
