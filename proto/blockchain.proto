@@ -38,11 +38,11 @@ service BlockChainService{
 }
 
 
-message TxInfo{
+message Transaction{
     string key = 1; 
     bytes value = 2;  // []byte
     string data_type = 3;
-    string time = 4;  // 时间错
+    uint64 timestamp = 4;  // 时间错
     bool del_mark = 5; // 是否删除
     bytes public_key = 6; // 用户公钥
     string hash = 7; // 交易 hash
@@ -51,8 +51,9 @@ message TxInfo{
 }
 message Block{
     string hash = 1; // 块 hash
-    string pre_block_hash = 2; // 区块链中前一个区块hash
-    repeated TxInfo TxInfos = 3;// 所要打包的交易
+    uint64 timestamp = 2; // 时间戳
+    string pre_block_hash = 3; // 区块链中前一个区块hash
+    repeated Transaction TxInfos = 4;// 所要打包的交易
 }
 
 // 区块同步
@@ -77,5 +78,5 @@ message PackBlock{
 }
 message ResQuery{
     bool code = 1; // 查找状态
-    TxInfo datas = 2; // 数据(如果找到的)
+    Transaction datas = 2; // 数据(如果找到的)
 }
