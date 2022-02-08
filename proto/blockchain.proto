@@ -27,6 +27,10 @@ service BlockChainService{
 
     // 数据查询
     rpc DataQuery(QueryInfo)returns(ResQuery){}
+
+    // 获取某个节点最新区块信息
+    rpc GetLatestBlock(ReqBlock)returns(Block){}
+
     // // 客户端向 follower 发送数据
     // rpc ClientYieldMsgDataRequest(stream MessageData)returns (Response){}
 
@@ -44,37 +48,40 @@ message Transaction{
     string data_type = 3;
     uint64 timestamp = 4;  // 时间错
     bool del_mark = 5; // 是否删除
-    bytes public_key = 6; // 用户公钥
-    string hash = 7; // 交易 hash
-    string pre_block_hash = 8;// 在链中，用户相同交易所在前一个区块hahs
-    string signature = 9; // 用户对交易的签名
+    bytes public_key = 6; // 用户公钥， 可以有多个(用户共享数据)
+    bytes hash = 7; // 交易 hash
+    bytes pre_block_hash = 8;// 在链中，用户相同交易所在前一个区块hahs(可以有多个，如果该数据类型是共享的话)
+    bytes signature = 9; // 用户对交易的签名
 }
 message Block{
-    string hash = 1; // 块 hash
-    uint64 timestamp = 2; // 时间戳
-    string pre_block_hash = 3; // 区块链中前一个区块hash
-    repeated Transaction TxInfos = 4;// 所要打包的交易
+    bytes hash = 1; // 块 hash
+    uint64 block_id = 2; // 块序号
+    uint64 timestamp = 3; // 时间戳
+    bytes pre_block_hash = 4; // 区块链中前一个区块hash
+    bytes MerkelRoot = 5; // 区块链中前一个区块hash
+    repeated Transaction TxInfos = 6;// 所要打包的交易
 }
 
 // 区块同步
 message ReqBlock{
-    string hash = 1; // 本地节点最新区块hash
+    bytes hash = 1; // 本地节点最新区块hash
+    uint64 block_id = 2;// 最新区块序号
 }
 
 message ResBlocks{
-    string latest_block_hash = 1; // 同步过来的最新区块hash
+    bytes latest_block_hash = 1; // 同步过来的最新区块hash
     repeated Block  blocks = 2; // 同步过来的区块数据
 }
 
 message QueryInfo{
     string key = 1; // 查询关键字
-    string User_public_key_hash = 2;// 用户公钥hash；也就是地址
+    bytes User_public_key_hash = 2;// 用户公钥hash；也就是地址
 }
 message ResPackBlock{
     bool code = 1; // 区块校验是否成功
 }
 message PackBlock{
-    string hash = 1; // 区块hash
+    bytes hash = 1; // 区块hash
 }
 message ResQuery{
     bool code = 1; // 查找状态

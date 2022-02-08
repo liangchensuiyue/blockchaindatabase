@@ -72,10 +72,10 @@ func NewCoinbaseTX(address string, data string) *Transaction {
 }
 
 // 创建普通的转账交易
-func NewTransaction(from, to string, amount float64, bc *BlockChain) *Transaction {
+func NewTransaction(key string, value []byte, user string, sharemode string, shareuser []string) *Transaction {
 	// 创建交易之后要进行数字签名,所以需要通过地址打开对应钱包获取私钥公钥
 	ws := NewWallets()
-	wallet := ws.WalletsMap[from]
+	wallet := ws.WalletsMap[user]
 	if wallet == nil {
 		fmt.Println("没有找到对应钱包!")
 		return nil

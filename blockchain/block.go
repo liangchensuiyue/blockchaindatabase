@@ -12,10 +12,15 @@ import (
 type Block struct {
 	// 前区块hash
 	PreBlockHash []byte
+	// 块 序号
+	BlockId uint64
 	// 时间戳
 	Timestamp uint64
 	// 当前区块hash,正常比特币区块中没有当前区块hash，这里是为了方便做了简化
-	Hash    string
+	Hash []byte
+
+	MerkelRoot []byte
+
 	TxInfos []*Transaction
 	//
 }
@@ -28,28 +33,28 @@ func Uint64Tobyte(src uint64) []byte {
 }
 
 // 创建区块
-func NewBlock(txs []*Transaction, prevBlockHash []byte) *Block {
+func NewBlock(block_id uint64, pre_block_hash []byte, txinfos []*Transaction) *Block {
 	block := Block{
-		Version:      00,
-		PrevHash:     prevBlockHash,
-		MerkelRoot:   []byte{},
-		TimeStamp:    uint64(time.Now().Unix()),
-		Difficulty:   0,        // 随便填写的无效值
-		Nonce:        0,        // 同上
-		Hash:         []byte{}, // 先填空，后面计算
-		Transactions: txs,
+		// 前区块hash
+		PreBlockHash: pre_block_hash,
+		// 块 序号
+		BlockId: block_id,
+		// 时间戳
+		Timestamp: uint64(time.Now().Unix()),
+		// 当前区块hash,正常比特币区块中没有当前区块hash，这里是为了方便做了简化
+		TxInfos: txinfos,
 	}
 	block.MerkelRoot = block.MakeMerkelRoot()
 	// block.SetHash()
-	pow := NewProofOfWork(&block)
-	hash, nonce := pow.Run()
-	block.Hash = hash
-	block.Nonce = nonce
+	// pow := NewProofOfWork(&block)
+	// hash, nonce := pow.Run()
+	hash := sha256.Sum256(block.Serialize())
+	block.Hash = hash[:]
 	return &block
 }
 
 // 生成 hash
-// func(block *Block) SetHash(){
+// func (block *Block) SetHash() {
 // 	// blockInfo := append(block.PrevHash, Uint64Tobyte(block.Version)...)
 // 	// blockInfo  = append(blockInfo, block.MerkelRoot...)
 // 	// blockInfo  = append(blockInfo, Uint64Tobyte(block.TimeStamp)...)
@@ -63,7 +68,7 @@ func NewBlock(txs []*Transaction, prevBlockHash []byte) *Block {
 // 		Uint64Tobyte(block.Difficulty),
 // 		Uint64Tobyte(block.Nonce),
 // 		block.Data,
-// 	},[]byte(""))
+// 	}, []byte(""))
 // 	hash := sha256.Sum256(sc)
 // 	block.Hash = hash[:]
 // }
@@ -91,8 +96,8 @@ func Deserialize(data []byte) Block {
 // 模拟梅克尔根，这里只是堆交易的数据做简单的拼接，而不错二叉树
 func (block *Block) MakeMerkelRoot() []byte {
 	var info []byte
-	for _, tx := range block.Transactions {
-		info = append(info, tx.TXID...)
+	for _, tx := range block.TxInfos {
+		info = append(info, tx.Hash...)
 	}
 	hash := sha256.Sum256(info)
 	return hash[:]

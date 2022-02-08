@@ -19,11 +19,12 @@ type BlockChain struct {
 
 const blockChainDB = "blockChain.db"
 const blockBucket = "blockBucket"
+const LastHashKey = "lastkey"
 
-func NewBlockChain(address string) *BlockChain {
+func NewBlockChain(block_hash []byte, block_id uint64, pre_block_hash []byte) *BlockChain {
 	// 创建一个创世块，并作为第一个区块添加到区块链中
 	var lastHash []byte
-	db, err := bolt.Open("blockChainDB", 0600, nil)
+	db, err := bolt.Open(blockChainDB, 0600, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -35,12 +36,12 @@ func NewBlockChain(address string) *BlockChain {
 			if err != nil {
 				panic(err)
 			}
-			genesisBlock := GenesisBlock(address)
+			genesisBlock := GenesisBlock(block_id, pre_block_hash)
 			bucket.Put(genesisBlock.Hash, genesisBlock.Serialize())
-			bucket.Put([]byte("LastHashKey"), genesisBlock.Hash)
+			bucket.Put([]byte(LastHashKey), genesisBlock.Hash)
 			lastHash = genesisBlock.Hash
 		} else {
-			lastHash = bucket.Get([]byte("LastHashKey"))
+			lastHash = bucket.Get([]byte(LastHashKey))
 		}
 		return nil
 	})
@@ -51,9 +52,9 @@ func NewBlockChain(address string) *BlockChain {
 }
 
 // 创世块
-func GenesisBlock(address string) *Block {
-	coinbase := NewCoinbaseTX(address, "go 区块链")
-	return NewBlock([]*Transaction{coinbase}, []byte{})
+func GenesisBlock(block_id uint64, pre_block_hash []byte) *Block {
+	// coinbase := NewCoinbaseTX(block_hash, block_id, pre_block_hash)
+	return NewBlock(block_id, pre_block_hash, []*Transaction{})
 }
 
 // 添加区块

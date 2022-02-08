@@ -22,6 +22,16 @@ func (cli *CLI) GetBalance(address string) {
 	}
 	fmt.Printf("%s 的余额为 %f\n", address, total)
 }
+
+// user  用户地址(由公钥导过来)
+// strict 是否严格处理，数据不会进入草稿，直接验证打包，也就是一个区块只有一笔交易
+// sharemode 是否和某个用户共享数据
+// shareuser 一起共享数据的用户
+
+func (cli *CLI) PutData(key string, value []byte, user string, strict bool, sharemode string, shareuser []string) {
+	fmt.Println(user, "PutData", key, value)
+	NewTransaction(key, value, user, sharemode, shareuser)
+}
 func (cli *CLI) Send(from, to string, amount float64, miner string, data string) {
 	fmt.Printf("from:%s\n", from)
 	fmt.Printf("to:%s\n", to)
