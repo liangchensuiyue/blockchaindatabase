@@ -30,8 +30,8 @@ type Transaction struct {
 	Hash      []byte
 
 	// 当交易打包时在填上
-	PreBlockHash string
-	Signature    string
+	PreBlockHash []byte
+	Signature    []byte
 }
 
 // 设置交易ID
@@ -93,71 +93,39 @@ func NewTransaction(method, key string, value []byte, datatype string, user_addr
 	return Tx, nil
 }
 
-func (tx *Transaction) Sign(privateKey *ecdsa.PrivateKey, prevTxs map[string]Transaction) {
-	if tx.IsCoinbase() {
-		return
+func (tx *Transaction) Sign(user_address string) {
+
+	var privateKey *ecdsa.PrivateKey
+	wa, _ := LocalWallets.GetUserWallet(user_address)
+	privateKey = wa.Private
+	tx.PreBlockHash, _ = LocalWallets.GetUserTailBlockHash(user_address)
+	tx.SetHash()
+	r, s, err := ecdsa.Sign(rand.Reader, privateKey, tx.Hash)
+	if err != nil {
+		log.Panic(err)
 	}
-	txCopy := tx.TrimmedCopy()
-	for i, input := range txCopy.TXInputs {
-		prevtx := prevTxs[string(input.TXid)]
-		if len(tx.TXID) == 0 {
-			log.Panic("引用交易失败!")
-		}
-		txCopy.TXInputs[i].PubKey = prevtx.TXOutputs[input.Index].PubKeyHash
-		txCopy.SetHash()
-		signDataHash := txCopy.TXID
-		r, s, err := ecdsa.Sign(rand.Reader, privateKey, signDataHash)
-		if err != nil {
-			log.Panic(err)
-		}
-		signature := append(r.Bytes(), s.Bytes()...)
-		tx.TXInputs[i].Signature = signature
-	}
-}
-func (tx *Transaction) TrimmedCopy() Transaction {
-	var inputs []TXInput
-	var outputs []TXOutput
-	for _, input := range tx.TXInputs {
-		inputs = append(inputs, TXInput{input.TXid, input.Index, nil, nil})
-	}
-	for _, output := range tx.TXOutputs {
-		outputs = append(outputs, output)
-	}
-	return Transaction{tx.TXID, inputs, outputs}
+	tx.Signature = append(r.Bytes(), s.Bytes()...)
 }
 
-func (tx *Transaction) Verify(prevTXs map[string]Transaction) bool {
-	if tx.IsCoinbase() {
-		return true
-	}
-	txCopy := tx.TrimmedCopy()
-	for i, input := range tx.TXInputs {
-		prevTX := prevTXs[string(input.TXid)]
-		if len(prevTX.TXID) == 0 {
-			log.Panic("引用的交易无效!")
-		}
-		txCopy.TXInputs[i].PubKey = prevTX.TXOutputs[input.Index].PubKeyHash
-		txCopy.SetHash()
-		dataHash := txCopy.TXID
-		signature := input.Signature
-		pubKey := input.PubKey
+func (tx *Transaction) Verify(user_address string) bool {
+	tx.PreBlockHash, _ = LocalWallets.GetUserTailBlockHash(user_address)
+	tx.SetHash()
 
-		r := big.Int{}
-		s := big.Int{}
+	r := big.Int{}
+	s := big.Int{}
 
-		r.SetBytes(signature[:len(signature)/2])
-		s.SetBytes(signature[len(signature)/2:])
+	r.SetBytes(tx.Signature[:len(tx.Signature)/2])
+	s.SetBytes(tx.Signature[len(tx.Signature)/2:])
 
-		X := big.Int{}
-		Y := big.Int{}
+	X := big.Int{}
+	Y := big.Int{}
 
-		X.SetBytes(pubKey[:len(pubKey)/2])
-		Y.SetBytes(pubKey[len(pubKey)/2:])
+	X.SetBytes(tx.PublicKey[:len(tx.PublicKey)/2])
+	Y.SetBytes(tx.PublicKey[len(tx.PublicKey)/2:])
 
-		pubKeyOrigin := ecdsa.PublicKey{Curve: elliptic.P256(), X: &X, Y: &Y}
-		if !ecdsa.Verify(&pubKeyOrigin, dataHash, &r, &s) {
-			return false
-		}
+	pubKeyOrigin := ecdsa.PublicKey{Curve: elliptic.P256(), X: &X, Y: &Y}
+	if !ecdsa.Verify(&pubKeyOrigin, tx.Hash, &r, &s) {
+		return false
 	}
 	return true
 }

@@ -82,7 +82,8 @@ func (block *Block) Serialize() []byte {
 	return buffer.Bytes()
 	// return []byte{}
 }
-func Deserialize(data []byte) Block {
+
+func BlockDeserialize(data []byte) Block {
 	var buffer *bytes.Buffer = bytes.NewBuffer(data)
 	decore := gob.NewDecoder(bytes.NewReader(buffer.Bytes()))
 	var block Block
