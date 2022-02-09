@@ -7,9 +7,10 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/gob"
-	"fmt"
+	"errors"
 	"log"
 	"math/big"
+	"time"
 
 	// "log"
 	// "go_code/区块链/demo1/block"
@@ -20,13 +21,15 @@ const reword = 12.5
 
 //1. 定义交易结构
 type Transaction struct {
-	Key          string
-	Value        []byte
-	DataType     string
-	Timestamp    uint64
-	DelMark      bool
-	PublicKey    []byte
-	Hash         string
+	Key       string
+	Value     []byte
+	DataType  string
+	Timestamp uint64
+	DelMark   bool
+	PublicKey []byte
+	Hash      []byte
+
+	// 当交易打包时在填上
 	PreBlockHash string
 	Signature    string
 }
@@ -41,78 +44,53 @@ func (tx *Transaction) SetHash() {
 	}
 	data := buffer.Bytes()
 	hash := sha256.Sum256(data)
-	tx.TXID = hash[:]
-}
-
-// 判断是否为挖矿交易
-func (tx *Transaction) IsCoinbase() bool {
-	// 交易的input只有一个
-	// 交易id为空
-	// 交易的index为-1
-	input := tx.TXInputs[0]
-	if len(tx.TXInputs) == 1 && len(input.TXid) == 0 && input.Index == -1 {
-		return true
-	}
-	return false
-}
-
-//2. 提供创建交易方法(挖矿交易)
-func NewCoinbaseTX(address string, data string) *Transaction {
-	//	挖矿交易的特点
-	//1. 只有一个input
-	//2. 无需引用交易id
-	//3. 无需引用index
-	// 矿工由于挖矿时无需指定签名，所以这个PubKey字段可以由矿工自由填写数据，一般是填写矿池的名字
-	input := TXInput{[]byte{}, -1, nil, []byte(data)}
-	// output := TXOutput{reword, address}
-	output := NewTXOutput(reword, address)
-	tx := Transaction{[]byte{}, []TXInput{input}, []TXOutput{*output}}
-	tx.SetHash()
-	return &tx
+	tx.Hash = hash[:]
 }
 
 // 创建普通的转账交易
-func NewTransaction(key string, value []byte, user string, sharemode string, shareuser []string) *Transaction {
+func NewTransaction(method, key string, value []byte, datatype string, user_address string, sharemode string, shareuser []string) (*Transaction, error) {
+
+	var Tx *Transaction
+
 	// 创建交易之后要进行数字签名,所以需要通过地址打开对应钱包获取私钥公钥
-	ws := NewWallets()
-	wallet := ws.WalletsMap[user]
-	if wallet == nil {
-		fmt.Println("没有找到对应钱包!")
-		return nil
+
+	wallet, e := LocalWallets.GetUserWallet(user_address)
+	if wallet == nil || e != nil {
+		return nil, e
 	}
 
-	pubKey := wallet.PubKey
-	pubKeyHash := HashPubKey(pubKey)
-	privateKey := wallet.Private
+	// pubKey := wallet.PubKey
+	// pubKeyHash := HashPubKey(pubKey)
+	// privateKey := wallet.Private
 
-	utxos, resValue := bc.FindNeedUTXOs(pubKeyHash, amount)
-	if resValue < amount {
-		fmt.Println("余额不足，交易失败!", resValue, amount)
-		return nil
-	}
-	var inputs []TXInput
-	var outputs []TXOutput
-
-	// 将这些 utxo 转换成 input
-	for id, indexArray := range utxos {
-		for _, i := range indexArray {
-			input := TXInput{[]byte(id), int64(i), nil, pubKey}
-			inputs = append(inputs, input)
+	switch method {
+	case "put":
+		Tx = &Transaction{
+			Key:       key,
+			Value:     value,
+			DataType:  datatype,
+			Timestamp: uint64(time.Now().Unix()),
+			DelMark:   false,
+			PublicKey: wallet.PubKey,
 		}
+	case "delete":
+		Tx = &Transaction{
+			Key:       key,
+			Value:     value,
+			DataType:  datatype,
+			Timestamp: uint64(time.Now().Unix()),
+			DelMark:   true,
+			PublicKey: wallet.PubKey,
+		}
+	default:
+		return nil, errors.New("未知的操作")
 	}
-	// output := TXOutput{amount, to}
-	output := NewTXOutput(amount, to)
-	outputs = append(outputs, *output)
-	if resValue > amount {
-		// 找零
-		// outputs = append(outputs, TXOutput{resValue - amount, from})
-		outputs = append(outputs, *(NewTXOutput(resValue-amount, from)))
-	}
-	tx := Transaction{[]byte{}, inputs, outputs}
-	tx.SetHash()
 
-	bc.SignTransaction(&tx, privateKey)
-	return &tx
+	// hash 在区块打包时建立
+	// tx.SetHash()
+
+	// bc.SignTransaction(&tx, privateKey)
+	return Tx, nil
 }
 
 func (tx *Transaction) Sign(privateKey *ecdsa.PrivateKey, prevTxs map[string]Transaction) {

@@ -17,14 +17,23 @@ type BlockChainInfo struct {
 	PassWorld         string
 	NodeId            []string
 	BlockTailHashName string
+	BlockChainDB      string
 }
 
 func main() {
 	var info BlockChainInfo
 	for {
-		fmt.Printf("passworld:")
+		fmt.Printf("集群访问密码:")
 		fmt.Scanf("%s", &info.PassWorld)
 		if strings.TrimSpace(info.PassWorld) == "" {
+			continue
+		}
+		break
+	}
+	for {
+		fmt.Printf("块数据存储文件名称:")
+		fmt.Scanf("%s", &info.BlockChainDB)
+		if strings.TrimSpace(info.BlockChainDB) == "" {
 			continue
 		}
 		break

@@ -13,18 +13,22 @@ import (
 
 // 引入区块链
 type BlockChain struct {
-	db   *bolt.DB
-	tail []byte // 存储最后一个区块的hash
+	Db                   *bolt.DB
+	PassWorld            string
+	NodeId               []string
+	BlockBucket          string
+	BlockTailHashKey     string
+	BlockChainDBFileName string
+	// Tail                 []byte // 存储最后一个区块的hash
 }
 
 const blockChainDB = "blockChain.db"
 const blockBucket = "blockBucket"
 const LastHashKey = "lastkey"
 
-func NewBlockChain(block_hash []byte, block_id uint64, pre_block_hash []byte) *BlockChain {
+func NewBlockChain(passworld string, NodeId []string, blockTailHashKey, blockChainDBFileName string) *BlockChain {
 	// 创建一个创世块，并作为第一个区块添加到区块链中
-	var lastHash []byte
-	db, err := bolt.Open(blockChainDB, 0600, nil)
+	db, err := bolt.Open(blockChainDBFileName, 0600, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -36,25 +40,25 @@ func NewBlockChain(block_hash []byte, block_id uint64, pre_block_hash []byte) *B
 			if err != nil {
 				panic(err)
 			}
-			genesisBlock := GenesisBlock(block_id, pre_block_hash)
+			genesisBlock := GenesisBlock()
 			bucket.Put(genesisBlock.Hash, genesisBlock.Serialize())
-			bucket.Put([]byte(LastHashKey), genesisBlock.Hash)
-			lastHash = genesisBlock.Hash
-		} else {
-			lastHash = bucket.Get([]byte(LastHashKey))
+			bucket.Put([]byte(blockTailHashKey), genesisBlock.Hash)
 		}
 		return nil
 	})
 	return &BlockChain{
-		db,
-		lastHash,
+		Db:                   db,
+		PassWorld:            passworld,
+		BlockBucket:          blockBucket,
+		BlockChainDBFileName: blockChainDBFileName,
+		BlockTailHashKey:     blockTailHashKey,
 	}
 }
 
 // 创世块
-func GenesisBlock(block_id uint64, pre_block_hash []byte) *Block {
+func GenesisBlock() *Block {
 	// coinbase := NewCoinbaseTX(block_hash, block_id, pre_block_hash)
-	return NewBlock(block_id, pre_block_hash, []*Transaction{})
+	return NewBlock(1, []byte(""), []*Transaction{})
 }
 
 // 添加区块
@@ -90,6 +94,19 @@ func (bc *BlockChain) AddBlock(txs []*Transaction) {
 
 		return nil
 	})
+}
+func (bc *BlockChain) GetTailBlockHash() []byte {
+	var blockhash []byte
+	bc.Db.View(func(tx *bolt.Tx) error {
+		bucket := tx.Bucket([]byte(bc.BlockBucket))
+		if bucket == nil {
+			panic("bucket is empty!")
+		}
+		hashkey := bucket.Get([]byte(bc.BlockTailHashKey))
+		blockhash = bucket.Get(hashkey)
+		return nil
+	})
+	return blockhash
 }
 func (bc *BlockChain) Print() {
 	lasthash := bc.tail

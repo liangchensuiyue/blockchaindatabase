@@ -102,3 +102,12 @@ func (block *Block) MakeMerkelRoot() []byte {
 	hash := sha256.Sum256(info)
 	return hash[:]
 }
+
+// 判断是否为创世区块
+func (block *Block) IsGenesisBlock() bool {
+	if block.BlockId == 1 {
+		return true
+	} else {
+		return false
+	}
+}

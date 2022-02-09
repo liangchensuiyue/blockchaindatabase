@@ -15,6 +15,9 @@ import (
 type Wallet struct {
 	Private *ecdsa.PrivateKey
 	PubKey  []byte
+
+	// 用户最后一个操作所在的区块hash
+	TailBlockHash []byte
 }
 
 // 创建钱包

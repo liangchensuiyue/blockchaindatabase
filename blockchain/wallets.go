@@ -4,9 +4,12 @@ import (
 	"bytes"
 	"crypto/elliptic"
 	"encoding/gob"
+	"errors"
 	"io/ioutil"
 	"log"
 	"os"
+
+	"sync"
 
 	"github.com/btcsuite/btcutil/base58"
 	// "fmt"
@@ -14,17 +17,45 @@ import (
 
 const walletFile = "wallet.dat"
 
+var LocalWallets Wallets
+var _lock *sync.Mutex
+
 // 定义一个 Wallets 结构，它保存所有的wallet以及它的地址
 type Wallets struct {
-	WalletsMap map[string]*Wallet
+	WalletsMap       map[string]*Wallet
+	TailBlockHashMap map[string][]byte
 }
 
-func NewWallets() *Wallets {
-	var ws Wallets
-	ws.loadFile()
-	return &ws
+func LoadLocalWallets() {
+	LocalWallets.loadFile()
 }
 
+func (ws *Wallets) GetUserWallet(user_address string) (*Wallet, error) {
+	LoadLocalWallets()
+	wa, flag := ws.WalletsMap[user_address]
+	if !flag {
+		return wa, errors.New("未知的用户")
+	}
+	return wa, nil
+}
+func (ws *Wallets) GetUserTailBlockHash(user_address string) ([]byte, error) {
+	LoadLocalWallets()
+	wa, flag := ws.TailBlockHashMap[user_address]
+	if !flag {
+		return wa, errors.New("未知的用户")
+	}
+	return wa, nil
+}
+func (ws *Wallets) PutTailBlockHash(user_address string, blockhash []byte) error {
+	LoadLocalWallets()
+	_, flag := ws.TailBlockHashMap[user_address]
+	if !flag {
+		return errors.New("未知的用户")
+	}
+	ws.TailBlockHashMap[user_address] = blockhash
+	ws.saveToFile()
+	return nil
+}
 func (ws *Wallets) loadFile() {
 	_, err := os.Stat(walletFile)
 	if os.IsNotExist(err) {
@@ -68,6 +99,7 @@ func (ws *Wallets) CreateWallet() string {
 	return address
 }
 func (ws *Wallets) saveToFile() {
+	defer _lock.Unlock()
 	/*
 		如果 Encode/Decode 类型是interface或者struct中某些字段是interface{}的时候
 		需要在gob中注册interface可能的所有实现或者可能类型
@@ -82,6 +114,7 @@ func (ws *Wallets) saveToFile() {
 	if err != nil {
 		log.Panic(err)
 	}
+	_lock.Lock()
 	err = ioutil.WriteFile(walletFile, content.Bytes(), 0644)
 	if err != nil {
 		log.Panic(err)

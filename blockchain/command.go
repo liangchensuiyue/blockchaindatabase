@@ -28,9 +28,9 @@ func (cli *CLI) GetBalance(address string) {
 // sharemode 是否和某个用户共享数据
 // shareuser 一起共享数据的用户
 
-func (cli *CLI) PutData(key string, value []byte, user string, strict bool, sharemode string, shareuser []string) {
+func (cli *CLI) PutData(key string, value []byte, dataype string, user string, strict bool, sharemode string, shareuser []string) {
 	fmt.Println(user, "PutData", key, value)
-	NewTransaction(key, value, user, sharemode, shareuser)
+	NewTransaction("put", key, value, dataype, user, sharemode, shareuser)
 }
 func (cli *CLI) Send(from, to string, amount float64, miner string, data string) {
 	fmt.Printf("from:%s\n", from)
@@ -39,16 +39,13 @@ func (cli *CLI) Send(from, to string, amount float64, miner string, data string)
 	fmt.Printf("miner:%s\n", miner)
 	fmt.Printf("data:%s\n", data)
 
-	// 挖矿交易
-	coinbase := NewCoinbaseTX(miner, data)
-
 	// 创建普通交易
 	tx := NewTransaction(from, to, amount, cli.Bc)
 	if tx == nil {
 		fmt.Println("无效的交易")
 		return
 	}
-	cli.Bc.AddBlock([]*Transaction{coinbase, tx})
+	cli.Bc.AddBlock([]*Transaction{tx})
 	fmt.Println("转账成功")
 }
 func (cli *CLI) NewWallet() {
