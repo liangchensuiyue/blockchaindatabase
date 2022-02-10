@@ -22,6 +22,9 @@ type Block struct {
 	MerkelRoot []byte
 
 	TxInfos []*Transaction
+
+	// 由集群私钥加密
+	Signature []byte
 	//
 }
 

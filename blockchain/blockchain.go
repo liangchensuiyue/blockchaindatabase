@@ -1,8 +1,13 @@
 package blockchain
 
 import (
+	"bytes"
+	"crypto/ecdsa"
+	"crypto/rand"
 	"crypto/sha256"
 	"errors"
+	"fmt"
+	"math/big"
 
 	"github.com/boltdb/bolt"
 )
@@ -82,8 +87,22 @@ func (bc *BlockChain) GetTailBlock() *Block {
 	return bl
 }
 
-// 对区块进行签名
-func (bc *BlockChain) SignBlock(user_address string, newblock *Block) {
+// 遍历区块链
+func (bc *BlockChain) traverse(handle func(*Block, error)) {
+	cur_block := bc.GetTailBlock()
+	var e error = nil
+	handle(cur_block, nil)
+	for {
+		cur_block, e = bc.GetBlockByHash(cur_block.PreBlockHash)
+		handle(cur_block, e)
+		if e != nil {
+			break
+		}
+	}
+}
+
+// 使用集群成员共有的私钥对区块进行签名
+func (bc *BlockChain) SignBlock(groupPriKey *ecdsa.PrivateKey, user_address string, newblock *Block) {
 	bc_pre_block := bc.GetTailBlock()
 	for _, tx := range newblock.TxInfos {
 		tx.Sign(user_address)
@@ -94,6 +113,52 @@ func (bc *BlockChain) SignBlock(user_address string, newblock *Block) {
 	newblock.MerkelRoot = newblock.MakeMerkelRoot()
 	hash := sha256.Sum256(newblock.Serialize())
 	newblock.Hash = hash[:]
+
+	r, s, err := ecdsa.Sign(rand.Reader, groupPriKey, newblock.Hash)
+	if err != nil {
+		panic(err)
+	}
+	newblock.Signature = append(r.Bytes(), s.Bytes()...)
+}
+
+// 对区块进行验证
+func (bc *BlockChain) VerifyBlock(groupPubKey *ecdsa.PublicKey, user_address string, newblock *Block) bool {
+	bc_pre_block := bc.GetTailBlock()
+	for _, tx := range newblock.TxInfos {
+		flag := tx.Verify(user_address)
+		if !flag {
+			return flag
+		}
+	}
+	// 区块是否连续
+	if bc_pre_block.BlockId != newblock.BlockId-1 {
+		fmt.Println("区块验证: 区块不连续")
+		return false
+	}
+	// 前区块是否存在
+	_, e := bc.GetBlockByHash(newblock.PreBlockHash)
+	if e != nil {
+		fmt.Println("区块验证: 区块前hash不存在")
+		return false
+	}
+
+	newblock.BlockId = bc_pre_block.BlockId + 1
+	newblock.PreBlockHash = bc_pre_block.Hash
+
+	if !bytes.Equal(newblock.MerkelRoot, newblock.MakeMerkelRoot()) {
+		fmt.Println("区块验证: 默克尔根错误")
+		return false
+	}
+	r := big.Int{}
+	s := big.Int{}
+
+	r.SetBytes(newblock.Signature[:len(newblock.Signature)/2])
+	s.SetBytes(newblock.Signature[len(newblock.Signature)/2:])
+
+	if !ecdsa.Verify(groupPubKey, newblock.Hash, &r, &s) {
+		return false
+	}
+	return true
 }
 
 func (bc *BlockChain) GetTailBlockHash() []byte {
