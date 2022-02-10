@@ -11,6 +11,8 @@ func init() {
 var blockBucket string = "gds"
 
 func main() {
+	a := []byte("123")
+	fmt.Println(a[:2])
 	// var lastHash []byte
 	// db, err := bolt.Open("blockChainDB", 0600, nil)
 	// if err != nil {

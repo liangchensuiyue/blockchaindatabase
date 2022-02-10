@@ -7,6 +7,8 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"sync"
+	"time"
 )
 
 type Draft struct {
@@ -18,10 +20,16 @@ type Draft struct {
 	PackNum int
 
 	// 交易打包时间上限 单位 秒
-	time int
+	Time int
+
+	// 草稿运行状态
+	WorkStatus bool
+
+	DraftBlock *sync.Mutex
 }
 
 var draft_datat_file_name string = "draft"
+var _pre_time time.Time
 
 func (draft *Draft) loadFile() {
 	_, err := os.Stat(walletFile)
@@ -49,7 +57,7 @@ func (draft *Draft) loadFile() {
 	draft.TxInfos = d.TxInfos
 }
 func (draft *Draft) saveToFile() {
-	defer _lock.Unlock()
+	defer draft.DraftBlock.Unlock()
 	/*
 		如果 Encode/Decode 类型是interface或者struct中某些字段是interface{}的时候
 		需要在gob中注册interface可能的所有实现或者可能类型
@@ -64,16 +72,42 @@ func (draft *Draft) saveToFile() {
 	if err != nil {
 		log.Panic(err)
 	}
-	_lock.Lock()
+	draft.DraftBlock.Lock()
 	err = ioutil.WriteFile(draft_datat_file_name, content.Bytes(), 0644)
 	if err != nil {
 		log.Panic(err)
 	}
 }
-func (draft *Draft) PackBlock(pre_block *Block) (*Block, error) {
-
-	block := NewBlock(pre_block.BlockId+1, pre_block.Hash, draft.TxInfos)
+func (draft *Draft) PackBlock() (*Block, error) {
+	defer draft.DraftBlock.Unlock()
+	draft.DraftBlock.Lock()
+	var newblock *Block
 	if len(draft.TxInfos) > draft.PackNum {
+		newblock = NewBlock(draft.TxInfos[:draft.PackNum])
+		draft.TxInfos = draft.TxInfos[draft.PackNum:]
 
+	} else {
+		newblock = NewBlock(draft.TxInfos)
+		draft.TxInfos = []*Transaction{}
+	}
+	return newblock, nil
+}
+func (draft *Draft) GetTxInfosNum() int {
+	return len(draft.TxInfos)
+}
+func (draft *Draft) Work(handler func(*Block, error)) {
+	_pre_time = time.Now()
+	for {
+		if !draft.WorkStatus {
+			continue
+		}
+		cur := time.Now()
+		_flag := cur.After(_pre_time.Add(time.Second * time.Duration(draft.Time)))
+		if _flag {
+			// 到了所设置的草稿打包的时间
+			b, e := draft.PackBlock()
+			handler(b, e)
+			_pre_time = cur
+		}
 	}
 }

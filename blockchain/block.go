@@ -33,23 +33,20 @@ func Uint64Tobyte(src uint64) []byte {
 }
 
 // 创建区块
-func NewBlock(block_id uint64, pre_block_hash []byte, txinfos []*Transaction) *Block {
+func NewBlock(txinfos []*Transaction) *Block {
 	block := Block{
 		// 前区块hash
-		PreBlockHash: pre_block_hash,
+		// PreBlockHash: pre_block_hash,
 		// 块 序号
-		BlockId: block_id,
+		// BlockId: block_id,
 		// 时间戳
 		Timestamp: uint64(time.Now().Unix()),
 		// 当前区块hash,正常比特币区块中没有当前区块hash，这里是为了方便做了简化
 		TxInfos: txinfos,
 	}
-	block.MerkelRoot = block.MakeMerkelRoot()
-	// block.SetHash()
-	// pow := NewProofOfWork(&block)
-	// hash, nonce := pow.Run()
-	hash := sha256.Sum256(block.Serialize())
-	block.Hash = hash[:]
+	// block.MerkelRoot = block.MakeMerkelRoot()
+	// hash := sha256.Sum256(block.Serialize())
+	// block.Hash = hash[:]
 	return &block
 }
 

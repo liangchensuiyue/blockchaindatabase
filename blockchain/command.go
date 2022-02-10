@@ -32,6 +32,7 @@ func (cli *CLI) PutData(key string, value []byte, dataype string, user string, s
 	fmt.Println(user, "PutData", key, value)
 	NewTransaction("put", key, value, dataype, user, sharemode, shareuser)
 }
+
 func (cli *CLI) Send(from, to string, amount float64, miner string, data string) {
 	fmt.Printf("from:%s\n", from)
 	fmt.Printf("to:%s\n", to)

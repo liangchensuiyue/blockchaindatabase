@@ -1,9 +1,8 @@
 package blockchain
 
 import (
+	"crypto/sha256"
 	"errors"
-	"fmt"
-	"log"
 
 	"github.com/boltdb/bolt"
 )
@@ -55,43 +54,48 @@ func NewBlockChain(passworld string, NodeId []string, blockTailHashKey, blockCha
 // 创世块
 func GenesisBlock() *Block {
 	// coinbase := NewCoinbaseTX(block_hash, block_id, pre_block_hash)
-	return NewBlock(1, []byte(""), []*Transaction{})
+	return NewBlock([]*Transaction{})
 }
 
 // 添加区块
-func (bc *BlockChain) AddBlock(newblock *Block) {
-	for _, tx := range txs {
-		if !bc.VerifyTransaction(tx) {
-			fmt.Println("矿工发现无效交易")
-			return
-		}
-	}
-	//如何获取前区块的哈希呢？？
-	db := bc.db         //区块链数据库
-	lastHash := bc.tail //最后一个区块的哈希
+func (bc *BlockChain) AddBlock(newblock *Block) error {
+	db := bc.Db //区块链数据库
 
-	db.Update(func(tx *bolt.Tx) error {
+	e := db.Update(func(tx *bolt.Tx) error {
 
 		//完成数据添加
-		bucket := tx.Bucket([]byte(blockBucket))
+		bucket := tx.Bucket([]byte(bc.BlockBucket))
 		if bucket == nil {
-			log.Panic("bucket 不应该为空，请检查!")
+			return errors.New("bucket 不应该为空，请检查!")
 		}
 
-		//a. 创建新的区块
-		block := NewBlock(txs, lastHash)
-
-		//b. 添加到区块链db中
-		//hash作为key， block的字节流作为value，尚未实现
-		bucket.Put(block.Hash, block.Serialize())
-		bucket.Put([]byte("LastHashKey"), block.Hash)
-
-		//c. 更新一下内存中的区块链，指的是把最后的小尾巴tail更新一下
-		bc.tail = block.Hash
+		bucket.Put(newblock.Hash, newblock.Serialize())
+		bucket.Put([]byte(bc.BlockTailHashKey), newblock.Hash)
 
 		return nil
 	})
+	return e
 }
+func (bc *BlockChain) GetTailBlock() *Block {
+	hash := bc.GetTailBlockHash()
+	bl, _ := bc.GetBlockByHash(hash)
+	return bl
+}
+
+// 对区块进行签名
+func (bc *BlockChain) SignBlock(user_address string, newblock *Block) {
+	bc_pre_block := bc.GetTailBlock()
+	for _, tx := range newblock.TxInfos {
+		tx.Sign(user_address)
+	}
+	newblock.BlockId = bc_pre_block.BlockId + 1
+	newblock.PreBlockHash = bc_pre_block.Hash
+
+	newblock.MerkelRoot = newblock.MakeMerkelRoot()
+	hash := sha256.Sum256(newblock.Serialize())
+	newblock.Hash = hash[:]
+}
+
 func (bc *BlockChain) GetTailBlockHash() []byte {
 	var blockhash []byte
 	bc.Db.View(func(tx *bolt.Tx) error {
