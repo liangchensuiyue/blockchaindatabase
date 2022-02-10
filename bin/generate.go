@@ -2,10 +2,12 @@ package main
 
 import (
 	"bytes"
-	"crypto/aes"
-	"crypto/cipher"
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
 	"encoding/gob"
 	"fmt"
+	quorum "go_code/基于区块链的非关系型数据库/quorum"
 	"io/ioutil"
 	"log"
 	"os"
@@ -13,79 +15,64 @@ import (
 	"time"
 )
 
-type BlockChainInfo struct {
-	PassWorld         string
-	NodeId            []string
-	BlockTailHashName string
-	BlockChainDB      string
-}
-
 func main() {
-	var info BlockChainInfo
+	var localNode quorum.NodeInfo
+	localNode.BCInfo = &quorum.BlockChainInfo{}
+	localNode.BCInfo.TailBlockId = 0
+	for {
+		fmt.Printf("绑定端口:")
+		fmt.Scanf("%d\n", &localNode.LocalPort)
+		// 校验端口是否合规
+		if localNode.LocalPort >= 65535 {
+			continue
+		}
+		break
+	}
 	for {
 		fmt.Printf("集群访问密码:")
-		fmt.Scanf("%s", &info.PassWorld)
-		if strings.TrimSpace(info.PassWorld) == "" {
+		fmt.Scanf("%s\n", &localNode.BCInfo.PassWorld)
+		if strings.TrimSpace(localNode.BCInfo.PassWorld) == "" {
 			continue
 		}
 		break
 	}
 	for {
 		fmt.Printf("块数据存储文件名称:")
-		fmt.Scanf("%s", &info.BlockChainDB)
-		if strings.TrimSpace(info.BlockChainDB) == "" {
+		fmt.Scanf("%s", &localNode.BCInfo.BlockChainDB)
+		if strings.TrimSpace(localNode.BCInfo.BlockChainDB) == "" {
 			continue
 		}
 		break
 	}
-	info.BlockTailHashName = "key_" + fmt.Sprintf("%d", time.Now().Unix())
-	info.NodeId = []string{"127.0.0.1"}
+
+	curve := elliptic.P256()
+
+	privateKey, err := ecdsa.GenerateKey(curve, rand.Reader)
+	if err != nil {
+		log.Panic()
+	}
+	pubkeyOrig := privateKey.PublicKey
+	pubKey := append(pubkeyOrig.X.Bytes(), pubkeyOrig.Y.Bytes()...)
+	localNode.BCInfo.PriKey = privateKey
+	localNode.BCInfo.PubKey = pubKey
+	localNode.BCInfo.BlockTailHashKey = "key_" + fmt.Sprintf("%d", time.Now().Unix())
+
 	var buffer bytes.Buffer
+	gob.Register(elliptic.P256())
 	encoder := gob.NewEncoder(&buffer)
-	err := encoder.Encode(info)
+	err = encoder.Encode(localNode)
 	if err != nil {
+		fmt.Println("密钥生成失败")
 		panic(err)
 	}
-	err = ioutil.WriteFile("genesis", aesEncrypt(buffer.Bytes(), []byte("1234567812345678")), 0644)
+	err = ioutil.WriteFile("genesis", quorum.AesEncrypt(buffer.Bytes(), []byte("1234567812345678")), 0644)
 	if err != nil {
 		panic(err)
 	}
 }
 
-func aesDecrypt(codeText, key []byte) []byte {
-	block, err := aes.NewCipher(key)
-	if err != nil {
-		panic(err)
-	}
-
-	// 创建一个使用 ctr 分组
-	iv := []byte("1234567812345678") // 这不是初始化向量，而是给一个随机种子，大小必须与blocksize 相等
-	stream := cipher.NewCTR(block, iv)
-	// 加密
-	dst := make([]byte, len(codeText))
-	stream.XORKeyStream(dst, codeText)
-	return dst
-}
-
-// AES  加解密
-func aesEncrypt(plainText, key []byte) []byte {
-	block, err := aes.NewCipher(key)
-	if err != nil {
-		panic(err)
-	}
-
-	// 创建一个使用 ctr 分组
-	iv := []byte("1234567812345678") // 这不是初始化向量，而是给一个随机种子，大小必须与blocksize 相等
-	stream := cipher.NewCTR(block, iv)
-	// 加密
-	dst := make([]byte, len(plainText))
-	a := make([]byte, len(plainText))
-	stream.XORKeyStream(dst, plainText)
-	stream.XORKeyStream(a, plainText) // dst != a
-	return dst
-}
 func load() {
-	var info BlockChainInfo
+	var info quorum.BlockChainInfo
 
 	_, err := os.Stat("genesis")
 	if os.IsNotExist(err) {
@@ -97,7 +84,7 @@ func load() {
 		panic(err)
 	}
 
-	decoder := gob.NewDecoder(bytes.NewReader(aesDecrypt(content, []byte("1234567812345678"))))
+	decoder := gob.NewDecoder(bytes.NewReader(quorum.AesDecrypt(content, []byte("1234567812345678"))))
 	err = decoder.Decode(&info)
 	if err != nil {
 		log.Panic(err)

@@ -27,7 +27,7 @@ const blockChainDB = "blockChain.db"
 const blockBucket = "blockBucket"
 const LastHashKey = "lastkey"
 
-func NewBlockChain(passworld string, NodeId []string, blockTailHashKey, blockChainDBFileName string) *BlockChain {
+func NewBlockChain(passworld string, blockTailHashKey, blockChainDBFileName string) *BlockChain {
 	// 创建一个创世块，并作为第一个区块添加到区块链中
 	db, err := bolt.Open(blockChainDBFileName, 0600, nil)
 	if err != nil {
@@ -41,9 +41,9 @@ func NewBlockChain(passworld string, NodeId []string, blockTailHashKey, blockCha
 			if err != nil {
 				panic(err)
 			}
-			genesisBlock := GenesisBlock()
-			bucket.Put(genesisBlock.Hash, genesisBlock.Serialize())
-			bucket.Put([]byte(blockTailHashKey), genesisBlock.Hash)
+			// genesisBlock := GenesisBlock()
+			// bucket.Put(genesisBlock.Hash, genesisBlock.Serialize())
+			// bucket.Put([]byte(blockTailHashKey), genesisBlock.Hash)
 		}
 		return nil
 	})
@@ -57,7 +57,7 @@ func NewBlockChain(passworld string, NodeId []string, blockTailHashKey, blockCha
 }
 
 // 创世块
-func GenesisBlock() *Block {
+func NewGenesisBlock() *Block {
 	// coinbase := NewCoinbaseTX(block_hash, block_id, pre_block_hash)
 	return NewBlock([]*Transaction{})
 }
@@ -81,15 +81,24 @@ func (bc *BlockChain) AddBlock(newblock *Block) error {
 	})
 	return e
 }
-func (bc *BlockChain) GetTailBlock() *Block {
+func (bc *BlockChain) GetTailBlock() (*Block, error) {
 	hash := bc.GetTailBlockHash()
-	bl, _ := bc.GetBlockByHash(hash)
-	return bl
+	bl, err := bc.GetBlockByHash(hash)
+	if err != nil {
+		fmt.Println(err)
+		return bl, nil
+	}
+	return bl, nil
 }
 
 // 遍历区块链
 func (bc *BlockChain) traverse(handle func(*Block, error)) {
-	cur_block := bc.GetTailBlock()
+	cur_block, err := bc.GetTailBlock()
+	if err != nil {
+		fmt.Println(err)
+		handle(cur_block, nil)
+		return
+	}
 	var e error = nil
 	handle(cur_block, nil)
 	for {
@@ -103,16 +112,26 @@ func (bc *BlockChain) traverse(handle func(*Block, error)) {
 
 // 使用集群成员共有的私钥对区块进行签名
 func (bc *BlockChain) SignBlock(groupPriKey *ecdsa.PrivateKey, user_address string, newblock *Block) {
-	bc_pre_block := bc.GetTailBlock()
-	for _, tx := range newblock.TxInfos {
-		tx.Sign(user_address)
-	}
-	newblock.BlockId = bc_pre_block.BlockId + 1
-	newblock.PreBlockHash = bc_pre_block.Hash
+	bc_pre_block, _ := bc.GetTailBlock()
 
-	newblock.MerkelRoot = newblock.MakeMerkelRoot()
-	hash := sha256.Sum256(newblock.Serialize())
-	newblock.Hash = hash[:]
+	if user_address == "" {
+		// 创世块
+		newblock.BlockId = 1
+		newblock.PreBlockHash = []byte{}
+		newblock.MerkelRoot = []byte{}
+		hash := sha256.Sum256(newblock.Serialize())
+		newblock.Hash = hash[:]
+	} else {
+		for _, tx := range newblock.TxInfos {
+			tx.Sign(user_address)
+		}
+		newblock.BlockId = bc_pre_block.BlockId + 1
+		newblock.PreBlockHash = bc_pre_block.Hash
+
+		newblock.MerkelRoot = newblock.MakeMerkelRoot()
+		hash := sha256.Sum256(newblock.Serialize())
+		newblock.Hash = hash[:]
+	}
 
 	r, s, err := ecdsa.Sign(rand.Reader, groupPriKey, newblock.Hash)
 	if err != nil {
@@ -123,7 +142,26 @@ func (bc *BlockChain) SignBlock(groupPriKey *ecdsa.PrivateKey, user_address stri
 
 // 对区块进行验证
 func (bc *BlockChain) VerifyBlock(groupPubKey *ecdsa.PublicKey, user_address string, newblock *Block) bool {
-	bc_pre_block := bc.GetTailBlock()
+	bc_pre_block, _ := bc.GetTailBlock()
+	if user_address == "" {
+		if newblock.BlockId != 1 {
+			return false
+		}
+		r := big.Int{}
+		s := big.Int{}
+
+		r.SetBytes(newblock.Signature[:len(newblock.Signature)/2])
+		s.SetBytes(newblock.Signature[len(newblock.Signature)/2:])
+
+		_sig := newblock.Signature
+		newblock.Signature = []byte{}
+		_hash := sha256.Sum256(newblock.Serialize())
+		if !ecdsa.Verify(groupPubKey, _hash[:], &r, &s) {
+			return false
+		}
+		newblock.Signature = _sig
+		return true
+	}
 	for _, tx := range newblock.TxInfos {
 		flag := tx.Verify(user_address)
 		if !flag {
@@ -155,9 +193,13 @@ func (bc *BlockChain) VerifyBlock(groupPubKey *ecdsa.PublicKey, user_address str
 	r.SetBytes(newblock.Signature[:len(newblock.Signature)/2])
 	s.SetBytes(newblock.Signature[len(newblock.Signature)/2:])
 
-	if !ecdsa.Verify(groupPubKey, newblock.Hash, &r, &s) {
+	_sig := newblock.Signature
+	newblock.Signature = []byte{}
+	_hash := sha256.Sum256(newblock.Serialize())
+	if !ecdsa.Verify(groupPubKey, _hash[:], &r, &s) {
 		return false
 	}
+	newblock.Signature = _sig
 	return true
 }
 
@@ -180,14 +222,17 @@ func (bc *BlockChain) GetBlockByHash(hash []byte) (*Block, error) {
 		return nil, errors.New("错误的hash")
 
 	}
-	bc.Db.View(func(tx *bolt.Tx) error {
+	err := bc.Db.View(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket([]byte(bc.BlockBucket))
 		if bucket == nil {
-			panic("bucket is empty!")
+			return errors.New("not found bucket")
 		}
 		value := bucket.Get(hash)
+		if len(value) == 0 {
+			return errors.New("not found")
+		}
 		block = BlockDeserialize(value)
 		return nil
 	})
-	return &block, nil
+	return &block, err
 }

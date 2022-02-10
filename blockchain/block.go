@@ -38,6 +38,9 @@ func Uint64Tobyte(src uint64) []byte {
 // 创建区块
 func NewBlock(txinfos []*Transaction) *Block {
 	block := Block{
+		PreBlockHash: []byte{},
+		MerkelRoot:   []byte{},
+		Signature:    []byte{},
 		// 前区块hash
 		// PreBlockHash: pre_block_hash,
 		// 块 序号
