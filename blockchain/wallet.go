@@ -49,6 +49,19 @@ func (w *Wallet) NewAddress() string {
 	address := base58.Encode(payload)
 	return address
 }
+func GenerateAddressFromPubkey(pubKey []byte) string {
+	rip160HashValue := HashPubKey(pubKey)
+
+	version := byte(00)
+	payload := append([]byte{version}, rip160HashValue...)
+
+	checkCode := CheckSum(payload)
+	payload = append(payload, checkCode...)
+
+	// go 语言有一个库 btcd 这个是go语言实现的比特币全节点源码
+	address := base58.Encode(payload)
+	return address
+}
 
 func HashPubKey(data []byte) []byte {
 	hash := sha256.Sum256(data)

@@ -4,6 +4,7 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/ecdsa"
+	BC "go_code/基于区块链的非关系型数据库/blockchain"
 )
 
 type BlockChainInfo struct {
@@ -16,12 +17,23 @@ type BlockChainInfo struct {
 	PriKey *ecdsa.PrivateKey
 	PubKey []byte
 }
-type NodeInfo struct {
+type BlockChainNode struct {
 	LocalIp   string
 	LocalPort int
 
 	BCInfo *BlockChainInfo
-	quorum []*NodeInfo
+	quorum []*BlockChainNode
+}
+
+var blockQueue chan *BC.Block
+
+func StartGrpcWork(localnode *BlockChainNode) {
+	blockQueue = make(chan *BC.Block, 100)
+	_startWork(blockQueue, localnode)
+}
+
+func (node *BlockChainNode) DistribuBlock(newblock *BC.Block) {
+	blockQueue <- newblock
 }
 
 func AesDecrypt(codeText, key []byte) []byte {

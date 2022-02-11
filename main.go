@@ -14,10 +14,10 @@ import (
 )
 
 var localBlockChain *BC.BlockChain
-var localNode *quorum.NodeInfo
+var localNode *quorum.BlockChainNode
 
-func LoadGenesisFile(filename string) (*quorum.NodeInfo, error) {
-	var info quorum.NodeInfo
+func LoadGenesisFile(filename string) (*quorum.BlockChainNode, error) {
+	var info quorum.BlockChainNode
 
 	_, err := os.Stat(filename)
 	if os.IsNotExist(err) {
@@ -39,6 +39,21 @@ func LoadGenesisFile(filename string) (*quorum.NodeInfo, error) {
 	}
 	return &info, nil
 }
+func StartDraftWork() {
+	draft := BC.GetLocalDraft()
+	draft.Work(func(newblock *BC.Block, e error) {
+		if len(newblock.TxInfos) == 0 && !newblock.IsGenesisBlock() {
+			// 如果不是创世块，并且交易数目为0 ，则不能打包
+			return
+		}
+		if newblock.IsGenesisBlock() {
+			localBlockChain.SignBlock(localNode.BCInfo.PriKey, true, newblock)
+
+		} else {
+			localBlockChain.SignBlock(localNode.BCInfo.PriKey, false, newblock)
+		}
+	})
+}
 func main() {
 	var genesis_file_name string
 	var bind_port int
@@ -57,8 +72,16 @@ func main() {
 	if localNode.BCInfo.TailBlockId == 0 {
 		// 创建创世块
 		genesis_block := BC.NewGenesisBlock()
-		localBlockChain.SignBlock(localNode.BCInfo.PriKey, "", genesis_block)
+		genesis_block.BlockId = 1
+		localBlockChain.SignBlock(localNode.BCInfo.PriKey, true, genesis_block)
+		err = localBlockChain.AddBlock(genesis_block)
+		if err != nil {
+			panic(err)
+		}
 	}
+
+	quorum.StartGrpcWork(localNode)
+	StartDraftWork()
 
 	fmt.Println("hello world")
 }

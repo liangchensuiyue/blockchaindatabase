@@ -1,6 +1,6 @@
 syntax = "proto3";
 option java_multiple_files = true;//以非外部类模式生成
-package BlockChain;
+package blockchaingrpc;
 
 /*
  需要实现的服务;
@@ -19,8 +19,8 @@ package BlockChain;
 // option java_outer_classname = "DMQFollowerProto";
 service BlockChainService{
 
-    // 区块打包验证
-    rpc PackBlockValidation(Block)returns(ResPackBlock){}
+    /// 分发区块
+    rpc DistributeBlock(Block)returns(VerifyInfo){}
 
     // 区块同步
     rpc BlockSynchronization(ReqBlock)returns(ResBlocks){}
@@ -40,7 +40,10 @@ service BlockChainService{
     // // 客户端关闭管道
     // rpc ClientCloseChannel(ClientRegistToFollower)returns(Response){}
 }
-
+message VerifyInfo{
+    bool status = 1;
+    string info = 2;
+}
 
 message Transaction{
     string key = 1; 
@@ -60,6 +63,7 @@ message Block{
     bytes pre_block_hash = 4; // 区块链中前一个区块hash
     bytes MerkelRoot = 5; // 区块链中前一个区块hash
     repeated Transaction TxInfos = 6;// 所要打包的交易
+    bytes signature = 7;
 }
 
 // 区块同步

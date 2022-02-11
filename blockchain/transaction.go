@@ -83,7 +83,7 @@ func NewTransaction(method, key string, value []byte, datatype string, user_addr
 			PublicKey: wallet.PubKey,
 		}
 	default:
-		return nil, errors.New("未知的操作")
+		return nil, errors.New(" 未知的操作")
 	}
 
 	// hash 在区块打包时建立
@@ -93,8 +93,8 @@ func NewTransaction(method, key string, value []byte, datatype string, user_addr
 	return Tx, nil
 }
 
-func (tx *Transaction) Sign(user_address string) {
-
+func (tx *Transaction) Sign() {
+	user_address := GenerateAddressFromPubkey(tx.PublicKey)
 	var privateKey *ecdsa.PrivateKey
 	wa, _ := LocalWallets.GetUserWallet(user_address)
 	privateKey = wa.Private
@@ -107,7 +107,8 @@ func (tx *Transaction) Sign(user_address string) {
 	tx.Signature = append(r.Bytes(), s.Bytes()...)
 }
 
-func (tx *Transaction) Verify(user_address string) bool {
+func (tx *Transaction) Verify() bool {
+	user_address := GenerateAddressFromPubkey(tx.PublicKey)
 	tx.PreBlockHash, _ = LocalWallets.GetUserTailBlockHash(user_address)
 	tx.SetHash()
 

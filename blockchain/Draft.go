@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/elliptic"
 	"encoding/gob"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -31,11 +32,36 @@ type Draft struct {
 var draft_datat_file_name string = "draft"
 var _pre_time time.Time
 
-func (draft *Draft) loadFile() {
-	_, err := os.Stat(walletFile)
+func initDraft() {
+	var draft *Draft = &Draft{}
+	draft.PackNum = 5
+	draft.TxInfos = []*Transaction{}
+	draft.Time = 60
+	draft.WorkStatus = false
+	/*
+		如果 Encode/Decode 类型是interface或者struct中某些字段是interface{}的时候
+		需要在gob中注册interface可能的所有实现或者可能类型
+	*/
+	var content bytes.Buffer
+
+	// Curve 是一个接口类型
+	gob.Register(elliptic.P256())
+
+	encoder := gob.NewEncoder(&content)
+	err := encoder.Encode(draft)
+	if err != nil {
+		log.Panic(err)
+	}
+	err = ioutil.WriteFile(draft_datat_file_name, content.Bytes(), 0644)
+	if err != nil {
+		fmt.Println("InitDraft error")
+		panic(err)
+	}
+}
+func GetLocalDraft() *Draft {
+	_, err := os.Stat(draft_datat_file_name)
 	if os.IsNotExist(err) {
-		draft.TxInfos = make([]*Transaction, 10)
-		return
+		initDraft()
 	}
 	// 读取钱包
 	content, err := ioutil.ReadFile(draft_datat_file_name)
@@ -54,9 +80,15 @@ func (draft *Draft) loadFile() {
 		log.Panic(err)
 	}
 	// ws = &wsLocal
-	draft.TxInfos = d.TxInfos
+	return &d
 }
-func (draft *Draft) saveToFile() {
+func (draft *Draft) Start() {
+	draft.WorkStatus = true
+}
+func (draft *Draft) Stop() {
+	draft.WorkStatus = false
+}
+func (draft *Draft) SaveToFile() {
 	defer draft.DraftBlock.Unlock()
 	/*
 		如果 Encode/Decode 类型是interface或者struct中某些字段是interface{}的时候
@@ -99,6 +131,7 @@ func (draft *Draft) Work(handler func(*Block, error)) {
 	_pre_time = time.Now()
 	for {
 		if !draft.WorkStatus {
+			_pre_time = time.Now()
 			continue
 		}
 		cur := time.Now()

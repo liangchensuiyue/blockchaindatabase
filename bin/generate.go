@@ -16,7 +16,7 @@ import (
 )
 
 func main() {
-	var localNode quorum.NodeInfo
+	var localNode quorum.BlockChainNode
 	localNode.BCInfo = &quorum.BlockChainInfo{}
 	localNode.BCInfo.TailBlockId = 0
 	for {

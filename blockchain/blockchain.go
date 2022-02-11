@@ -111,10 +111,10 @@ func (bc *BlockChain) traverse(handle func(*Block, error)) {
 }
 
 // 使用集群成员共有的私钥对区块进行签名
-func (bc *BlockChain) SignBlock(groupPriKey *ecdsa.PrivateKey, user_address string, newblock *Block) {
+func (bc *BlockChain) SignBlock(groupPriKey *ecdsa.PrivateKey, IsGenesisBlock bool, newblock *Block) {
 	bc_pre_block, _ := bc.GetTailBlock()
 
-	if user_address == "" {
+	if IsGenesisBlock {
 		// 创世块
 		newblock.BlockId = 1
 		newblock.PreBlockHash = []byte{}
@@ -123,7 +123,7 @@ func (bc *BlockChain) SignBlock(groupPriKey *ecdsa.PrivateKey, user_address stri
 		newblock.Hash = hash[:]
 	} else {
 		for _, tx := range newblock.TxInfos {
-			tx.Sign(user_address)
+			tx.Sign()
 		}
 		newblock.BlockId = bc_pre_block.BlockId + 1
 		newblock.PreBlockHash = bc_pre_block.Hash
@@ -141,12 +141,9 @@ func (bc *BlockChain) SignBlock(groupPriKey *ecdsa.PrivateKey, user_address stri
 }
 
 // 对区块进行验证
-func (bc *BlockChain) VerifyBlock(groupPubKey *ecdsa.PublicKey, user_address string, newblock *Block) bool {
+func (bc *BlockChain) VerifyBlock(groupPubKey *ecdsa.PublicKey, newblock *Block) bool {
 	bc_pre_block, _ := bc.GetTailBlock()
-	if user_address == "" {
-		if newblock.BlockId != 1 {
-			return false
-		}
+	if newblock.BlockId == 1 {
 		r := big.Int{}
 		s := big.Int{}
 
@@ -163,7 +160,7 @@ func (bc *BlockChain) VerifyBlock(groupPubKey *ecdsa.PublicKey, user_address str
 		return true
 	}
 	for _, tx := range newblock.TxInfos {
-		flag := tx.Verify(user_address)
+		flag := tx.Verify()
 		if !flag {
 			return flag
 		}
