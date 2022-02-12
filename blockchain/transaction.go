@@ -21,14 +21,14 @@ const reword = 12.5
 
 //1. 定义交易结构
 type Transaction struct {
-	Key       string
-	Value     []byte
-	DataType  string
-	Timestamp uint64
-	DelMark   bool
-	PublicKey []byte
-	Hash      []byte
-
+	Key          string
+	Value        []byte
+	DataType     string
+	Timestamp    uint64
+	DelMark      bool
+	PublicKey    []byte
+	Hash         []byte
+	ShareAddress []string
 	// 当交易打包时在填上
 	PreBlockHash []byte
 	Signature    []byte
@@ -48,7 +48,7 @@ func (tx *Transaction) SetHash() {
 }
 
 // 创建普通的转账交易
-func NewTransaction(method, key string, value []byte, datatype string, user_address string, sharemode string, shareuser []string) (*Transaction, error) {
+func NewTransaction(method, key string, value []byte, datatype string, user_address string, shareuser_address []string) (*Transaction, error) {
 
 	var Tx *Transaction
 
@@ -62,7 +62,6 @@ func NewTransaction(method, key string, value []byte, datatype string, user_addr
 	// pubKey := wallet.PubKey
 	// pubKeyHash := HashPubKey(pubKey)
 	// privateKey := wallet.Private
-
 	switch method {
 	case "put":
 		Tx = &Transaction{

@@ -40,7 +40,7 @@ func LoadGenesisFile(filename string) (*quorum.BlockChainNode, error) {
 	return &info, nil
 }
 func StartDraftWork() {
-	draft := BC.GetLocalDraft()
+	draft := BC.GetLocalDraftFromDisk()
 	draft.Work(func(newblock *BC.Block, e error) {
 		if len(newblock.TxInfos) == 0 && !newblock.IsGenesisBlock() {
 			// 如果不是创世块，并且交易数目为0 ，则不能打包
@@ -52,6 +52,7 @@ func StartDraftWork() {
 		} else {
 			localBlockChain.SignBlock(localNode.BCInfo.PriKey, false, newblock)
 		}
+		localNode.DistribuBlock(newblock)
 	})
 }
 func addblocks(blocks []*BC.Block) {
@@ -60,11 +61,13 @@ func addblocks(blocks []*BC.Block) {
 		if flag {
 			localBlockChain.AddBlock(newblock)
 			for _, tx := range newblock.TxInfos {
-				adddress := BC.GenerateAddressFromPubkey(tx.PublicKey)
-				wa, e := BC.LocalWallets.GetUserWallet(adddress)
-				if e != nil {
-					wa.TailBlockHash = newblock.Hash
+				for _, addr := range tx.ShareAddress {
+					wa, e := BC.LocalWallets.GetUserWallet(addr)
+					if e != nil {
+						wa.TailBlockHash = newblock.Hash
+					}
 				}
+
 			}
 		} else {
 			return

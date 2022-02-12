@@ -13,15 +13,17 @@ import (
 )
 
 type Wallet struct {
-	Private *ecdsa.PrivateKey
-	PubKey  []byte
+	Private   *ecdsa.PrivateKey
+	Username  string
+	Passworld string
+	PubKey    []byte
 
 	// 用户最后一个操作所在的区块hash
 	TailBlockHash []byte
 }
 
 // 创建钱包
-func NewWallet() *Wallet {
+func NewWallet(username string, passworld string) *Wallet {
 	curve := elliptic.P256()
 
 	privateKey, err := ecdsa.GenerateKey(curve, rand.Reader)
@@ -30,7 +32,7 @@ func NewWallet() *Wallet {
 	}
 	pubkeyOrig := privateKey.PublicKey
 	pubKey := append(pubkeyOrig.X.Bytes(), pubkeyOrig.Y.Bytes()...)
-	return &Wallet{Private: privateKey, PubKey: pubKey}
+	return &Wallet{Private: privateKey, PubKey: pubKey, Username: username, Passworld: passworld}
 }
 
 // 生成地址

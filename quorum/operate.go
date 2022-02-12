@@ -105,6 +105,7 @@ func BlockSynchronization() ([]*BC.Block, error) {
 	}
 	return Blocks, nil
 }
+
 func DistributeBlock(block *BC.Block, node *BlockChainNode, handle func(*bcgrpc.VerifyInfo, error)) {
 	conn, err := grpc.Dial(fmt.Sprintf("%s:%d", node.LocalIp, node.LocalPort), grpc.WithInsecure())
 	if err != nil {

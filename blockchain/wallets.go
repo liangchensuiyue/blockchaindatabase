@@ -22,8 +22,7 @@ var _lock *sync.Mutex
 
 // 定义一个 Wallets 结构，它保存所有的wallet以及它的地址
 type Wallets struct {
-	WalletsMap       map[string]*Wallet
-	TailBlockHashMap map[string][]byte
+	WalletsMap map[string]*Wallet
 }
 
 func LoadLocalWallets() {
@@ -38,22 +37,30 @@ func (ws *Wallets) GetUserWallet(user_address string) (*Wallet, error) {
 	}
 	return wa, nil
 }
+func (ws *Wallets) GetAddressFromUsername(username string) (string, error) {
+	for addr, v := range ws.WalletsMap {
+		if v.Username == username {
+			return addr, nil
+		}
+	}
+	return "", errors.New("未知用户")
+}
 func (ws *Wallets) GetUserTailBlockHash(user_address string) ([]byte, error) {
 	LoadLocalWallets()
-	wa, flag := ws.TailBlockHashMap[user_address]
+	wa, flag := ws.WalletsMap[user_address]
 	if !flag {
-		return wa, errors.New("未知的用户")
+		return []byte{}, errors.New("未知的用户")
 	}
-	return wa, nil
+	return wa.TailBlockHash, nil
 }
 func (ws *Wallets) PutTailBlockHash(user_address string, blockhash []byte) error {
 	LoadLocalWallets()
-	_, flag := ws.TailBlockHashMap[user_address]
+	_, flag := ws.WalletsMap[user_address]
 	if !flag {
 		return errors.New("未知的用户")
 	}
-	ws.TailBlockHashMap[user_address] = blockhash
-	ws.saveToFile()
+	ws.WalletsMap[user_address].TailBlockHash = blockhash
+	ws.SaveToFile()
 	return nil
 }
 func (ws *Wallets) loadFile() {
@@ -89,16 +96,7 @@ func (ws *Wallets) GetAllAddresses() []string {
 	return addresses
 }
 
-func (ws *Wallets) CreateWallet() string {
-	wallet := NewWallet()
-	address := wallet.NewAddress()
-
-	ws.WalletsMap[address] = wallet
-
-	ws.saveToFile()
-	return address
-}
-func (ws *Wallets) saveToFile() {
+func (ws *Wallets) SaveToFile() {
 	defer _lock.Unlock()
 	/*
 		如果 Encode/Decode 类型是interface或者struct中某些字段是interface{}的时候

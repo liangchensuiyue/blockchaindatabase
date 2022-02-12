@@ -29,6 +29,8 @@ type Draft struct {
 	DraftBlock *sync.Mutex
 }
 
+var local_draft *Draft
+
 var draft_datat_file_name string = "draft"
 var _pre_time time.Time
 
@@ -58,7 +60,7 @@ func initDraft() {
 		panic(err)
 	}
 }
-func GetLocalDraft() *Draft {
+func GetLocalDraftFromDisk() *Draft {
 	_, err := os.Stat(draft_datat_file_name)
 	if os.IsNotExist(err) {
 		initDraft()
@@ -80,7 +82,12 @@ func GetLocalDraft() *Draft {
 		log.Panic(err)
 	}
 	// ws = &wsLocal
-	return &d
+	local_draft = &d
+	return local_draft
+}
+func GetLocalDraft() *Draft {
+	return local_draft
+
 }
 func (draft *Draft) Start() {
 	draft.WorkStatus = true
@@ -110,18 +117,28 @@ func (draft *Draft) SaveToFile() {
 		log.Panic(err)
 	}
 }
-func (draft *Draft) PackBlock() (*Block, error) {
+func (draf *Draft) PutTx(tx *Transaction) {
+	draf.DraftBlock.Lock()
+	defer draf.DraftBlock.Unlock()
+	draf.TxInfos = append(draf.TxInfos, tx)
+}
+func (draft *Draft) PackBlock(tx *Transaction) (*Block, error) {
 	defer draft.DraftBlock.Unlock()
 	draft.DraftBlock.Lock()
 	var newblock *Block
-	if len(draft.TxInfos) > draft.PackNum {
-		newblock = NewBlock(draft.TxInfos[:draft.PackNum])
-		draft.TxInfos = draft.TxInfos[draft.PackNum:]
-
+	if tx != nil {
+		newblock = NewBlock([]*Transaction{tx})
 	} else {
-		newblock = NewBlock(draft.TxInfos)
-		draft.TxInfos = []*Transaction{}
+		if len(draft.TxInfos) > draft.PackNum {
+			newblock = NewBlock(draft.TxInfos[:draft.PackNum])
+			draft.TxInfos = draft.TxInfos[draft.PackNum:]
+
+		} else {
+			newblock = NewBlock(draft.TxInfos)
+			draft.TxInfos = []*Transaction{}
+		}
 	}
+
 	return newblock, nil
 }
 func (draft *Draft) GetTxInfosNum() int {
@@ -138,7 +155,7 @@ func (draft *Draft) Work(handler func(*Block, error)) {
 		_flag := cur.After(_pre_time.Add(time.Second * time.Duration(draft.Time)))
 		if _flag {
 			// 到了所设置的草稿打包的时间
-			b, e := draft.PackBlock()
+			b, e := draft.PackBlock(nil)
 			handler(b, e)
 			_pre_time = cur
 		}
