@@ -72,7 +72,7 @@ func NewTransaction(method, key string, value []byte, datatype string, user_addr
 			DelMark:   false,
 			PublicKey: wallet.PubKey,
 		}
-	case "delete":
+	case "del":
 		Tx = &Transaction{
 			Key:       key,
 			Value:     value,

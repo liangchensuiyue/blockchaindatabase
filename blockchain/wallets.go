@@ -17,7 +17,7 @@ import (
 
 const walletFile = "wallet.dat"
 
-var LocalWallets Wallets
+var LocalWallets *Wallets
 var _lock *sync.Mutex
 
 // 定义一个 Wallets 结构，它保存所有的wallet以及它的地址
@@ -67,6 +67,7 @@ func (ws *Wallets) loadFile() {
 	_, err := os.Stat(walletFile)
 	if os.IsNotExist(err) {
 		ws.WalletsMap = make(map[string]*Wallet)
+		ws.SaveToFile()
 		return
 	}
 	// 读取钱包
