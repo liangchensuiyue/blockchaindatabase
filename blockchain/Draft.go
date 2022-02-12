@@ -25,14 +25,13 @@ type Draft struct {
 
 	// 草稿运行状态
 	WorkStatus bool
-
-	DraftBlock *sync.Mutex
 }
 
 var local_draft *Draft
 
-var draft_datat_file_name string = "draft"
+var draft_datat_file_name string = "draft.db"
 var _pre_time time.Time
+var _draftlock *sync.Mutex = &sync.Mutex{}
 
 func initDraft() {
 	var draft *Draft = &Draft{}
@@ -63,6 +62,7 @@ func initDraft() {
 func GetLocalDraftFromDisk() *Draft {
 	_, err := os.Stat(draft_datat_file_name)
 	if os.IsNotExist(err) {
+		fmt.Println("---", draft_datat_file_name, "---", err)
 		initDraft()
 	}
 	// 读取钱包
@@ -96,7 +96,7 @@ func (draft *Draft) Stop() {
 	draft.WorkStatus = false
 }
 func (draft *Draft) SaveToFile() {
-	defer draft.DraftBlock.Unlock()
+	defer _draftlock.Unlock()
 	/*
 		如果 Encode/Decode 类型是interface或者struct中某些字段是interface{}的时候
 		需要在gob中注册interface可能的所有实现或者可能类型
@@ -111,20 +111,20 @@ func (draft *Draft) SaveToFile() {
 	if err != nil {
 		log.Panic(err)
 	}
-	draft.DraftBlock.Lock()
+	_draftlock.Lock()
 	err = ioutil.WriteFile(draft_datat_file_name, content.Bytes(), 0644)
 	if err != nil {
 		log.Panic(err)
 	}
 }
 func (draf *Draft) PutTx(tx *Transaction) {
-	draf.DraftBlock.Lock()
-	defer draf.DraftBlock.Unlock()
+	_draftlock.Lock()
+	defer _draftlock.Unlock()
 	draf.TxInfos = append(draf.TxInfos, tx)
 }
 func (draft *Draft) PackBlock(tx *Transaction) (*Block, error) {
-	defer draft.DraftBlock.Unlock()
-	draft.DraftBlock.Lock()
+	defer _draftlock.Unlock()
+	_draftlock.Lock()
 	var newblock *Block
 	if tx != nil {
 		newblock = NewBlock([]*Transaction{tx})

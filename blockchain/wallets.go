@@ -17,8 +17,8 @@ import (
 
 const walletFile = "wallet.dat"
 
-var LocalWallets *Wallets
-var _lock *sync.Mutex
+var LocalWallets *Wallets = &Wallets{}
+var _lock *sync.Mutex = &sync.Mutex{}
 
 // 定义一个 Wallets 结构，它保存所有的wallet以及它的地址
 type Wallets struct {

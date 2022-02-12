@@ -44,7 +44,7 @@ func LoadGenesisFile(filename string) (*quorum.BlockChainNode, error) {
 }
 func StartDraftWork() {
 	draft := BC.GetLocalDraftFromDisk()
-	draft.Work(func(newblock *BC.Block, e error) {
+	go draft.Work(func(newblock *BC.Block, e error) {
 		if len(newblock.TxInfos) == 0 && !newblock.IsGenesisBlock() {
 			// 如果不是创世块，并且交易数目为0 ，则不能打包
 			return
@@ -90,8 +90,9 @@ func runLocalTestCli() {
 	}
 	switch cmds[0] {
 	case "put":
+		// 15GcPFKHT1dWCE9qz2mHpLRKcC7jURCFa3
 		err := db.Put(cmds[1], []byte(cmds[2]), cmds[3], cmds[4], false, []string{}, true)
-		fmt.Println("del", err)
+		fmt.Println("put", err)
 	case "del":
 		db.Del(cmds[1], cmds[2], false, []string{}, true)
 	case "get":
@@ -99,6 +100,32 @@ func runLocalTestCli() {
 		fmt.Println("get", string(v), len(v))
 	case "newuser":
 		db.CreateUser(cmds[1], cmds[2])
+	case "print":
+		localBlockChain.Traverse(func(block *BC.Block, err error) {
+			if block != nil {
+				fmt.Println("blockid", block.BlockId)
+
+				for i, tx := range block.TxInfos {
+					fmt.Println("交易", i)
+					fmt.Println(tx.Key)
+					fmt.Println(tx.Value)
+				}
+			}
+
+		})
+	case "print_tail_block":
+		block, _ := localBlockChain.GetTailBlock()
+		fmt.Println("tail_blockId", block.BlockId)
+		fmt.Println("tail_hash", block.Hash)
+		for i, tx := range block.TxInfos {
+			fmt.Println("交易", i)
+			fmt.Println(tx.Key)
+			fmt.Println(tx.Value)
+		}
+	case "print_addr":
+		for addr, _ := range BC.LocalWallets.WalletsMap {
+			fmt.Println(addr)
+		}
 	default:
 		fmt.Println(cmds)
 	}
@@ -114,16 +141,19 @@ func main() {
 		panic(err)
 	}
 	BC.LoadLocalWallets()
-	quorum.Broadcast()
-	newbllocks, e := quorum.BlockSynchronization()
-	if e != nil {
-		addblocks(newbllocks)
-	}
 	localBlockChain = BC.NewBlockChain(
 		localNode.BCInfo.PassWorld,
 		localNode.BCInfo.BlockTailHashKey,
 		localNode.BCInfo.BlockChainDB)
-	if localNode.BCInfo.TailBlockId == 0 {
+	quorum.Broadcast(localNode, localBlockChain)
+
+	newbllocks, e := quorum.BlockSynchronization()
+	if e != nil {
+		addblocks(newbllocks)
+	}
+
+	_tailblock, _ := localBlockChain.GetTailBlock()
+	if _tailblock == nil {
 		// 创建创世块
 		genesis_block := BC.NewGenesisBlock()
 		genesis_block.BlockId = 1
@@ -134,11 +164,11 @@ func main() {
 		}
 	}
 
-	quorum.StartGrpcWork(localNode, localBlockChain)
+	quorum.StartGrpcWork()
 	StartDraftWork()
 
 	db.Run(localBlockChain, localNode)
+	fmt.Println("hello world")
 
 	runLocalTestCli()
-	fmt.Println("hello world")
 }

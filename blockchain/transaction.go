@@ -99,6 +99,7 @@ func (tx *Transaction) Sign() {
 	privateKey = wa.Private
 	tx.PreBlockHash, _ = LocalWallets.GetUserTailBlockHash(user_address)
 	tx.SetHash()
+	// fmt.Println("sign", string(tx.Hash), tx)
 	r, s, err := ecdsa.Sign(rand.Reader, privateKey, tx.Hash)
 	if err != nil {
 		log.Panic(err)
@@ -107,10 +108,15 @@ func (tx *Transaction) Sign() {
 }
 
 func (tx *Transaction) Verify() bool {
+	signature := tx.Signature
+	tx.Signature = []byte{}
 	user_address := GenerateAddressFromPubkey(tx.PublicKey)
 	tx.PreBlockHash, _ = LocalWallets.GetUserTailBlockHash(user_address)
+	tx.Hash = []byte{}
 	tx.SetHash()
+	// fmt.Println("verift", string(tx.Hash), tx)
 
+	tx.Signature = signature
 	r := big.Int{}
 	s := big.Int{}
 

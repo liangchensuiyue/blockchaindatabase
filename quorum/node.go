@@ -27,10 +27,8 @@ type BlockChainNode struct {
 }
 
 var blockQueue chan *BC.Block
-var localBlockChain *BC.BlockChain
-var localnode *BlockChainNode
 
-func StartGrpcWork(localnode *BlockChainNode, localBlockChain *BC.BlockChain) {
+func StartGrpcWork() {
 	blockQueue = make(chan *BC.Block, 100)
 	go _starDistributeBlock(blockQueue)
 	go _startServer()

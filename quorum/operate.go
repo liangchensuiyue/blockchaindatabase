@@ -10,7 +10,12 @@ import (
 	"google.golang.org/grpc"
 )
 
-func Broadcast() {
+var localBlockChain *BC.BlockChain
+var localnode *BlockChainNode
+
+func Broadcast(ln *BlockChainNode, lbc *BC.BlockChain) {
+	localnode = ln
+	localBlockChain = lbc
 	for _, node := range localnode.quorum {
 		conn, err := grpc.Dial(fmt.Sprintf("%s:%d", node.LocalIp, node.LocalPort), grpc.WithInsecure())
 		if err != nil {
@@ -41,6 +46,9 @@ func Broadcast() {
 
 func BlockSynchronization() ([]*BC.Block, error) {
 	var blockId_map map[int]uint64 = make(map[int]uint64)
+	if len(localnode.quorum) == 0 {
+		return []*BC.Block{}, nil
+	}
 	for index, rnode := range localnode.quorum {
 		conn, err := grpc.Dial(fmt.Sprintf("%s:%d", rnode.LocalIp, rnode.LocalPort), grpc.WithInsecure())
 		if err != nil {
@@ -63,6 +71,7 @@ func BlockSynchronization() ([]*BC.Block, error) {
 	}
 	local_tailblock, _e := localBlockChain.GetTailBlock()
 	if _e != nil {
+		local_tailblock = &BC.Block{}
 		local_tailblock.BlockId = 0
 	}
 	var _index uint64 = 0

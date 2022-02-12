@@ -8,6 +8,7 @@ import (
 	"crypto/sha256"
 	"errors"
 	"fmt"
+	"log"
 	"math/big"
 
 	"github.com/boltdb/bolt"
@@ -75,6 +76,7 @@ func (bc *BlockChain) AddBlock(newblock *Block) error {
 		}
 
 		bucket.Put(newblock.Hash, newblock.Serialize())
+		// fmt.Println(newblock.BlockId, newblock.Hash)
 		bucket.Put([]byte(bc.BlockTailHashKey), newblock.Hash)
 
 		return nil
@@ -92,10 +94,9 @@ func (bc *BlockChain) GetTailBlock() (*Block, error) {
 }
 
 // 遍历区块链
-func (bc *BlockChain) traverse(handle func(*Block, error)) {
+func (bc *BlockChain) Traverse(handle func(*Block, error)) {
 	cur_block, err := bc.GetTailBlock()
 	if err != nil {
-		fmt.Println(err)
 		handle(cur_block, nil)
 		return
 	}
@@ -170,11 +171,12 @@ func (bc *BlockChain) VerifyBlock(groupPubKey []byte, newblock *Block) bool {
 	for _, tx := range newblock.TxInfos {
 		flag := tx.Verify()
 		if !flag {
+			fmt.Println("区块中交易校验失败")
 			return flag
 		}
 	}
 	// 区块是否连续
-	if bc_pre_block.BlockId != newblock.BlockId-1 {
+	if bc_pre_block.BlockId != newblock.BlockId-1 || !bytes.Equal(bc_pre_block.Hash, newblock.PreBlockHash) {
 		fmt.Println("区块验证: 区块不连续")
 		return false
 	}
@@ -189,7 +191,7 @@ func (bc *BlockChain) VerifyBlock(groupPubKey []byte, newblock *Block) bool {
 	newblock.PreBlockHash = bc_pre_block.Hash
 
 	if !bytes.Equal(newblock.MerkelRoot, newblock.MakeMerkelRoot()) {
-		fmt.Println("区块验证: 默克尔根错误")
+		log.Println("区块验证: 默克尔根错误")
 		return false
 	}
 	r := big.Int{}
@@ -200,26 +202,27 @@ func (bc *BlockChain) VerifyBlock(groupPubKey []byte, newblock *Block) bool {
 
 	_sig := newblock.Signature
 	newblock.Signature = []byte{}
+	newblock.Hash = []byte{}
 	_hash := sha256.Sum256(newblock.Serialize())
 	if !ecdsa.Verify(&pubKeyOrigin, _hash[:], &r, &s) {
 		return false
 	}
 	newblock.Signature = _sig
+	newblock.Hash = _hash[:]
 	return true
 }
 
 func (bc *BlockChain) GetTailBlockHash() []byte {
-	var blockhash []byte
+	var hashkey []byte
 	bc.Db.View(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket([]byte(bc.BlockBucket))
 		if bucket == nil {
 			panic("bucket is empty!")
 		}
-		hashkey := bucket.Get([]byte(bc.BlockTailHashKey))
-		blockhash = bucket.Get(hashkey)
+		hashkey = bucket.Get([]byte(bc.BlockTailHashKey))
 		return nil
 	})
-	return blockhash
+	return hashkey
 }
 func (bc *BlockChain) GetBlockByHash(hash []byte) (*Block, error) {
 	block := Block{BlockId: 0}
@@ -234,7 +237,7 @@ func (bc *BlockChain) GetBlockByHash(hash []byte) (*Block, error) {
 		}
 		value := bucket.Get(hash)
 		if len(value) == 0 {
-			return errors.New("not found")
+			return errors.New(fmt.Sprintf(" not the key"))
 		}
 		block = BlockDeserialize(value)
 		return nil

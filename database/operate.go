@@ -40,9 +40,15 @@ func Put(key string, value []byte, datatype string, user_address string, share b
 	if strict {
 		lcdraft := BC.GetLocalDraft()
 		newblock, _ := lcdraft.PackBlock(tx)
+		localBlockChain.SignBlock(localNode.BCInfo.PriKey, false, newblock)
+
+		localNode.DistribuBlock(newblock)
 		flag := localBlockChain.VerifyBlock(localNode.BCInfo.PubKey, newblock)
 		if flag {
-			localBlockChain.AddBlock(newblock)
+			e := localBlockChain.AddBlock(newblock)
+			if e != nil {
+				fmt.Println(e)
+			}
 			for _, tx := range newblock.TxInfos {
 				for _, addr := range tx.ShareAddress {
 					wa, e := BC.LocalWallets.GetUserWallet(addr)
@@ -52,6 +58,7 @@ func Put(key string, value []byte, datatype string, user_address string, share b
 				}
 
 			}
+			fmt.Println("校验成功")
 			return nil
 		} else {
 			return errors.New("区块校验失败")
