@@ -1,10 +1,13 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"crypto/sha256"
 	"encoding/gob"
 	"fmt"
+	"os"
+	"strings"
 )
 
 func init() {
@@ -32,14 +35,17 @@ func g(node1 *node) []byte {
 	return hash1[:]
 }
 func main() {
-	n := &node{
-		Id:   1,
-		Name: "gds",
+	for {
+		reader := bufio.NewReader(os.Stdin)
+		s, _, _ := reader.ReadLine()
+		strs := strings.Split(string(s), " ")
+		for _, v := range strs {
+			if v == "" {
+				continue
+			}
+			fmt.Printf("--%s--\n", v)
+		}
 	}
-	h1 := g(n)
-	n.Tx = []*int{}
-	h2 := g(n)
-	fmt.Println(bytes.Equal(h1, h2))
 	// var lastHash []byte
 	// db, err := bolt.Open("blockChainDB", 0600, nil)
 	// if err != nil {

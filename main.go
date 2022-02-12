@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"crypto/elliptic"
 	"encoding/gob"
@@ -8,8 +9,10 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strings"
 
 	BC "go_code/基于区块链的非关系型数据库/blockchain"
+	db "go_code/基于区块链的非关系型数据库/database"
 	quorum "go_code/基于区块链的非关系型数据库/quorum"
 )
 
@@ -74,6 +77,32 @@ func addblocks(blocks []*BC.Block) {
 		}
 	}
 }
+func runLocalTestCli() {
+	reader := bufio.NewReader(os.Stdin)
+	_clistr, _, _ := reader.ReadLine()
+	clistr := string(_clistr)
+	_cmds := strings.Split(clistr, " ")
+	cmds := []string{}
+	for _, v := range _cmds {
+		if v != "" {
+			cmds = append(cmds, v)
+		}
+	}
+	switch cmds[0] {
+	case "put":
+		err := db.Put(cmds[1], []byte(cmds[2]), cmds[3], cmds[4], false, []string{}, true)
+		fmt.Println("del", err)
+	case "del":
+		db.Del(cmds[1], cmds[2], false, []string{}, true)
+	case "get":
+		v := db.Get(cmds[1], cmds[2], false, []string{})
+		fmt.Println("get", string(v), len(v))
+	case "newuser":
+		db.CreateUser(cmds[1], cmds[2])
+	default:
+		fmt.Println(cmds)
+	}
+}
 func main() {
 	var genesis_file_name string
 	var bind_port int
@@ -108,5 +137,8 @@ func main() {
 	quorum.StartGrpcWork(localNode, localBlockChain)
 	StartDraftWork()
 
+	db.Run(localBlockChain, localNode)
+
+	runLocalTestCli()
 	fmt.Println("hello world")
 }

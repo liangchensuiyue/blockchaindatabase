@@ -102,7 +102,7 @@ func Del(key string, user_address string, share bool, shareuser []string, strict
 	draft.PutTx(tx)
 	return
 }
-func Get(key string, value []byte, datatype string, user_address string, sharemode bool, shareuser []string) []byte {
+func Get(key string, user_address string, sharemode bool, shareuser []string) []byte {
 	user_wa, _ := BC.LocalWallets.GetUserWallet(user_address)
 	tailhash := BC.LocalWallets.WalletsMap[user_address].TailBlockHash
 	user_addrs_map := map[string]bool{}
