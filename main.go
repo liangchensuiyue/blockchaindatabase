@@ -54,6 +54,23 @@ func StartDraftWork() {
 		}
 	})
 }
+func addblocks(blocks []*BC.Block) {
+	for _, newblock := range blocks {
+		flag := localBlockChain.VerifyBlock(localNode.BCInfo.PubKey, newblock)
+		if flag {
+			localBlockChain.AddBlock(newblock)
+			for _, tx := range newblock.TxInfos {
+				adddress := BC.GenerateAddressFromPubkey(tx.PublicKey)
+				wa, e := BC.LocalWallets.GetUserWallet(adddress)
+				if e != nil {
+					wa.TailBlockHash = newblock.Hash
+				}
+			}
+		} else {
+			return
+		}
+	}
+}
 func main() {
 	var genesis_file_name string
 	var bind_port int
@@ -65,6 +82,11 @@ func main() {
 		panic(err)
 	}
 	BC.LoadLocalWallets()
+	quorum.Broadcast()
+	newbllocks, e := quorum.BlockSynchronization()
+	if e != nil {
+		addblocks(newbllocks)
+	}
 	localBlockChain = BC.NewBlockChain(
 		localNode.BCInfo.PassWorld,
 		localNode.BCInfo.BlockTailHashKey,
@@ -80,7 +102,7 @@ func main() {
 		}
 	}
 
-	quorum.StartGrpcWork(localNode)
+	quorum.StartGrpcWork(localNode, localBlockChain)
 	StartDraftWork()
 
 	fmt.Println("hello world")

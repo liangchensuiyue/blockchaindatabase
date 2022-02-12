@@ -26,10 +26,13 @@ service BlockChainService{
     rpc BlockSynchronization(ReqBlock)returns(ResBlocks){}
 
     // 数据查询
-    rpc DataQuery(QueryInfo)returns(ResQuery){}
+    // rpc DataQuery(QueryInfo)returns(ResQuery){}
 
     // 获取某个节点最新区块信息
     rpc GetLatestBlock(ReqBlock)returns(Block){}
+
+    // 加入集群
+    rpc JoinGroup(NodeInfo)returns(Nodes){}
 
     // // 客户端向 follower 发送数据
     // rpc ClientYieldMsgDataRequest(stream MessageData)returns (Response){}
@@ -39,6 +42,14 @@ service BlockChainService{
 
     // // 客户端关闭管道
     // rpc ClientCloseChannel(ClientRegistToFollower)returns(Response){}
+}
+message NodeInfo{
+    string passworld = 1;
+    string local_ip = 2;
+    int32 local_port =3;
+}
+message Nodes{
+    repeated NodeInfo nodes = 1;
 }
 message VerifyInfo{
     bool status = 1;
@@ -73,8 +84,8 @@ message ReqBlock{
 }
 
 message ResBlocks{
-    bytes latest_block_hash = 1; // 同步过来的最新区块hash
-    repeated Block  blocks = 2; // 同步过来的区块数据
+    // bytes latest_block_hash = 1; // 同步过来的最新区块hash
+    repeated Block  blocks = 1; // 同步过来的区块数据
 }
 
 message QueryInfo{

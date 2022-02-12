@@ -1,34 +1,56 @@
 package quorum
 
 import (
-	"context"
 	"fmt"
 	BC "go_code/基于区块链的非关系型数据库/blockchain"
+	bcgrpc "go_code/基于区块链的非关系型数据库/proto"
+	"net"
 
 	"google.golang.org/grpc"
 )
 
-func _startWork(blockQueue chan *BC.Block) {
+func _startServer() {
+	//创建网络
+	ln, err := net.Listen("tcp", fmt.Sprintf(":%d", localnode.LocalPort))
+	if err != nil {
+		fmt.Println("网络错误", err)
+	}
+
+	//创建grpc的服务
+	srv := grpc.NewServer()
+
+	//注册服务
+	bcgrpc.RegisterBlockChainServiceServer(srv, &Server{})
+
+	//等待网络连接
+	err = srv.Serve(ln)
+	if err != nil {
+		fmt.Println("网络错误", err)
+	}
+}
+func _starDistributeBlock(blockQueue chan *BC.Block) {
 	for {
 		block := <-blockQueue
-
-		conn, err := grpc.Dial("127.0.0.1:8899", grpc.WithInsecure())
-		if err != nil {
-			fmt.Println("网络异常", err)
+		total := 0
+		fail := 0
+		fmt.Printf("区块 %d 分发:\n", block.BlockId)
+		for _, blockBlockChainNode := range localnode.quorum {
+			total++
+			DistributeBlock(block, blockBlockChainNode, func(res *bcgrpc.VerifyInfo, err error) {
+				if err != nil {
+					fmt.Println(err)
+					fail++
+					fmt.Printf("节点 %s:%d 接受失败", blockBlockChainNode.LocalIp, blockBlockChainNode.LocalPort)
+					return
+				}
+				if !res.Status {
+					fail++
+					fmt.Printf("节点 %s:%d 校验失败", blockBlockChainNode.LocalIp, blockBlockChainNode.LocalPort)
+					return
+				}
+				fmt.Printf("节点 %s:%d 接受成功", blockBlockChainNode.LocalIp, blockBlockChainNode.LocalPort)
+			})
 		}
-		//网络延迟关闭
-		defer conn.Close()
-
-		//获得grpc句柄
-		c := proto.NewStudentServiceClient(conn)
-
-		//通过句柄调用函数
-		fmt.Println("ffffffffff")
-		re, err := c.GetRealNameByUsername(context.Background(), &pd.MyRequest{Username: "熊猫"})
-		if err != nil {
-			fmt.Println("sayhello 服务调用失败")
-		}
-		fmt.Println("调用sayhello的返回", re)
 
 	}
 }

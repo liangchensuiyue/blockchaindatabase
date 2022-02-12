@@ -4,6 +4,7 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/ecdsa"
+	"errors"
 	BC "go_code/基于区块链的非关系型数据库/blockchain"
 )
 
@@ -26,14 +27,36 @@ type BlockChainNode struct {
 }
 
 var blockQueue chan *BC.Block
+var localBlockChain *BC.BlockChain
+var localnode *BlockChainNode
 
-func StartGrpcWork(localnode *BlockChainNode) {
+func StartGrpcWork(localnode *BlockChainNode, localBlockChain *BC.BlockChain) {
 	blockQueue = make(chan *BC.Block, 100)
-	_startWork(blockQueue, localnode)
+	go _starDistributeBlock(blockQueue)
+	go _startServer()
 }
 
 func (node *BlockChainNode) DistribuBlock(newblock *BC.Block) {
 	blockQueue <- newblock
+}
+func JointoGroup(passworld, local_ip string, local_port int32) error {
+	if passworld != localnode.BCInfo.PassWorld {
+		return errors.New("访问密码错误")
+	}
+	flag := false
+	for _, node := range localnode.quorum {
+		if node.LocalIp == local_ip {
+			node.LocalPort = int(local_port)
+			flag = true
+		}
+	}
+	if flag {
+		localnode.quorum = append(localnode.quorum, &BlockChainNode{
+			LocalIp:   local_ip,
+			LocalPort: int(local_port),
+		})
+	}
+	return nil
 }
 
 func AesDecrypt(codeText, key []byte) []byte {

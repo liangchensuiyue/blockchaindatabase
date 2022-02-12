@@ -3,6 +3,7 @@ package blockchain
 import (
 	"bytes"
 	"crypto/ecdsa"
+	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/sha256"
 	"errors"
@@ -16,7 +17,6 @@ import (
 type BlockChain struct {
 	Db                   *bolt.DB
 	PassWorld            string
-	NodeId               []string
 	BlockBucket          string
 	BlockTailHashKey     string
 	BlockChainDBFileName string
@@ -86,7 +86,7 @@ func (bc *BlockChain) GetTailBlock() (*Block, error) {
 	bl, err := bc.GetBlockByHash(hash)
 	if err != nil {
 		fmt.Println(err)
-		return bl, nil
+		return bl, err
 	}
 	return bl, nil
 }
@@ -104,7 +104,7 @@ func (bc *BlockChain) traverse(handle func(*Block, error)) {
 	for {
 		cur_block, e = bc.GetBlockByHash(cur_block.PreBlockHash)
 		handle(cur_block, e)
-		if e != nil {
+		if e != nil || cur_block.IsGenesisBlock() {
 			break
 		}
 	}
@@ -141,7 +141,14 @@ func (bc *BlockChain) SignBlock(groupPriKey *ecdsa.PrivateKey, IsGenesisBlock bo
 }
 
 // 对区块进行验证
-func (bc *BlockChain) VerifyBlock(groupPubKey *ecdsa.PublicKey, newblock *Block) bool {
+func (bc *BlockChain) VerifyBlock(groupPubKey []byte, newblock *Block) bool {
+	X := big.Int{}
+	Y := big.Int{}
+
+	X.SetBytes(groupPubKey[:len(groupPubKey)/2])
+	Y.SetBytes(groupPubKey[len(groupPubKey)/2:])
+
+	pubKeyOrigin := ecdsa.PublicKey{Curve: elliptic.P256(), X: &X, Y: &Y}
 	bc_pre_block, _ := bc.GetTailBlock()
 	if newblock.BlockId == 1 {
 		r := big.Int{}
@@ -153,7 +160,8 @@ func (bc *BlockChain) VerifyBlock(groupPubKey *ecdsa.PublicKey, newblock *Block)
 		_sig := newblock.Signature
 		newblock.Signature = []byte{}
 		_hash := sha256.Sum256(newblock.Serialize())
-		if !ecdsa.Verify(groupPubKey, _hash[:], &r, &s) {
+
+		if !ecdsa.Verify(&pubKeyOrigin, _hash[:], &r, &s) {
 			return false
 		}
 		newblock.Signature = _sig
@@ -193,7 +201,7 @@ func (bc *BlockChain) VerifyBlock(groupPubKey *ecdsa.PublicKey, newblock *Block)
 	_sig := newblock.Signature
 	newblock.Signature = []byte{}
 	_hash := sha256.Sum256(newblock.Serialize())
-	if !ecdsa.Verify(groupPubKey, _hash[:], &r, &s) {
+	if !ecdsa.Verify(&pubKeyOrigin, _hash[:], &r, &s) {
 		return false
 	}
 	newblock.Signature = _sig
@@ -214,7 +222,7 @@ func (bc *BlockChain) GetTailBlockHash() []byte {
 	return blockhash
 }
 func (bc *BlockChain) GetBlockByHash(hash []byte) (*Block, error) {
-	block := Block{}
+	block := Block{BlockId: 0}
 	if len(hash) == 0 {
 		return nil, errors.New("错误的hash")
 

@@ -1,6 +1,9 @@
 package main
 
 import (
+	"bytes"
+	"crypto/sha256"
+	"encoding/gob"
 	"fmt"
 )
 
@@ -10,9 +13,33 @@ func init() {
 
 var blockBucket string = "gds"
 
+type node struct {
+	Id   int
+	Name string
+	Tx   []*int
+}
+
+func g(node1 *node) []byte {
+
+	var buffer bytes.Buffer
+	encoder := gob.NewEncoder(&buffer)
+	err := encoder.Encode(node1)
+	if err != nil {
+		panic(err)
+	}
+	data := buffer.Bytes()
+	hash1 := sha256.Sum256(data)
+	return hash1[:]
+}
 func main() {
-	a := []byte("123")
-	fmt.Println(a[:2])
+	n := &node{
+		Id:   1,
+		Name: "gds",
+	}
+	h1 := g(n)
+	n.Tx = []*int{}
+	h2 := g(n)
+	fmt.Println(bytes.Equal(h1, h2))
 	// var lastHash []byte
 	// db, err := bolt.Open("blockChainDB", 0600, nil)
 	// if err != nil {
