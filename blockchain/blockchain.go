@@ -16,10 +16,11 @@ import (
 
 // 引入区块链
 type BlockChain struct {
-	Db                   *bolt.DB
-	PassWorld            string
+	Db *bolt.DB
+	// PassWorld            string
 	BlockBucket          string
 	BlockTailHashKey     string
+	TailUserBlockHashkey string
 	BlockChainDBFileName string
 	// Tail                 []byte // 存储最后一个区块的hash
 }
@@ -28,7 +29,7 @@ const blockChainDB = "blockChain.db"
 const blockBucket = "blockBucket"
 const LastHashKey = "lastkey"
 
-func NewBlockChain(passworld string, blockTailHashKey, blockChainDBFileName string) *BlockChain {
+func NewBlockChain(blockTailHashKey, blockChainDBFileName string) *BlockChain {
 	// 创建一个创世块，并作为第一个区块添加到区块链中
 	db, err := bolt.Open(blockChainDBFileName, 0600, nil)
 	if err != nil {
@@ -50,9 +51,9 @@ func NewBlockChain(passworld string, blockTailHashKey, blockChainDBFileName stri
 	})
 	return &BlockChain{
 		Db:                   db,
-		PassWorld:            passworld,
 		BlockBucket:          blockBucket,
 		BlockChainDBFileName: blockChainDBFileName,
+		TailUserBlockHashkey: "user",
 		BlockTailHashKey:     blockTailHashKey,
 	}
 }
@@ -83,7 +84,20 @@ func (bc *BlockChain) AddBlock(newblock *Block) error {
 	})
 	return e
 }
+
+// 获取区块链中最后一个区块
 func (bc *BlockChain) GetTailBlock() (*Block, error) {
+	hash := bc.GetTailBlockHash()
+	bl, err := bc.GetBlockByHash(hash)
+	if err != nil {
+		fmt.Println(err)
+		return bl, err
+	}
+	return bl, nil
+}
+
+// 获取关于用户信息的最后一个区块信息
+func (bc *BlockChain) GetTailUserBlock() (*Block, error) {
 	hash := bc.GetTailBlockHash()
 	bl, err := bc.GetBlockByHash(hash)
 	if err != nil {
@@ -220,6 +234,19 @@ func (bc *BlockChain) GetTailBlockHash() []byte {
 			panic("bucket is empty!")
 		}
 		hashkey = bucket.Get([]byte(bc.BlockTailHashKey))
+		return nil
+	})
+	return hashkey
+}
+
+func (bc *BlockChain) GetTailUserBlockHash() []byte {
+	var hashkey []byte
+	bc.Db.View(func(tx *bolt.Tx) error {
+		bucket := tx.Bucket([]byte(bc.BlockBucket))
+		if bucket == nil {
+			panic("bucket is empty!")
+		}
+		hashkey = bucket.Get([]byte(bc.TailUserBlockHashkey))
 		return nil
 	})
 	return hashkey

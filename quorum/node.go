@@ -93,7 +93,7 @@ func LoadGenesisFile(filename string) (*BlockChainNode, error) {
 	if e != nil {
 		return nil, e
 	}
-	JointoGroup(localBlockChain.PassWorld, ip.String(), int32(localNode.LocalPort))
+	JointoGroup(localNode.BCInfo.PassWorld, ip.String(), int32(localNode.LocalPort))
 	return localNode, nil
 }
 func JointoGroup(passworld, local_ip string, local_port int32) error {

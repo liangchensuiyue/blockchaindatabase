@@ -5,6 +5,9 @@ import (
 	"crypto/elliptic"
 	"encoding/gob"
 	"errors"
+	"fmt"
+
+	// quorum "go_code/基于区块链的非关系型数据库/quorum"
 	"io/ioutil"
 	"log"
 	"os"
@@ -28,9 +31,22 @@ type Wallets struct {
 func LoadLocalWallets() {
 	LocalWallets.loadFile()
 }
+func (ws *Wallets) GetBlockChainRootWallet() *Wallet {
+	addr, err := LocalWallets.GetAddressFromUsername("liangchen")
+	if err != nil {
+		fmt.Println("区块链root用户未找到")
+		return nil
+	}
+	w, e := LocalWallets.GetUserWallet(addr)
+	if e != nil {
+		fmt.Println("区块链root用户未找到")
+		return nil
+	}
+	return w
+}
 
 func (ws *Wallets) GetUserWallet(user_address string) (*Wallet, error) {
-	LoadLocalWallets()
+	// LoadLocalWallets()
 	wa, flag := ws.WalletsMap[user_address]
 	if !flag {
 		return wa, errors.New("未知的用户")
@@ -46,7 +62,6 @@ func (ws *Wallets) GetAddressFromUsername(username string) (string, error) {
 	return "", errors.New("未知用户")
 }
 func (ws *Wallets) GetUserTailBlockHash(user_address string) ([]byte, error) {
-	LoadLocalWallets()
 	wa, flag := ws.WalletsMap[user_address]
 	if !flag {
 		return []byte{}, errors.New("未知的用户")
@@ -54,7 +69,6 @@ func (ws *Wallets) GetUserTailBlockHash(user_address string) ([]byte, error) {
 	return wa.TailBlockHash, nil
 }
 func (ws *Wallets) PutTailBlockHash(user_address string, blockhash []byte) error {
-	LoadLocalWallets()
 	_, flag := ws.WalletsMap[user_address]
 	if !flag {
 		return errors.New("未知的用户")

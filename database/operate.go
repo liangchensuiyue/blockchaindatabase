@@ -40,10 +40,11 @@ func Put(key string, value []byte, datatype string, user_address string, share b
 	if strict {
 		lcdraft := BC.GetLocalDraft()
 		newblock, _ := lcdraft.PackBlock(tx)
-		localBlockChain.SignBlock(localNode.BCInfo.PriKey, false, newblock)
+		rw := BC.LocalWallets.GetBlockChainRootWallet()
+		localBlockChain.SignBlock(rw.Private, false, newblock)
 
 		localNode.DistribuBlock(newblock, func(total, fail int) {
-			flag := localBlockChain.VerifyBlock(localNode.BCInfo.PubKey, newblock)
+			flag := localBlockChain.VerifyBlock(rw.PubKey, newblock)
 			if flag {
 				e := localBlockChain.AddBlock(newblock)
 				if e != nil {
@@ -95,9 +96,11 @@ func Del(key string, user_address string, share bool, shareuser []string, strict
 	if strict {
 		lcdraft := BC.GetLocalDraft()
 		newblock, _ := lcdraft.PackBlock(tx)
-		localBlockChain.SignBlock(localNode.BCInfo.PriKey, false, newblock)
+		rw := BC.LocalWallets.GetBlockChainRootWallet()
+
+		localBlockChain.SignBlock(rw.Private, false, newblock)
 		localNode.DistribuBlock(newblock, func(total, fail int) {
-			flag := localBlockChain.VerifyBlock(localNode.BCInfo.PubKey, newblock)
+			flag := localBlockChain.VerifyBlock(rw.PubKey, newblock)
 			if flag {
 				localBlockChain.AddBlock(newblock)
 				for _, tx := range newblock.TxInfos {

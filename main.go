@@ -18,19 +18,20 @@ var localNode *quorum.BlockChainNode
 
 func StartDraftWork() {
 	draft := BC.GetLocalDraftFromDisk()
+	rw := BC.LocalWallets.GetBlockChainRootWallet()
 	go draft.Work(func(newblock *BC.Block, e error) {
 		if len(newblock.TxInfos) == 0 && !newblock.IsGenesisBlock() {
 			// 如果不是创世块，并且交易数目为0 ，则不能打包
 			return
 		}
 		if newblock.IsGenesisBlock() {
-			localBlockChain.SignBlock(localNode.BCInfo.PriKey, true, newblock)
+			localBlockChain.SignBlock(rw.Private, true, newblock)
 
 		} else {
-			localBlockChain.SignBlock(localNode.BCInfo.PriKey, false, newblock)
+			localBlockChain.SignBlock(rw.Private, false, newblock)
 		}
 		localNode.DistribuBlock(newblock, func(total, fail int) {
-			flag := localBlockChain.VerifyBlock(localNode.BCInfo.PubKey, newblock)
+			flag := localBlockChain.VerifyBlock(rw.PubKey, newblock)
 			if flag {
 				e := localBlockChain.AddBlock(newblock)
 				if e != nil {
@@ -60,8 +61,10 @@ func StartDraftWork() {
 	})
 }
 func addblocks(blocks []*BC.Block) {
+	rw := BC.LocalWallets.GetBlockChainRootWallet()
+
 	for _, newblock := range blocks {
-		flag := localBlockChain.VerifyBlock(localNode.BCInfo.PubKey, newblock)
+		flag := localBlockChain.VerifyBlock(rw.PubKey, newblock)
 		if flag {
 			localBlockChain.AddBlock(newblock)
 			for _, tx := range newblock.TxInfos {
@@ -170,11 +173,17 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	BC.LoadLocalWallets()
 	localBlockChain = BC.NewBlockChain(
-		localNode.BCInfo.PassWorld,
 		localNode.BCInfo.BlockTailHashKey,
+
 		localNode.BCInfo.BlockChainDB)
+	BC.LoadLocalWallets()
+	_, err = BC.LocalWallets.GetAddressFromUsername("liangchen")
+	if err != nil {
+		wa := BC.NewWallet("liangchen", localNode.BCInfo.PassWorld)
+		BC.LocalWallets.WalletsMap[wa.NewAddress()] = wa
+		BC.LocalWallets.SaveToFile()
+	}
 	quorum.Broadcast(localBlockChain)
 
 	newbllocks, e := quorum.BlockSynchronization()
@@ -187,7 +196,9 @@ func main() {
 		// 创建创世块
 		genesis_block := BC.NewGenesisBlock()
 		genesis_block.BlockId = 1
-		localBlockChain.SignBlock(localNode.BCInfo.PriKey, true, genesis_block)
+
+		rw := BC.LocalWallets.GetBlockChainRootWallet()
+		localBlockChain.SignBlock(rw.Private, true, genesis_block)
 		err = localBlockChain.AddBlock(genesis_block)
 		if err != nil {
 			panic(err)

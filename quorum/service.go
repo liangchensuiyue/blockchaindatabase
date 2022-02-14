@@ -11,7 +11,8 @@ type Server struct{}
 func (this *Server) DistributeBlock(ctx context.Context, req *bcgrpc.Block) (info *bcgrpc.VerifyInfo, err error) {
 	info.Info = "区块校验成功"
 	err = nil
-	flag := localBlockChain.VerifyBlock(localNode.BCInfo.PubKey, CopyBlock2(req))
+	rw := BC.LocalWallets.GetBlockChainRootWallet()
+	flag := localBlockChain.VerifyBlock(rw.PubKey, CopyBlock2(req))
 	if !flag {
 		info.Info = "区块校验失败"
 		info.Status = false
