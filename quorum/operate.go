@@ -11,12 +11,11 @@ import (
 )
 
 var localBlockChain *BC.BlockChain
-var localnode *BlockChainNode
+var localNode *BlockChainNode
 
-func Broadcast(ln *BlockChainNode, lbc *BC.BlockChain) {
-	localnode = ln
+func Broadcast(lbc *BC.BlockChain) {
 	localBlockChain = lbc
-	for _, node := range localnode.quorum {
+	for _, node := range localNode.quorum {
 		conn, err := grpc.Dial(fmt.Sprintf("%s:%d", node.LocalIp, node.LocalPort), grpc.WithInsecure())
 		if err != nil {
 			fmt.Printf("%s:%d 网络异常", node.LocalIp, node.LocalPort)
@@ -29,15 +28,15 @@ func Broadcast(ln *BlockChainNode, lbc *BC.BlockChain) {
 
 		//通过句柄调用函数
 		re, err := c.JoinGroup(context.Background(), &bcgrpc.NodeInfo{
-			Passworld: localnode.BCInfo.PassWorld,
-			LocalIp:   localnode.LocalIp,
-			LocalPort: int32(localnode.LocalPort),
+			Passworld: localNode.BCInfo.PassWorld,
+			LocalIp:   localNode.LocalIp,
+			LocalPort: int32(localNode.LocalPort),
 		})
 		if err != nil {
 			fmt.Println("JoinGroup 服务调用失败")
 		} else {
 			for _, n := range re.Nodes {
-				JointoGroup(localnode.BCInfo.PassWorld, n.LocalIp, n.LocalPort)
+				JointoGroup(localNode.BCInfo.PassWorld, n.LocalIp, n.LocalPort)
 			}
 		}
 	}
@@ -46,10 +45,10 @@ func Broadcast(ln *BlockChainNode, lbc *BC.BlockChain) {
 
 func BlockSynchronization() ([]*BC.Block, error) {
 	var blockId_map map[int]uint64 = make(map[int]uint64)
-	if len(localnode.quorum) == 0 {
+	if len(localNode.quorum) == 0 {
 		return []*BC.Block{}, nil
 	}
-	for index, rnode := range localnode.quorum {
+	for index, rnode := range localNode.quorum {
 		conn, err := grpc.Dial(fmt.Sprintf("%s:%d", rnode.LocalIp, rnode.LocalPort), grpc.WithInsecure())
 		if err != nil {
 			fmt.Println("网络异常", err)
@@ -85,7 +84,7 @@ func BlockSynchronization() ([]*BC.Block, error) {
 	if _id <= local_tailblock.BlockId {
 		return []*BC.Block{}, nil
 	}
-	conn, err := grpc.Dial(fmt.Sprintf("%s:%d", localnode.quorum[_index].LocalIp, localnode.quorum[_index].LocalPort), grpc.WithInsecure())
+	conn, err := grpc.Dial(fmt.Sprintf("%s:%d", localNode.quorum[_index].LocalIp, localNode.quorum[_index].LocalPort), grpc.WithInsecure())
 	if err != nil {
 		fmt.Println("网络异常", err)
 	}
@@ -102,7 +101,7 @@ func BlockSynchronization() ([]*BC.Block, error) {
 		Hash:    local_tailblock.Hash,
 	})
 	if err != nil {
-		fmt.Printf("%s:%d  BlockSynchronization 服务调用失败\n", localnode.quorum[_index].LocalIp, localnode.quorum[_index].LocalPort)
+		fmt.Printf("%s:%d  BlockSynchronization 服务调用失败\n", localNode.quorum[_index].LocalIp, localNode.quorum[_index].LocalPort)
 		return nil, errors.New("区块同步失败")
 	}
 	Blocks := []*BC.Block{}

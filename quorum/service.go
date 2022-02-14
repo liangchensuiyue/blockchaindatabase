@@ -11,7 +11,7 @@ type Server struct{}
 func (this *Server) DistributeBlock(ctx context.Context, req *bcgrpc.Block) (info *bcgrpc.VerifyInfo, err error) {
 	info.Info = "区块校验成功"
 	err = nil
-	flag := localBlockChain.VerifyBlock(localnode.BCInfo.PubKey, CopyBlock2(req))
+	flag := localBlockChain.VerifyBlock(localNode.BCInfo.PubKey, CopyBlock2(req))
 	if !flag {
 		info.Info = "区块校验失败"
 		info.Status = false
@@ -32,7 +32,7 @@ func (this *Server) JoinGroup(ctx context.Context, req *bcgrpc.NodeInfo) (info *
 	if err != nil {
 		return
 	}
-	for _, node := range localnode.quorum {
+	for _, node := range localNode.quorum {
 		info.Nodes = append(info.Nodes, &bcgrpc.NodeInfo{
 			LocalIp:   node.LocalIp,
 			LocalPort: int32(node.LocalPort),

@@ -2,7 +2,6 @@ package quorum
 
 import (
 	"fmt"
-	BC "go_code/基于区块链的非关系型数据库/blockchain"
 	bcgrpc "go_code/基于区块链的非关系型数据库/proto"
 	"net"
 
@@ -11,7 +10,7 @@ import (
 
 func _startServer() {
 	//创建网络
-	ln, err := net.Listen("tcp", fmt.Sprintf(":%d", localnode.LocalPort))
+	ln, err := net.Listen("tcp", fmt.Sprintf(":%d", localNode.LocalPort))
 	if err != nil {
 		fmt.Println("网络错误", err)
 	}
@@ -28,13 +27,14 @@ func _startServer() {
 		fmt.Println("网络错误", err)
 	}
 }
-func _starDistributeBlock(blockQueue chan *BC.Block) {
+func _starDistributeBlock(blockQueue chan queueObject) {
 	for {
-		block := <-blockQueue
+		el := <-blockQueue
+		block := el.TargetBlock
 		total := 0
 		fail := 0
 		fmt.Printf("区块 %d 分发:\n", block.BlockId)
-		for _, blockBlockChainNode := range localnode.quorum {
+		for _, blockBlockChainNode := range localNode.quorum {
 			total++
 			DistributeBlock(block, blockBlockChainNode, func(res *bcgrpc.VerifyInfo, err error) {
 				if err != nil {
@@ -51,6 +51,7 @@ func _starDistributeBlock(blockQueue chan *BC.Block) {
 				fmt.Printf("节点 %s:%d 接受成功", blockBlockChainNode.LocalIp, blockBlockChainNode.LocalPort)
 			})
 		}
+		el.Handle(total, fail)
 
 	}
 }

@@ -8,6 +8,7 @@ import (
 	"encoding/gob"
 	"fmt"
 	quorum "go_code/基于区块链的非关系型数据库/quorum"
+	"go_code/基于区块链的非关系型数据库/util"
 	"io/ioutil"
 	"log"
 	"os"
@@ -28,6 +29,11 @@ func main() {
 		}
 		break
 	}
+	ip, err := util.GetLocalIp()
+	if err != nil {
+		fmt.Println(err)
+	}
+	localNode.LocalIp = ip.String()
 	for {
 		fmt.Printf("集群访问密码:")
 		fmt.Scanf("%s\n", &localNode.BCInfo.PassWorld)

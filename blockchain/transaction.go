@@ -28,6 +28,7 @@ type Transaction struct {
 	DelMark      bool
 	PublicKey    []byte
 	Hash         []byte
+	Share        bool
 	ShareAddress []string
 	// 当交易打包时在填上
 	PreBlockHash []byte
@@ -48,7 +49,7 @@ func (tx *Transaction) SetHash() {
 }
 
 // 创建普通的转账交易
-func NewTransaction(method, key string, value []byte, datatype string, user_address string, shareuser_address []string) (*Transaction, error) {
+func NewTransaction(method, key string, value []byte, datatype string, user_address string, share bool, shareuser_address []string) (*Transaction, error) {
 
 	var Tx *Transaction
 
@@ -67,6 +68,7 @@ func NewTransaction(method, key string, value []byte, datatype string, user_addr
 		Tx = &Transaction{
 			Key:       key,
 			Value:     value,
+			Share:     share,
 			DataType:  datatype,
 			Timestamp: uint64(time.Now().Unix()),
 			DelMark:   false,
@@ -76,6 +78,7 @@ func NewTransaction(method, key string, value []byte, datatype string, user_addr
 		Tx = &Transaction{
 			Key:       key,
 			Value:     value,
+			Share:     share,
 			DataType:  datatype,
 			Timestamp: uint64(time.Now().Unix()),
 			DelMark:   true,

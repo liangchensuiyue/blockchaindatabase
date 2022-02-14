@@ -2,12 +2,9 @@ package main
 
 import (
 	"bufio"
-	"bytes"
-	"crypto/elliptic"
-	"encoding/gob"
+	"encoding/base64"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strings"
 
@@ -19,29 +16,6 @@ import (
 var localBlockChain *BC.BlockChain
 var localNode *quorum.BlockChainNode
 
-func LoadGenesisFile(filename string) (*quorum.BlockChainNode, error) {
-	var info quorum.BlockChainNode
-
-	_, err := os.Stat(filename)
-	if os.IsNotExist(err) {
-		return nil, err
-	}
-	// 读取钱包
-	content, err := ioutil.ReadFile(filename)
-	if err != nil {
-		return nil, err
-	}
-
-	// 解码
-	gob.Register(elliptic.P256())
-
-	decoder := gob.NewDecoder(bytes.NewReader(quorum.AesDecrypt(content, []byte("1234567812345678"))))
-	err = decoder.Decode(&info)
-	if err != nil {
-		panic(err)
-	}
-	return &info, nil
-}
 func StartDraftWork() {
 	draft := BC.GetLocalDraftFromDisk()
 	go draft.Work(func(newblock *BC.Block, e error) {
@@ -55,7 +29,34 @@ func StartDraftWork() {
 		} else {
 			localBlockChain.SignBlock(localNode.BCInfo.PriKey, false, newblock)
 		}
-		localNode.DistribuBlock(newblock)
+		localNode.DistribuBlock(newblock, func(total, fail int) {
+			flag := localBlockChain.VerifyBlock(localNode.BCInfo.PubKey, newblock)
+			if flag {
+				e := localBlockChain.AddBlock(newblock)
+				if e != nil {
+					fmt.Println(e)
+					return
+				}
+				for _, tx := range newblock.TxInfos {
+					wa, e := BC.LocalWallets.GetUserWallet(BC.GenerateAddressFromPubkey(tx.PublicKey))
+					if e == nil {
+						wa.TailBlockHash = newblock.Hash
+
+					}
+					for _, addr := range tx.ShareAddress {
+						wa, e = BC.LocalWallets.GetUserWallet(addr)
+						if e == nil {
+							wa.TailBlockHash = newblock.Hash
+						}
+					}
+
+				}
+				BC.LocalWallets.SaveToFile()
+				fmt.Println("校验成功")
+				return
+			}
+			fmt.Println("区块校验失败")
+		})
 	})
 }
 func addblocks(blocks []*BC.Block) {
@@ -79,55 +80,84 @@ func addblocks(blocks []*BC.Block) {
 }
 func runLocalTestCli() {
 	reader := bufio.NewReader(os.Stdin)
-	_clistr, _, _ := reader.ReadLine()
-	clistr := string(_clistr)
-	_cmds := strings.Split(clistr, " ")
-	cmds := []string{}
-	for _, v := range _cmds {
-		if v != "" {
-			cmds = append(cmds, v)
-		}
-	}
-	switch cmds[0] {
-	case "put":
-		// 15GcPFKHT1dWCE9qz2mHpLRKcC7jURCFa3
-		err := db.Put(cmds[1], []byte(cmds[2]), cmds[3], cmds[4], false, []string{}, true)
-		fmt.Println("put", err)
-	case "del":
-		db.Del(cmds[1], cmds[2], false, []string{}, true)
-	case "get":
-		v := db.Get(cmds[1], cmds[2], false, []string{})
-		fmt.Println("get", string(v), len(v))
-	case "newuser":
-		db.CreateUser(cmds[1], cmds[2])
-	case "print":
-		localBlockChain.Traverse(func(block *BC.Block, err error) {
-			if block != nil {
-				fmt.Println("blockid", block.BlockId)
+	for {
 
-				for i, tx := range block.TxInfos {
-					fmt.Println("交易", i)
-					fmt.Println(tx.Key)
-					fmt.Println(tx.Value)
-				}
+		_clistr, _, _ := reader.ReadLine()
+		clistr := string(_clistr)
+		_cmds := strings.Split(clistr, " ")
+		cmds := []string{}
+		for _, v := range _cmds {
+			if v != "" {
+				cmds = append(cmds, v)
 			}
+		}
+		switch cmds[0] {
+		case "put":
+			// 15GcPFKHT1dWCE9qz2mHpLRKcC7jURCFa3
+			err := db.Put(cmds[1], []byte(cmds[2]), cmds[3], cmds[4], false, []string{}, true)
+			fmt.Println("put", err)
+		case "del":
+			db.Del(cmds[1], cmds[2], false, []string{}, true)
+		case "get":
+			block, index := db.Get(cmds[1], cmds[2], false, []string{})
+			fmt.Println("get:")
+			if block != nil {
+				fmt.Println("blockid:", block.BlockId)
+				// fmt.Println("block_hash", block.Hash)
+				fmt.Println("pre_block_hash:", base64.RawStdEncoding.EncodeToString(block.PreBlockHash))
+				fmt.Println("block_hash:", base64.RawStdEncoding.EncodeToString(block.Hash))
+				fmt.Println("key-value:", block.TxInfos[index].Key, string(block.TxInfos[index].Value))
+			} else {
+				fmt.Println("未查询到")
+			}
+		case "newuser":
+			db.CreateUser(cmds[1], cmds[2])
+		case "print":
+			localBlockChain.Traverse(func(block *BC.Block, err error) {
+				if block != nil {
+					fmt.Println("---------------------------")
+					fmt.Println("blockid:", block.BlockId)
+					// fmt.Println("block_hash", block.Hash)
+					fmt.Println("pre_block_hash:", base64.RawStdEncoding.EncodeToString(block.PreBlockHash))
+					fmt.Println("block_hash:", base64.RawStdEncoding.EncodeToString(block.Hash))
 
-		})
-	case "print_tail_block":
-		block, _ := localBlockChain.GetTailBlock()
-		fmt.Println("tail_blockId", block.BlockId)
-		fmt.Println("tail_hash", block.Hash)
-		for i, tx := range block.TxInfos {
-			fmt.Println("交易", i)
-			fmt.Println(tx.Key)
-			fmt.Println(tx.Value)
+					for i, tx := range block.TxInfos {
+						w, e := BC.LocalWallets.GetUserWallet(BC.GenerateAddressFromPubkey(tx.PublicKey))
+						fmt.Println("交易索引:", i)
+						fmt.Println("user:", w.Username)
+						fmt.Println("key-value:", tx.Key, string(tx.Value))
+						fmt.Println("sharemode:", tx.Share)
+						fmt.Println("delmark:", tx.DelMark)
+						fmt.Println("shareuser:")
+						for _, uaddr := range tx.ShareAddress {
+							w, e = BC.LocalWallets.GetUserWallet(uaddr)
+							if e == nil {
+								fmt.Println(w.NewAddress())
+							}
+						}
+					}
+
+				}
+
+			})
+			fmt.Printf("---------------------------\n\n")
+
+		case "print_tail_block":
+			block, _ := localBlockChain.GetTailBlock()
+			fmt.Println("tail_blockId", block.BlockId)
+			fmt.Println("tail_hash", block.Hash)
+			for i, tx := range block.TxInfos {
+				fmt.Println("交易", i)
+				fmt.Println(tx.Key)
+				fmt.Println(tx.Value)
+			}
+		case "print_addr":
+			for addr, _ := range BC.LocalWallets.WalletsMap {
+				fmt.Println(addr)
+			}
+		default:
+			fmt.Println(cmds)
 		}
-	case "print_addr":
-		for addr, _ := range BC.LocalWallets.WalletsMap {
-			fmt.Println(addr)
-		}
-	default:
-		fmt.Println(cmds)
 	}
 }
 func main() {
@@ -136,7 +166,7 @@ func main() {
 	var err error
 	flag.StringVar(&genesis_file_name, "f", "./genesis", "genesis文件")
 	flag.IntVar(&bind_port, "port", 3300, "节点访问端口")
-	localNode, err = LoadGenesisFile(genesis_file_name)
+	localNode, err = quorum.LoadGenesisFile(genesis_file_name)
 	if err != nil {
 		panic(err)
 	}
@@ -145,7 +175,7 @@ func main() {
 		localNode.BCInfo.PassWorld,
 		localNode.BCInfo.BlockTailHashKey,
 		localNode.BCInfo.BlockChainDB)
-	quorum.Broadcast(localNode, localBlockChain)
+	quorum.Broadcast(localBlockChain)
 
 	newbllocks, e := quorum.BlockSynchronization()
 	if e != nil {

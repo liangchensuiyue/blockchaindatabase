@@ -1,12 +1,11 @@
-package main
+package util
 
 import (
 	"errors"
-	"fmt"
 	"net"
 )
 
-func externalIP() (net.IP, error) {
+func GetLocalIp() (net.IP, error) {
 	ifaces, err := net.Interfaces()
 	if err != nil {
 		return nil, err
@@ -50,13 +49,4 @@ func getIpFromAddr(addr net.Addr) net.IP {
 	}
 
 	return ip
-}
-
-func main() {
-	ip, err := externalIP()
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	fmt.Println(ip.String())
 }

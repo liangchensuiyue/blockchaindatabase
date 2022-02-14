@@ -51,6 +51,7 @@ func (w *Wallet) NewAddress() string {
 	address := base58.Encode(payload)
 	return address
 }
+
 func GenerateAddressFromPubkey(pubKey []byte) string {
 	rip160HashValue := HashPubKey(pubKey)
 
