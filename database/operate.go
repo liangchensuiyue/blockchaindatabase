@@ -51,17 +51,13 @@ func Put(key string, value []byte, datatype string, user_address string, share b
 					fmt.Println(e)
 					return
 				}
-				for _, tx := range newblock.TxInfos {
-					wa, e := BC.LocalWallets.GetUserWallet(user_address)
-					if e == nil {
-						wa.TailBlockHash = newblock.Hash
 
-					}
+				BC.LocalWallets.TailBlockHashMap[user_address] = newblock.Hash
+
+				for _, tx := range newblock.TxInfos {
+
 					for _, addr := range tx.ShareAddress {
-						wa, e = BC.LocalWallets.GetUserWallet(addr)
-						if e == nil {
-							wa.TailBlockHash = newblock.Hash
-						}
+						BC.LocalWallets.TailBlockHashMap[addr] = newblock.Hash
 					}
 
 				}
@@ -103,17 +99,13 @@ func Del(key string, user_address string, share bool, shareuser []string, strict
 			flag := localBlockChain.VerifyBlock(rw.PubKey, newblock)
 			if flag {
 				localBlockChain.AddBlock(newblock)
-				for _, tx := range newblock.TxInfos {
-					wa, e := BC.LocalWallets.GetUserWallet(user_address)
-					if e == nil {
-						wa.TailBlockHash = newblock.Hash
 
-					}
+				BC.LocalWallets.TailBlockHashMap[user_address] = newblock.Hash
+
+				for _, tx := range newblock.TxInfos {
+
 					for _, addr := range tx.ShareAddress {
-						wa, e = BC.LocalWallets.GetUserWallet(addr)
-						if e != nil {
-							wa.TailBlockHash = newblock.Hash
-						}
+						BC.LocalWallets.TailBlockHashMap[addr] = newblock.Hash
 					}
 
 				}
@@ -133,7 +125,10 @@ func Del(key string, user_address string, share bool, shareuser []string, strict
 }
 func Get(key string, user_address string, sharemode bool, shareuser []string) (*BC.Block, int) {
 	user_wa, _ := BC.LocalWallets.GetUserWallet(user_address)
-	tailhash := BC.LocalWallets.WalletsMap[user_address].TailBlockHash
+	tailhash, ok := BC.LocalWallets.TailBlockHashMap[user_address]
+	if !ok {
+		return nil, -1
+	}
 	user_addrs_map := map[string]bool{}
 	for j := 0; j < len(shareuser); j++ {
 		addr, e := BC.LocalWallets.GetAddressFromUsername(shareuser[j])

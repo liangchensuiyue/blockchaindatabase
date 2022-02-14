@@ -19,7 +19,7 @@ type Wallet struct {
 	PubKey    []byte
 
 	// 用户最后一个操作所在的区块hash
-	TailBlockHash []byte
+	// TailBlockHash []byte
 }
 
 // 创建钱包
