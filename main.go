@@ -172,6 +172,8 @@ func main() {
 	_, err = BC.LocalWallets.GetAddressFromUsername("liangchen")
 	if err != nil {
 		wa := BC.NewWallet("liangchen", localNode.BCInfo.PassWorld)
+		wa.Private = localNode.BCInfo.PriKey
+		wa.PubKey = localNode.BCInfo.PubKey
 		BC.LocalWallets.WalletsMap[wa.NewAddress()] = wa
 		BC.LocalWallets.SaveToFile()
 	}
@@ -194,6 +196,7 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
+		BC.LocalWallets.TailBlockHashMap[rw.NewAddress()] = genesis_block.Hash
 	}
 
 	quorum.StartGrpcWork()

@@ -271,3 +271,27 @@ func (bc *BlockChain) GetBlockByHash(hash []byte) (*Block, error) {
 	})
 	return &block, err
 }
+func (bc *BlockChain) GetAddressFromUsername(username string) (string, error) {
+	user_address := LocalWallets.GetBlockChainRootWallet().NewAddress()
+
+	// 判断用户是否创建
+	_hash, _ := LocalWallets.GetUserTailBlockHash(user_address)
+
+	b, e := bc.GetBlockByHash(_hash)
+	if e != nil {
+		return "", e
+	}
+	for {
+		if b.IsGenesisBlock() {
+			break
+		}
+		for _, tx := range b.TxInfos {
+			_hash = tx.PreBlockHash
+			if tx.Key == username {
+				return GenerateAddressFromPubkey(tx.PublicKey), nil
+			}
+		}
+		b, _ = bc.GetBlockByHash(_hash)
+	}
+	return "", errors.New("未知的用户")
+}

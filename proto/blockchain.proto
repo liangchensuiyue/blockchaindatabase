@@ -3,6 +3,7 @@ option java_multiple_files = true;//以非外部类模式生成
 package blockchaingrpc;
 
 /*
+protoc --go_out=plugins=grpc:./ *.proto
  需要实现的服务;
     1. 区块打包验证
     2. 区块同步(比如某个节点数据滞后于其它节点。该节点获取当前最新区块的时间戳，然后与其它节点相比较，然后同步该时间戳之后的区块)
@@ -34,6 +35,7 @@ service BlockChainService{
     // 加入集群
     rpc JoinGroup(NodeInfo)returns(Nodes){}
 
+    rpc Request(RequestBody)returns(VerifyInfo){}
     // // 客户端向 follower 发送数据
     // rpc ClientYieldMsgDataRequest(stream MessageData)returns (Response){}
 
@@ -47,6 +49,11 @@ message NodeInfo{
     string passworld = 1;
     string local_ip = 2;
     int32 local_port =3;
+}
+message RequestBody{
+    string username = 1;
+    string passworld = 2;
+    Transaction Tx = 3;
 }
 message Nodes{
     repeated NodeInfo nodes = 1;
@@ -66,6 +73,8 @@ message Transaction{
     bytes hash = 7; // 交易 hash
     bytes pre_block_hash = 8;// 在链中，用户相同交易所在前一个区块hahs(可以有多个，如果该数据类型是共享的话)
     bytes signature = 9; // 用户对交易的签名
+    repeated string shareuseraddress = 10;
+    bool share = 11;
 }
 message Block{
     bytes hash = 1; // 块 hash

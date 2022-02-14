@@ -43,6 +43,48 @@ func Broadcast(lbc *BC.BlockChain) {
 
 }
 
+func Request(username string, passworld string, tx *BC.Transaction) error {
+	for _, rnode := range localNode.quorum {
+		conn, err := grpc.Dial(fmt.Sprintf("%s:%d", rnode.LocalIp, rnode.LocalPort), grpc.WithInsecure())
+		if err != nil {
+			fmt.Println("网络异常", err)
+		}
+		//网络延迟关闭
+		defer conn.Close()
+
+		//获得grpc句柄
+		c := bcgrpc.NewBlockChainServiceClient(conn)
+
+		//通过句柄调用函数
+		re, err := c.Request(context.Background(), &bcgrpc.RequestBody{
+			Username:  username,
+			Passworld: passworld,
+			Tx: &bcgrpc.Transaction{
+				Key:              tx.Key,
+				Value:            tx.Value, // []byte
+				DataType:         tx.DataType,
+				Timestamp:        tx.Timestamp,    // 时间错
+				DelMark:          tx.DelMark,      // 是否删除
+				PublicKey:        tx.PublicKey,    // 用户公钥， 可以有多个(用户共享数据)
+				Hash:             tx.Hash,         // 交易 hash
+				PreBlockHash:     tx.PreBlockHash, // 在链中，用户相同交易所在前一个区块hahs(可以有多个，如果该数据类型是共享的话)
+				Signature:        tx.Signature,    // 用户对交易的签名
+				Shareuseraddress: tx.ShareAddress,
+				Share:            tx.Share,
+			},
+		})
+		if err != nil {
+			fmt.Printf("%s:%d  Request 服务调用失败\n", rnode.LocalIp, rnode.LocalPort)
+			continue
+		}
+		if re.Status {
+			return nil
+		}
+
+	}
+	return errors.New("请求失败")
+}
+
 func BlockSynchronization() ([]*BC.Block, error) {
 	var blockId_map map[int]uint64 = make(map[int]uint64)
 	if len(localNode.quorum) == 0 {

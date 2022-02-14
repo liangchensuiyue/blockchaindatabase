@@ -66,22 +66,34 @@ func NewTransaction(method, key string, value []byte, datatype string, user_addr
 	switch method {
 	case "put":
 		Tx = &Transaction{
-			Key:       key,
-			Value:     value,
-			Share:     share,
-			DataType:  datatype,
-			Timestamp: uint64(time.Now().Unix()),
-			DelMark:   false,
-			PublicKey: wallet.PubKey,
+			Key:          key,
+			Value:        value,
+			Share:        share,
+			DataType:     datatype,
+			Timestamp:    uint64(time.Now().Unix()),
+			DelMark:      false,
+			PublicKey:    wallet.PubKey,
+			ShareAddress: shareuser_address,
 		}
 	case "del":
+		Tx = &Transaction{
+			Key:          key,
+			Value:        value,
+			Share:        share,
+			DataType:     datatype,
+			Timestamp:    uint64(time.Now().Unix()),
+			DelMark:      true,
+			PublicKey:    wallet.PubKey,
+			ShareAddress: shareuser_address,
+		}
+	case "create_user":
 		Tx = &Transaction{
 			Key:       key,
 			Value:     value,
 			Share:     share,
 			DataType:  datatype,
 			Timestamp: uint64(time.Now().Unix()),
-			DelMark:   true,
+			DelMark:   false,
 			PublicKey: wallet.PubKey,
 		}
 	default:

@@ -33,17 +33,13 @@ func LoadLocalWallets() {
 	LocalWallets.loadFile()
 }
 func (ws *Wallets) GetBlockChainRootWallet() *Wallet {
-	addr, err := LocalWallets.GetAddressFromUsername("liangchen")
-	if err != nil {
-		fmt.Println("区块链root用户未找到")
-		return nil
+	for _, wa := range LocalWallets.WalletsMap {
+		if wa.Username == "liangchen" {
+			return wa
+		}
 	}
-	w, e := LocalWallets.GetUserWallet(addr)
-	if e != nil {
-		fmt.Println("区块链root用户未找到")
-		return nil
-	}
-	return w
+	fmt.Println("区块链root用户未找到")
+	return nil
 }
 
 func (ws *Wallets) GetUserWallet(user_address string) (*Wallet, error) {
@@ -54,14 +50,34 @@ func (ws *Wallets) GetUserWallet(user_address string) (*Wallet, error) {
 	}
 	return wa, nil
 }
-func (ws *Wallets) GetAddressFromUsername(username string) (string, error) {
-	for addr, v := range ws.WalletsMap {
-		if v.Username == username {
-			return addr, nil
-		}
-	}
-	return "", errors.New("未知用户")
-}
+
+// func (ws *Wallets) GetAddressFromUsername(username string) (string, error) {
+// 	user_address := LocalWallets.GetBlockChainRootWallet().NewAddress()
+
+// 	// 判断用户是否创建
+// 	_hash, _ := LocalWallets.GetUserTailBlockHash(user_address)
+
+// 	b, e := localBlockChain.GetBlockByHash(_hash)
+// 	if e != nil {
+// 		return e
+// 	}
+// 	for {
+// 		if b.IsGenesisBlock() {
+// 			break
+// 		}
+// 		for _, tx := range b.TxInfos {
+// 			_hash = tx.PreBlockHash
+// 			if tx.Key == username {
+// 				if bytes.Equal(tx.Value, []byte(base64.RawStdEncoding.EncodeToString([]byte(passworld)))) {
+// 					return nil
+// 				}
+// 				return errors.New("密码错误")
+// 			}
+// 		}
+// 		b, _ = localBlockChain.GetBlockByHash(_hash)
+// 	}
+// 	return errors.New("未知的用户")
+// }
 func (ws *Wallets) GetUserTailBlockHash(user_address string) ([]byte, error) {
 	hash, flag := ws.TailBlockHashMap[user_address]
 	if !flag {

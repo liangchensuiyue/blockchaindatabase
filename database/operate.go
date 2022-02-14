@@ -2,29 +2,103 @@ package database
 
 import (
 	"bytes"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	BC "go_code/基于区块链的非关系型数据库/blockchain"
 )
 
-func CreateUser(username string, passworld string) {
-	wa := BC.NewWallet(username, passworld)
+func CreateUser(username string, passworld string) error {
+	user_address := BC.LocalWallets.GetBlockChainRootWallet().NewAddress()
 
-	BC.LocalWallets.WalletsMap[wa.NewAddress()] = wa
-	BC.LocalWallets.SaveToFile()
-}
-func VeriftUser(username string, passworld string) (string, error) {
-	for _, wa := range BC.LocalWallets.WalletsMap {
-		if wa.Username == username && wa.Passworld == passworld {
-			return wa.NewAddress(), nil
-		}
+	// 判断用户是否创建
+	_hash, _ := BC.LocalWallets.GetUserTailBlockHash(user_address)
+
+	b, e := localBlockChain.GetBlockByHash(_hash)
+	if e != nil {
+		return e
 	}
-	return "", errors.New("未知的用户")
+	for {
+		if b.IsGenesisBlock() {
+			break
+		}
+		for _, tx := range b.TxInfos {
+			_hash = tx.PreBlockHash
+			if tx.Key == username {
+				return errors.New("该用户已被创建")
+			}
+		}
+		b, _ = localBlockChain.GetBlockByHash(_hash)
+	}
+
+	wa := BC.NewWallet(username, passworld)
+	tx, e := BC.NewTransaction("create_user", username, []byte(base64.RawStdEncoding.EncodeToString([]byte(passworld))), "string", user_address, false, []string{})
+	if e != nil {
+		return errors.New("创建用户失败")
+	}
+
+	lcdraft := BC.GetLocalDraft()
+	newblock, _ := lcdraft.PackBlock(tx)
+	rw := BC.LocalWallets.GetBlockChainRootWallet()
+	localBlockChain.SignBlock(rw.Private, false, newblock)
+
+	localNode.DistribuBlock(newblock, func(total, fail int) {
+		flag := localBlockChain.VerifyBlock(rw.PubKey, newblock)
+		if flag {
+			e := localBlockChain.AddBlock(newblock)
+			if e != nil {
+				fmt.Println(e)
+				return
+			}
+
+			BC.LocalWallets.TailBlockHashMap[user_address] = newblock.Hash
+			BC.LocalWallets.WalletsMap[wa.NewAddress()] = wa
+
+			BC.LocalWallets.SaveToFile()
+			fmt.Println("校验成功")
+			return
+		}
+		fmt.Println("区块校验失败")
+	})
+	_, e = GetAddressFromUsername(username)
+	if e != nil {
+		return errors.New("创建失败")
+	}
+	return nil
 }
+
+func VeriftUser(username string, passworld string) error {
+	user_address := BC.LocalWallets.GetBlockChainRootWallet().NewAddress()
+
+	// 判断用户是否创建
+	_hash, _ := BC.LocalWallets.GetUserTailBlockHash(user_address)
+
+	b, e := localBlockChain.GetBlockByHash(_hash)
+	if e != nil {
+		return e
+	}
+	for {
+		if b.IsGenesisBlock() {
+			break
+		}
+		for _, tx := range b.TxInfos {
+			_hash = tx.PreBlockHash
+			if tx.Key == username {
+				if bytes.Equal(tx.Value, []byte(base64.RawStdEncoding.EncodeToString([]byte(passworld)))) {
+					return nil
+				}
+				return errors.New("密码错误")
+			}
+		}
+		b, _ = localBlockChain.GetBlockByHash(_hash)
+	}
+	return errors.New("未知的用户")
+}
+
 func Put(key string, value []byte, datatype string, user_address string, share bool, shareuser []string, strict bool) error {
 	if share {
 		for i := 0; i < len(shareuser); i++ {
-			addr, e := BC.LocalWallets.GetAddressFromUsername(shareuser[i])
+			addr, e := GetAddressFromUsername(shareuser[i])
 			if e != nil {
 				return e
 			}
@@ -54,12 +128,14 @@ func Put(key string, value []byte, datatype string, user_address string, share b
 
 				BC.LocalWallets.TailBlockHashMap[user_address] = newblock.Hash
 
-				for _, tx := range newblock.TxInfos {
+				if share {
+					for _, tx := range newblock.TxInfos {
 
-					for _, addr := range tx.ShareAddress {
-						BC.LocalWallets.TailBlockHashMap[addr] = newblock.Hash
+						for _, addr := range tx.ShareAddress {
+							BC.LocalWallets.TailBlockHashMap[addr] = newblock.Hash
+						}
+
 					}
-
 				}
 				BC.LocalWallets.SaveToFile()
 				fmt.Println("校验成功")
@@ -76,7 +152,7 @@ func Put(key string, value []byte, datatype string, user_address string, share b
 func Del(key string, user_address string, share bool, shareuser []string, strict bool) {
 	if share {
 		for i := 0; i < len(shareuser); i++ {
-			addr, e := BC.LocalWallets.GetAddressFromUsername(shareuser[i])
+			addr, e := GetAddressFromUsername(shareuser[i])
 			if e != nil {
 				return
 			}
@@ -102,12 +178,14 @@ func Del(key string, user_address string, share bool, shareuser []string, strict
 
 				BC.LocalWallets.TailBlockHashMap[user_address] = newblock.Hash
 
-				for _, tx := range newblock.TxInfos {
+				if share {
+					for _, tx := range newblock.TxInfos {
 
-					for _, addr := range tx.ShareAddress {
-						BC.LocalWallets.TailBlockHashMap[addr] = newblock.Hash
+						for _, addr := range tx.ShareAddress {
+							BC.LocalWallets.TailBlockHashMap[addr] = newblock.Hash
+						}
+
 					}
-
 				}
 				BC.LocalWallets.SaveToFile()
 				fmt.Println("区块校验成功")
@@ -131,7 +209,7 @@ func Get(key string, user_address string, sharemode bool, shareuser []string) (*
 	}
 	user_addrs_map := map[string]bool{}
 	for j := 0; j < len(shareuser); j++ {
-		addr, e := BC.LocalWallets.GetAddressFromUsername(shareuser[j])
+		addr, e := GetAddressFromUsername(shareuser[j])
 		if e == nil {
 			user_addrs_map[addr] = true
 		}
@@ -182,4 +260,29 @@ func Get(key string, user_address string, sharemode bool, shareuser []string) (*
 			}
 		}
 	}
+}
+
+func GetAddressFromUsername(username string) (string, error) {
+	user_address := BC.LocalWallets.GetBlockChainRootWallet().NewAddress()
+
+	// 判断用户是否创建
+	_hash, _ := BC.LocalWallets.GetUserTailBlockHash(user_address)
+
+	b, e := localBlockChain.GetBlockByHash(_hash)
+	if e != nil {
+		return "", e
+	}
+	for {
+		if b.IsGenesisBlock() {
+			break
+		}
+		for _, tx := range b.TxInfos {
+			_hash = tx.PreBlockHash
+			if tx.Key == username {
+				return BC.GenerateAddressFromPubkey(tx.PublicKey), nil
+			}
+		}
+		b, _ = localBlockChain.GetBlockByHash(_hash)
+	}
+	return "", errors.New("未知的用户")
 }

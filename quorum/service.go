@@ -1,7 +1,11 @@
 package quorum
 
 import (
+	"bytes"
 	"context"
+	"encoding/base64"
+	"errors"
+	"fmt"
 	BC "go_code/基于区块链的非关系型数据库/blockchain"
 	bcgrpc "go_code/基于区块链的非关系型数据库/proto"
 )
@@ -40,6 +44,121 @@ func (this *Server) JoinGroup(ctx context.Context, req *bcgrpc.NodeInfo) (info *
 		})
 	}
 	return
+}
+func VeriftUser(username string, passworld string) error {
+	user_address := BC.LocalWallets.GetBlockChainRootWallet().NewAddress()
+
+	// 判断用户是否创建
+	_hash, _ := BC.LocalWallets.GetUserTailBlockHash(user_address)
+
+	b, e := localBlockChain.GetBlockByHash(_hash)
+	if e != nil {
+		return e
+	}
+	for {
+		if b.IsGenesisBlock() {
+			break
+		}
+		for _, tx := range b.TxInfos {
+			_hash = tx.PreBlockHash
+			if tx.Key == username {
+				if bytes.Equal(tx.Value, []byte(base64.RawStdEncoding.EncodeToString([]byte(passworld)))) {
+					return nil
+				}
+				return errors.New("密码错误")
+			}
+		}
+		b, _ = localBlockChain.GetBlockByHash(_hash)
+	}
+	return errors.New("未知的用户")
+}
+func (this *Server) Request(ctx context.Context, req *bcgrpc.RequestBody) (info *bcgrpc.VerifyInfo, err error) {
+
+	_e := VeriftUser(req.Username, req.Passworld)
+	if _e != nil {
+		info.Status = false
+		info.Info = _e.Error()
+		return
+	}
+	user_address, e := localBlockChain.GetAddressFromUsername(req.Username)
+	if e != nil {
+		info.Status = false
+		info.Info = e.Error()
+		return
+	}
+
+	_, _e = BC.LocalWallets.GetUserWallet(user_address)
+	if _e != nil {
+		info.Status = false
+		info.Info = "请求失败"
+		return
+	}
+
+	tx := &BC.Transaction{
+		Key:          req.Tx.Key,
+		Value:        req.Tx.Value,
+		DataType:     req.Tx.DataType,
+		Timestamp:    req.Tx.Timestamp,
+		DelMark:      req.Tx.DelMark,
+		PublicKey:    req.Tx.PublicKey,
+		ShareAddress: req.Tx.Shareuseraddress,
+		Share:        req.Tx.Share,
+	}
+
+	info.Status = true
+	info.Info = "请求成功"
+	go func() {
+		lcdraft := BC.GetLocalDraft()
+		newblock, _ := lcdraft.PackBlock(tx)
+		rw := BC.LocalWallets.GetBlockChainRootWallet()
+		localBlockChain.SignBlock(rw.Private, false, newblock)
+
+		localNode.DistribuBlock(newblock, func(total, fail int) {
+			flag := localBlockChain.VerifyBlock(rw.PubKey, newblock)
+			if flag {
+				e := localBlockChain.AddBlock(newblock)
+				if e != nil {
+					fmt.Println(e)
+					return
+				}
+
+				BC.LocalWallets.TailBlockHashMap[user_address] = newblock.Hash
+
+				if req.Tx.Share {
+					for _, tx := range newblock.TxInfos {
+
+						for _, addr := range tx.ShareAddress {
+							BC.LocalWallets.TailBlockHashMap[addr] = newblock.Hash
+						}
+
+					}
+				}
+				BC.LocalWallets.SaveToFile()
+				fmt.Println("校验成功")
+				return
+			}
+			fmt.Println("区块校验失败")
+		})
+	}()
+	return
+}
+func GetUserAddressByUsername(username string) (string, error) {
+	wa := BC.LocalWallets.GetBlockChainRootWallet()
+	_hash, _ := BC.LocalWallets.GetUserTailBlockHash(wa.NewAddress())
+	b, e := localBlockChain.GetBlockByHash(_hash)
+	for {
+		if e != nil {
+			return "", e
+		}
+		for _, tx := range b.TxInfos {
+			_hash = tx.PreBlockHash
+			if tx.Key == username {
+				return string(BC.GenerateAddressFromPubkey(tx.PublicKey)), nil
+			}
+		}
+		b, e = localBlockChain.GetBlockByHash(_hash)
+
+	}
 }
 func (this *Server) BlockSynchronization(ctx context.Context, req *bcgrpc.ReqBlock) (out *bcgrpc.ResBlocks, err error) {
 	if req.BlockId < 0 {
