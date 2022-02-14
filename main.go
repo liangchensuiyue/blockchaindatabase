@@ -39,16 +39,9 @@ func StartDraftWork() {
 					return
 				}
 				for _, tx := range newblock.TxInfos {
-					wa, e := BC.LocalWallets.GetUserWallet(BC.GenerateAddressFromPubkey(tx.PublicKey))
-					if e == nil {
-						wa.TailBlockHash = newblock.Hash
-
-					}
+					BC.LocalWallets.TailBlockHashMap[BC.GenerateAddressFromPubkey(tx.PublicKey)] = newblock.Hash
 					for _, addr := range tx.ShareAddress {
-						wa, e = BC.LocalWallets.GetUserWallet(addr)
-						if e == nil {
-							wa.TailBlockHash = newblock.Hash
-						}
+						BC.LocalWallets.TailBlockHashMap[addr] = newblock.Hash
 					}
 
 				}
@@ -68,11 +61,9 @@ func addblocks(blocks []*BC.Block) {
 		if flag {
 			localBlockChain.AddBlock(newblock)
 			for _, tx := range newblock.TxInfos {
+				BC.LocalWallets.TailBlockHashMap[BC.GenerateAddressFromPubkey(tx.PublicKey)] = newblock.Hash
 				for _, addr := range tx.ShareAddress {
-					wa, e := BC.LocalWallets.GetUserWallet(addr)
-					if e != nil {
-						wa.TailBlockHash = newblock.Hash
-					}
+					BC.LocalWallets.TailBlockHashMap[addr] = newblock.Hash
 				}
 
 			}
