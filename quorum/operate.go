@@ -15,7 +15,7 @@ var localNode *BlockChainNode
 
 func Broadcast(lbc *BC.BlockChain) {
 	localBlockChain = lbc
-	for _, node := range localNode.quorum {
+	for _, node := range localNode.Quorum {
 		if node.LocalIp == localNode.LocalIp && node.LocalPort == localNode.LocalPort {
 			continue
 		}
@@ -47,7 +47,7 @@ func Broadcast(lbc *BC.BlockChain) {
 }
 
 func Request(useraddress string, tx *BC.Transaction) error {
-	for _, rnode := range localNode.quorum {
+	for _, rnode := range localNode.Quorum {
 		if rnode.LocalIp == localNode.LocalIp && rnode.LocalPort == localNode.LocalPort {
 			continue
 		}
@@ -92,10 +92,10 @@ func Request(useraddress string, tx *BC.Transaction) error {
 
 func BlockSynchronization() ([]*BC.Block, error) {
 	var blockId_map map[int]uint64 = make(map[int]uint64)
-	if len(localNode.quorum) == 0 {
+	if len(localNode.Quorum) == 0 {
 		return []*BC.Block{}, nil
 	}
-	for index, rnode := range localNode.quorum {
+	for index, rnode := range localNode.Quorum {
 		if rnode.LocalIp == localNode.LocalIp && rnode.LocalPort == localNode.LocalPort {
 			continue
 		}
@@ -134,7 +134,7 @@ func BlockSynchronization() ([]*BC.Block, error) {
 	if _id <= local_tailblock.BlockId {
 		return []*BC.Block{}, nil
 	}
-	conn, err := grpc.Dial(fmt.Sprintf("%s:%d", localNode.quorum[_index].LocalIp, localNode.quorum[_index].LocalPort), grpc.WithInsecure())
+	conn, err := grpc.Dial(fmt.Sprintf("%s:%d", localNode.Quorum[_index].LocalIp, localNode.Quorum[_index].LocalPort), grpc.WithInsecure())
 	if err != nil {
 		fmt.Println("网络异常", err)
 	}
@@ -151,7 +151,7 @@ func BlockSynchronization() ([]*BC.Block, error) {
 		Hash:    local_tailblock.Hash,
 	})
 	if err != nil {
-		fmt.Printf("%s:%d  BlockSynchronization 服务调用失败\n", localNode.quorum[_index].LocalIp, localNode.quorum[_index].LocalPort)
+		fmt.Printf("%s:%d  BlockSynchronization 服务调用失败\n", localNode.Quorum[_index].LocalIp, localNode.Quorum[_index].LocalPort)
 		return nil, errors.New("区块同步失败")
 	}
 	Blocks := []*BC.Block{}

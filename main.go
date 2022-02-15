@@ -108,6 +108,12 @@ func runLocalTestCli() {
 			}
 		case "newuser":
 			db.CreateUser(cmds[1], cmds[2])
+		case "print_quorum":
+			for _, node := range localNode.Quorum {
+				if node.LocalIp == localNode.LocalIp {
+					fmt.Println(node.LocalIp, "(本机)")
+				}
+			}
 		case "print":
 			localBlockChain.Traverse(func(block *BC.Block, err error) {
 				if block != nil {
@@ -203,7 +209,7 @@ func main() {
 	quorum.Broadcast(localBlockChain)
 
 	newbllocks, e := quorum.BlockSynchronization()
-	if e != nil {
+	if e == nil {
 		addblocks(newbllocks)
 	}
 

@@ -10,7 +10,6 @@ import (
 	"errors"
 	"fmt"
 	BC "go_code/基于区块链的非关系型数据库/blockchain"
-	"go_code/基于区块链的非关系型数据库/util"
 
 	"io/ioutil"
 	"os"
@@ -31,7 +30,7 @@ type BlockChainNode struct {
 	LocalPort int
 
 	BCInfo *BlockChainInfo
-	quorum []*BlockChainNode
+	Quorum []*BlockChainNode
 }
 type queueObject struct {
 	TargetBlock *BC.Block
@@ -89,11 +88,14 @@ func LoadGenesisFile(filename string) (*BlockChainNode, error) {
 		panic(err)
 	}
 	localNode = &info
-	ip, e := util.GetLocalIp()
-	if e != nil {
-		return nil, e
-	}
-	JointoGroup(localNode.BCInfo.PassWorld, ip.String(), int32(localNode.LocalPort))
+	// ip, e := util.GetLocalIp()
+	// if e != nil {
+	// 	return nil, e
+	// }
+	localNode.LocalIp = "10.0.0.1"
+	// localNode.LocalIp = ip.String()
+	// JointoGroup(localNode.BCInfo.PassWorld, ip.String(), int32(localNode.LocalPort))
+	JointoGroup(localNode.BCInfo.PassWorld, "10.0.0.1", int32(localNode.LocalPort))
 	return localNode, nil
 }
 func JointoGroup(passworld, local_ip string, local_port int32) error {
@@ -101,14 +103,14 @@ func JointoGroup(passworld, local_ip string, local_port int32) error {
 		return errors.New("访问密码错误")
 	}
 	flag := false
-	for _, node := range localNode.quorum {
+	for _, node := range localNode.Quorum {
 		if node.LocalIp == local_ip {
 			node.LocalPort = int(local_port)
 			flag = true
 		}
 	}
-	if flag {
-		localNode.quorum = append(localNode.quorum, &BlockChainNode{
+	if !flag {
+		localNode.Quorum = append(localNode.Quorum, &BlockChainNode{
 			LocalIp:   local_ip,
 			LocalPort: int(local_port),
 		})

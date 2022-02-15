@@ -37,7 +37,7 @@ func (this *Server) JoinGroup(ctx context.Context, req *bcgrpc.NodeInfo) (info *
 	if err != nil {
 		return
 	}
-	for _, node := range localNode.quorum {
+	for _, node := range localNode.Quorum {
 		info.Nodes = append(info.Nodes, &bcgrpc.NodeInfo{
 			LocalIp:   node.LocalIp,
 			LocalPort: int32(node.LocalPort),

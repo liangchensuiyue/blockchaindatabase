@@ -8,7 +8,6 @@ import (
 	"encoding/gob"
 	"fmt"
 	quorum "go_code/基于区块链的非关系型数据库/quorum"
-	"go_code/基于区块链的非关系型数据库/util"
 	"io/ioutil"
 	"log"
 	"os"
@@ -16,7 +15,7 @@ import (
 	"time"
 )
 
-func main1() {
+func main() {
 	var localNode quorum.BlockChainNode
 	localNode.BCInfo = &quorum.BlockChainInfo{}
 	localNode.BCInfo.TailBlockId = 0
@@ -29,11 +28,12 @@ func main1() {
 		}
 		break
 	}
-	ip, err := util.GetLocalIp()
-	if err != nil {
-		fmt.Println(err)
-	}
-	localNode.LocalIp = ip.String()
+	// ip, err := util.GetLocalIp()
+	// if err != nil {
+	// 	fmt.Println(err)
+	// }
+	// localNode.LocalIp = ip.String()
+	localNode.LocalIp = "10.0.0.1"
 	for {
 		fmt.Printf("集群访问密码:")
 		fmt.Scanf("%s\n", &localNode.BCInfo.PassWorld)

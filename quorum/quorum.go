@@ -34,7 +34,10 @@ func _starDistributeBlock(blockQueue chan queueObject) {
 		total := 0
 		fail := 0
 		fmt.Printf("区块 %d 分发:\n", block.BlockId)
-		for _, blockBlockChainNode := range localNode.quorum {
+		for _, blockBlockChainNode := range localNode.Quorum {
+			if blockBlockChainNode.LocalIp == localNode.LocalIp {
+				continue
+			}
 			total++
 			DistributeBlock(block, blockBlockChainNode, func(res *bcgrpc.VerifyInfo, err error) {
 				if err != nil {
