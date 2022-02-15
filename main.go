@@ -60,6 +60,10 @@ func addblocks(blocks []*BC.Block) {
 		flag := localBlockChain.VerifyBlock(rw.PubKey, newblock)
 		if flag {
 			localBlockChain.AddBlock(newblock)
+			if newblock.IsGenesisBlock() {
+				BC.LocalWallets.TailBlockHashMap[rw.NewAddress()] = newblock.Hash
+
+			}
 			for _, tx := range newblock.TxInfos {
 				BC.LocalWallets.TailBlockHashMap[BC.GenerateAddressFromPubkey(tx.PublicKey)] = newblock.Hash
 				for _, addr := range tx.ShareAddress {
@@ -67,7 +71,9 @@ func addblocks(blocks []*BC.Block) {
 				}
 
 			}
+			BC.LocalWallets.SaveToFile()
 		} else {
+			fmt.Println("同步区块", newblock.BlockId, "校验失败")
 			return
 		}
 	}
@@ -124,18 +130,17 @@ func runLocalTestCli() {
 					fmt.Println("block_hash:", base64.RawStdEncoding.EncodeToString(block.Hash))
 
 					for i, tx := range block.TxInfos {
-						w, e := BC.LocalWallets.GetUserWallet(BC.GenerateAddressFromPubkey(tx.PublicKey))
 						fmt.Println("交易索引:", i)
-						fmt.Println("user:", w.Username)
+						fmt.Println("user_address:", BC.GenerateAddressFromPubkey(tx.PublicKey))
 						fmt.Println("key-value:", tx.Key, string(tx.Value))
 						fmt.Println("sharemode:", tx.Share)
 						fmt.Println("delmark:", tx.DelMark)
 						fmt.Println("shareuser:")
 						for _, uaddr := range tx.ShareAddress {
-							w, e = BC.LocalWallets.GetUserWallet(uaddr)
-							if e == nil {
-								fmt.Println(w.NewAddress())
-							}
+							// w, e = BC.LocalWallets.GetUserWallet(uaddr)
+							// if e == nil {
+							fmt.Println(uaddr)
+							// }
 						}
 					}
 
@@ -190,6 +195,11 @@ func main() {
 	var err error
 	flag.StringVar(&genesis_file_name, "f", "./genesis", "genesis文件")
 	localNode, err = quorum.LoadGenesisFile(genesis_file_name)
+	fmt.Println("监听地址:", localNode.LocalIp, localNode.LocalPort)
+	fmt.Println("localNode.Quorum:")
+	for _, v := range localNode.Quorum {
+		fmt.Println(v.LocalIp)
+	}
 	if err != nil {
 		panic(err)
 	}
@@ -221,6 +231,10 @@ func main() {
 
 		rw := BC.LocalWallets.GetBlockChainRootWallet()
 		localBlockChain.SignBlock(rw.Private, true, genesis_block)
+		flag := localBlockChain.VerifyBlock(rw.PubKey, genesis_block)
+		if !flag {
+			fmt.Println("创世块校验失败")
+		}
 		err = localBlockChain.AddBlock(genesis_block)
 		if err != nil {
 			panic(err)

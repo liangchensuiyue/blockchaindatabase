@@ -15,7 +15,7 @@ import (
 	"time"
 )
 
-func main() {
+func main1() {
 	var localNode quorum.BlockChainNode
 	localNode.BCInfo = &quorum.BlockChainInfo{}
 	localNode.BCInfo.TailBlockId = 0
@@ -62,7 +62,10 @@ func main() {
 	localNode.BCInfo.PriKey = privateKey
 	localNode.BCInfo.PubKey = pubKey
 	localNode.BCInfo.BlockTailHashKey = "key_" + fmt.Sprintf("%d", time.Now().Unix())
-
+	localNode.Quorum = append(localNode.Quorum, &quorum.BlockChainNode{
+		LocalIp:   localNode.LocalIp,
+		LocalPort: localNode.LocalPort,
+	})
 	var buffer bytes.Buffer
 	gob.Register(elliptic.P256())
 	encoder := gob.NewEncoder(&buffer)

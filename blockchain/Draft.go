@@ -147,6 +147,7 @@ func (draft *Draft) GetTxInfosNum() int {
 func (draft *Draft) Work(handler func(*Block, error)) {
 	_pre_time = time.Now()
 	for {
+		time.Sleep(time.Second)
 		if !draft.WorkStatus {
 			_pre_time = time.Now()
 			continue

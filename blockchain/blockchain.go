@@ -174,13 +174,16 @@ func (bc *BlockChain) VerifyBlock(groupPubKey []byte, newblock *Block) bool {
 		s.SetBytes(newblock.Signature[len(newblock.Signature)/2:])
 
 		_sig := newblock.Signature
+		_hash := newblock.Hash
 		newblock.Signature = []byte{}
-		_hash := sha256.Sum256(newblock.Serialize())
+		newblock.Hash = []byte{}
+		hash := sha256.Sum256(newblock.Serialize())
 
-		if !ecdsa.Verify(&pubKeyOrigin, _hash[:], &r, &s) {
+		if !ecdsa.Verify(&pubKeyOrigin, hash[:], &r, &s) {
 			return false
 		}
 		newblock.Signature = _sig
+		newblock.Hash = _hash
 		return true
 	}
 	for _, tx := range newblock.TxInfos {

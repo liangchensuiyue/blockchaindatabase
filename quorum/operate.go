@@ -201,16 +201,17 @@ func CopyBlock(block *BC.Block) *bcgrpc.Block {
 	new_grpc_block.TxInfos = []*bcgrpc.Transaction{}
 	for _, tx := range block.TxInfos {
 		new_grpc_block.TxInfos = append(new_grpc_block.TxInfos, &bcgrpc.Transaction{
-			Key:       tx.Key,
-			Value:     tx.Value,
-			DataType:  tx.DataType,
-			Timestamp: tx.Timestamp,
-			DelMark:   tx.DelMark,
-			PublicKey: tx.PublicKey,
-			Hash:      tx.Hash,
-
-			PreBlockHash: tx.PreBlockHash,
-			Signature:    tx.Signature,
+			Key:              tx.Key,
+			Value:            tx.Value,
+			DataType:         tx.DataType,
+			Timestamp:        tx.Timestamp,
+			DelMark:          tx.DelMark,
+			PublicKey:        tx.PublicKey,
+			Hash:             tx.Hash,
+			Share:            tx.Share,
+			Shareuseraddress: tx.ShareAddress,
+			PreBlockHash:     tx.PreBlockHash,
+			Signature:        tx.Signature,
 		})
 	}
 	return new_grpc_block

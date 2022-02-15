@@ -10,6 +10,7 @@ import (
 
 func _startServer() {
 	//创建网络
+	fmt.Println("网络")
 	ln, err := net.Listen("tcp", fmt.Sprintf(":%d", localNode.LocalPort))
 	if err != nil {
 		fmt.Println("网络错误", err)

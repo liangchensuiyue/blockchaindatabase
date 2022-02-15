@@ -33,6 +33,7 @@ func (this *Server) GetLatestBlock(ctx context.Context, req *bcgrpc.ReqBlock) (i
 	return
 }
 func (this *Server) JoinGroup(ctx context.Context, req *bcgrpc.NodeInfo) (info *bcgrpc.Nodes, err error) {
+	info = &bcgrpc.Nodes{}
 	err = JointoGroup(req.Passworld, req.LocalIp, int32(req.LocalPort))
 	if err != nil {
 		return
@@ -73,7 +74,7 @@ func VeriftUser(username string, passworld string) error {
 	return errors.New("未知的用户")
 }
 func (this *Server) Request(ctx context.Context, req *bcgrpc.RequestBody) (info *bcgrpc.VerifyInfo, err error) {
-
+	info = &bcgrpc.VerifyInfo{}
 	_, _e := BC.LocalWallets.GetUserWallet(req.UserAddress)
 	if _e != nil {
 		info.Status = false
@@ -148,6 +149,8 @@ func GetUserAddressByUsername(username string) (string, error) {
 	}
 }
 func (this *Server) BlockSynchronization(ctx context.Context, req *bcgrpc.ReqBlock) (out *bcgrpc.ResBlocks, err error) {
+	fmt.Println("同步服务调用 blockid", req.BlockId)
+	out = &bcgrpc.ResBlocks{}
 	if req.BlockId < 0 {
 		return
 	}
@@ -161,13 +164,16 @@ func (this *Server) BlockSynchronization(ctx context.Context, req *bcgrpc.ReqBlo
 		if b.BlockId > req.BlockId {
 			out.Blocks = append(out.Blocks, CopyBlock(b))
 		} else {
+			fmt.Println("同步区块数量:", len(out.Blocks))
 			return
 		}
 		if b.IsGenesisBlock() {
+			fmt.Println("同步区块数量:", len(out.Blocks))
 			return
 		}
 		b, e = localBlockChain.GetBlockByHash(b.PreBlockHash)
 		if e != nil || b.BlockId == 0 {
+			fmt.Println("同步区块数量:", len(out.Blocks))
 			return
 		}
 
