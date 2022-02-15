@@ -74,20 +74,7 @@ func VeriftUser(username string, passworld string) error {
 }
 func (this *Server) Request(ctx context.Context, req *bcgrpc.RequestBody) (info *bcgrpc.VerifyInfo, err error) {
 
-	_e := VeriftUser(req.Username, req.Passworld)
-	if _e != nil {
-		info.Status = false
-		info.Info = _e.Error()
-		return
-	}
-	user_address, e := localBlockChain.GetAddressFromUsername(req.Username)
-	if e != nil {
-		info.Status = false
-		info.Info = e.Error()
-		return
-	}
-
-	_, _e = BC.LocalWallets.GetUserWallet(user_address)
+	_, _e := BC.LocalWallets.GetUserWallet(req.UserAddress)
 	if _e != nil {
 		info.Status = false
 		info.Info = "请求失败"
@@ -122,7 +109,7 @@ func (this *Server) Request(ctx context.Context, req *bcgrpc.RequestBody) (info 
 					return
 				}
 
-				BC.LocalWallets.TailBlockHashMap[user_address] = newblock.Hash
+				BC.LocalWallets.TailBlockHashMap[req.UserAddress] = newblock.Hash
 
 				if req.Tx.Share {
 					for _, tx := range newblock.TxInfos {

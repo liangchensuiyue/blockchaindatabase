@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"log"
 	"math/big"
+	"strings"
 
 	"github.com/boltdb/bolt"
 )
@@ -272,7 +273,11 @@ func (bc *BlockChain) GetBlockByHash(hash []byte) (*Block, error) {
 	return &block, err
 }
 func (bc *BlockChain) GetAddressFromUsername(username string) (string, error) {
-	user_address := LocalWallets.GetBlockChainRootWallet().NewAddress()
+	rw := LocalWallets.GetBlockChainRootWallet()
+	if rw == nil {
+		return "", errors.New("root用户未创建")
+	}
+	user_address := rw.NewAddress()
 
 	// 判断用户是否创建
 	_hash, _ := LocalWallets.GetUserTailBlockHash(user_address)
@@ -288,7 +293,8 @@ func (bc *BlockChain) GetAddressFromUsername(username string) (string, error) {
 		for _, tx := range b.TxInfos {
 			_hash = tx.PreBlockHash
 			if tx.Key == username {
-				return GenerateAddressFromPubkey(tx.PublicKey), nil
+				addr := strings.Split(string(tx.Value), " ")[1]
+				return addr, nil
 			}
 		}
 		b, _ = bc.GetBlockByHash(_hash)

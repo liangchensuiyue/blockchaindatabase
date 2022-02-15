@@ -51,9 +51,8 @@ message NodeInfo{
     int32 local_port =3;
 }
 message RequestBody{
-    string username = 1;
-    string passworld = 2;
-    Transaction Tx = 3;
+    string user_address = 1;
+    Transaction Tx = 2;
 }
 message Nodes{
     repeated NodeInfo nodes = 1;

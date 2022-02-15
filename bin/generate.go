@@ -16,7 +16,7 @@ import (
 	"time"
 )
 
-func main() {
+func main1() {
 	var localNode quorum.BlockChainNode
 	localNode.BCInfo = &quorum.BlockChainInfo{}
 	localNode.BCInfo.TailBlockId = 0

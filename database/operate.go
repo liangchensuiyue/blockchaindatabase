@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	BC "go_code/基于区块链的非关系型数据库/blockchain"
+	"go_code/基于区块链的非关系型数据库/quorum"
+	"strings"
 )
 
 func CreateUser(username string, passworld string) error {
@@ -32,7 +34,7 @@ func CreateUser(username string, passworld string) error {
 	}
 
 	wa := BC.NewWallet(username, passworld)
-	tx, e := BC.NewTransaction("create_user", username, []byte(base64.RawStdEncoding.EncodeToString([]byte(passworld))), "string", user_address, false, []string{})
+	tx, e := BC.NewTransaction("create_user", username, []byte(base64.RawStdEncoding.EncodeToString([]byte(passworld))+" "+wa.NewAddress()), "string", user_address, false, []string{})
 	if e != nil {
 		return errors.New("创建用户失败")
 	}
@@ -84,7 +86,8 @@ func VeriftUser(username string, passworld string) error {
 		for _, tx := range b.TxInfos {
 			_hash = tx.PreBlockHash
 			if tx.Key == username {
-				if bytes.Equal(tx.Value, []byte(base64.RawStdEncoding.EncodeToString([]byte(passworld)))) {
+				passw := strings.Split(string(tx.Value), " ")[0]
+				if passw == base64.RawStdEncoding.EncodeToString([]byte(passworld)) {
 					return nil
 				}
 				return errors.New("密码错误")
@@ -109,7 +112,8 @@ func Put(key string, value []byte, datatype string, user_address string, share b
 	}
 	tx, e := BC.NewTransaction("put", key, value, datatype, user_address, share, shareuser)
 	if e != nil {
-		return e
+		go quorum.Request(user_address, tx)
+		return nil
 	}
 	if strict {
 		lcdraft := BC.GetLocalDraft()
@@ -163,6 +167,7 @@ func Del(key string, user_address string, share bool, shareuser []string, strict
 	}
 	tx, e := BC.NewTransaction("del", key, []byte{}, "", user_address, share, shareuser)
 	if e != nil {
+		go quorum.Request(user_address, tx)
 		return
 	}
 	if strict {
@@ -279,7 +284,8 @@ func GetAddressFromUsername(username string) (string, error) {
 		for _, tx := range b.TxInfos {
 			_hash = tx.PreBlockHash
 			if tx.Key == username {
-				return BC.GenerateAddressFromPubkey(tx.PublicKey), nil
+				addr := strings.Split(string(tx.Value), " ")[1]
+				return addr, nil
 			}
 		}
 		b, _ = localBlockChain.GetBlockByHash(_hash)

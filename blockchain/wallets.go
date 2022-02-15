@@ -92,6 +92,7 @@ func (ws *Wallets) loadFile() {
 	_, err := os.Stat(walletFile)
 	if os.IsNotExist(err) {
 		ws.WalletsMap = make(map[string]*Wallet)
+		ws.TailBlockHashMap = make(map[string][]byte)
 		ws.SaveToFile()
 		return
 	}
@@ -113,6 +114,7 @@ func (ws *Wallets) loadFile() {
 	}
 	// ws = &wsLocal
 	ws.WalletsMap = wsLocal.WalletsMap
+	ws.TailBlockHashMap = wsLocal.TailBlockHashMap
 }
 func (ws *Wallets) GetAllAddresses() []string {
 	var addresses []string

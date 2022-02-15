@@ -87,12 +87,14 @@ func runLocalTestCli() {
 		}
 		switch cmds[0] {
 		case "put":
-			// 15GcPFKHT1dWCE9qz2mHpLRKcC7jURCFa3
+			// put age 15 int
 			err := db.Put(cmds[1], []byte(cmds[2]), cmds[3], cmds[4], false, []string{}, true)
 			fmt.Println("put", err)
 		case "del":
+			// del age
 			db.Del(cmds[1], cmds[2], false, []string{}, true)
 		case "get":
+			// get age
 			block, index := db.Get(cmds[1], cmds[2], false, []string{})
 			fmt.Println("get:")
 			if block != nil {
@@ -145,9 +147,32 @@ func runLocalTestCli() {
 				fmt.Println(tx.Key)
 				fmt.Println(tx.Value)
 			}
-		case "print_addr":
-			for addr, _ := range BC.LocalWallets.WalletsMap {
-				fmt.Println(addr)
+		case "print_global_wallet":
+			rw := BC.LocalWallets.GetBlockChainRootWallet()
+			user_address := rw.NewAddress()
+			fmt.Println(rw.Username, user_address)
+
+			// 判断用户是否创建
+			_hash, _ := BC.LocalWallets.GetUserTailBlockHash(user_address)
+
+			b, e := localBlockChain.GetBlockByHash(_hash)
+			if e != nil {
+				break
+			}
+			for {
+				if b.IsGenesisBlock() {
+					break
+				}
+				for _, tx := range b.TxInfos {
+					_hash = tx.PreBlockHash
+					fmt.Println(tx.Key, strings.Split(string(tx.Value), " ")[1])
+
+				}
+				b, _ = localBlockChain.GetBlockByHash(_hash)
+			}
+		case "print_local_wallet":
+			for addr, w := range BC.LocalWallets.WalletsMap {
+				fmt.Println(w.Username, addr)
 			}
 		default:
 			fmt.Println(cmds)
@@ -156,10 +181,8 @@ func runLocalTestCli() {
 }
 func main() {
 	var genesis_file_name string
-	var bind_port int
 	var err error
 	flag.StringVar(&genesis_file_name, "f", "./genesis", "genesis文件")
-	flag.IntVar(&bind_port, "port", 3300, "节点访问端口")
 	localNode, err = quorum.LoadGenesisFile(genesis_file_name)
 	if err != nil {
 		panic(err)
@@ -169,7 +192,7 @@ func main() {
 
 		localNode.BCInfo.BlockChainDB)
 	BC.LoadLocalWallets()
-	_, err = BC.LocalWallets.GetAddressFromUsername("liangchen")
+	_, err = localBlockChain.GetAddressFromUsername("liangchen")
 	if err != nil {
 		wa := BC.NewWallet("liangchen", localNode.BCInfo.PassWorld)
 		wa.Private = localNode.BCInfo.PriKey

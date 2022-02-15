@@ -16,6 +16,9 @@ var localNode *BlockChainNode
 func Broadcast(lbc *BC.BlockChain) {
 	localBlockChain = lbc
 	for _, node := range localNode.quorum {
+		if node.LocalIp == localNode.LocalIp && node.LocalPort == localNode.LocalPort {
+			continue
+		}
 		conn, err := grpc.Dial(fmt.Sprintf("%s:%d", node.LocalIp, node.LocalPort), grpc.WithInsecure())
 		if err != nil {
 			fmt.Printf("%s:%d 网络异常", node.LocalIp, node.LocalPort)
@@ -43,8 +46,11 @@ func Broadcast(lbc *BC.BlockChain) {
 
 }
 
-func Request(username string, passworld string, tx *BC.Transaction) error {
+func Request(useraddress string, tx *BC.Transaction) error {
 	for _, rnode := range localNode.quorum {
+		if rnode.LocalIp == localNode.LocalIp && rnode.LocalPort == localNode.LocalPort {
+			continue
+		}
 		conn, err := grpc.Dial(fmt.Sprintf("%s:%d", rnode.LocalIp, rnode.LocalPort), grpc.WithInsecure())
 		if err != nil {
 			fmt.Println("网络异常", err)
@@ -57,8 +63,7 @@ func Request(username string, passworld string, tx *BC.Transaction) error {
 
 		//通过句柄调用函数
 		re, err := c.Request(context.Background(), &bcgrpc.RequestBody{
-			Username:  username,
-			Passworld: passworld,
+			UserAddress: useraddress,
 			Tx: &bcgrpc.Transaction{
 				Key:              tx.Key,
 				Value:            tx.Value, // []byte
@@ -91,6 +96,9 @@ func BlockSynchronization() ([]*BC.Block, error) {
 		return []*BC.Block{}, nil
 	}
 	for index, rnode := range localNode.quorum {
+		if rnode.LocalIp == localNode.LocalIp && rnode.LocalPort == localNode.LocalPort {
+			continue
+		}
 		conn, err := grpc.Dial(fmt.Sprintf("%s:%d", rnode.LocalIp, rnode.LocalPort), grpc.WithInsecure())
 		if err != nil {
 			fmt.Println("网络异常", err)
