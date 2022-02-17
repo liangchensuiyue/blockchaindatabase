@@ -70,6 +70,7 @@ func addblocks(blocks []*BC.Block) {
 				BC.LocalWallets.TailBlockHashMap[rw.NewAddress()] = newblock.Hash
 			}
 			for _, tx := range newblock.TxInfos {
+				fmt.Println(tx.Share, tx.ShareAddress, base64.RawStdEncoding.EncodeToString(newblock.Hash))
 				if tx.Share {
 					BC.LocalWallets.ShareTailBlockHashMap[BC.GenerateUserShareKey(tx.ShareAddress)] = newblock.Hash
 
@@ -107,7 +108,7 @@ func runLocalTestCli() {
 			db.Del(cmds[1], cmds[2], true, []string{"lc"}, true)
 		case "get":
 			// get age
-			block, index := db.Get(cmds[1], cmds[2], false, []string{})
+			block, index := db.Get(cmds[1], cmds[2], true, []string{"gds"})
 			fmt.Println("get:")
 			if block != nil {
 				fmt.Println("blockid:", block.BlockId)
@@ -212,17 +213,14 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("=======================ffsdfsdfs")
 
 	localBlockChain = BC.NewBlockChain(
 		localNode.BCInfo.BlockTailHashKey,
 
 		localNode.BCInfo.BlockChainDB)
-	fmt.Println("=======================fffffffffff")
 
 	BC.LoadLocalWallets()
 	_, err = localBlockChain.GetAddressFromUsername("liangchen")
-	fmt.Println("=======================")
 	if err != nil {
 		wa := BC.NewWallet("liangchen", localNode.BCInfo.PassWorld)
 		wa.Private = localNode.BCInfo.PriKey
@@ -230,7 +228,6 @@ func main() {
 		BC.LocalWallets.WalletsMap[wa.NewAddress()] = wa
 		BC.LocalWallets.SaveToFile()
 	}
-	fmt.Println("...........")
 	quorum.Broadcast(localBlockChain)
 
 	newbllocks, e := quorum.BlockSynchronization()

@@ -35,12 +35,15 @@ func (this *Server) DistributeBlock(ctx context.Context, req *bcgrpc.Block) (inf
 
 	}
 	for _, tx := range newblock.TxInfos {
-		BC.LocalWallets.TailBlockHashMap[BC.GenerateAddressFromPubkey(tx.PublicKey)] = newblock.Hash
+
+		// fmt.Println(tx.Share, tx.ShareAddress, base64.RawStdEncoding.EncodeToString(newblock.Hash))
 		if tx.Share {
-			for _, addr := range tx.ShareAddress {
-				BC.LocalWallets.TailBlockHashMap[addr] = newblock.Hash
-			}
+			BC.LocalWallets.ShareTailBlockHashMap[BC.GenerateUserShareKey(tx.ShareAddress)] = newblock.Hash
+
+		} else {
+			BC.LocalWallets.TailBlockHashMap[BC.GenerateAddressFromPubkey(tx.PublicKey)] = newblock.Hash
 		}
+
 	}
 	BC.LocalWallets.SaveToFile()
 	return
@@ -132,17 +135,21 @@ func (this *Server) Request(ctx context.Context, req *bcgrpc.RequestBody) (info 
 						return
 					}
 
-					BC.LocalWallets.TailBlockHashMap[req.UserAddress] = newblock.Hash
+					// BC.LocalWallets.TailBlockHashMap[req.UserAddress] = newblock.Hash
 
-					if req.Tx.Share {
-						for _, tx := range newblock.TxInfos {
+					// if req.Tx.Share {
+					for _, tx := range newblock.TxInfos {
 
-							for _, addr := range tx.ShareAddress {
-								BC.LocalWallets.TailBlockHashMap[addr] = newblock.Hash
-							}
+						// fmt.Println(tx.Share, tx.ShareAddress, base64.RawStdEncoding.EncodeToString(newblock.Hash))
+						if tx.Share {
+							BC.LocalWallets.ShareTailBlockHashMap[BC.GenerateUserShareKey(tx.ShareAddress)] = newblock.Hash
 
+						} else {
+							BC.LocalWallets.TailBlockHashMap[BC.GenerateAddressFromPubkey(tx.PublicKey)] = newblock.Hash
 						}
+
 					}
+					// }
 					BC.LocalWallets.SaveToFile()
 					fmt.Println("block:", newblock.BlockId, "校验成功")
 					return

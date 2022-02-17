@@ -119,7 +119,7 @@ func Put(key string, value []byte, datatype string, user_address string, share b
 	}
 	tx, e := BC.NewTransaction("put", key, value, datatype, user_address, share, shareaddress)
 	if e != nil {
-		go quorum.Request(user_address, strict, &BC.Transaction{
+		go quorum.Request(user_address, false, &BC.Transaction{
 			Key:          key,
 			Value:        value,
 			DelMark:      false,
@@ -145,13 +145,16 @@ func Put(key string, value []byte, datatype string, user_address string, share b
 					return
 				}
 
-				if share {
-					for _, tx := range newblock.TxInfos {
+				for _, tx := range newblock.TxInfos {
+
+					// fmt.Println(tx.Share, tx.ShareAddress, base64.RawStdEncoding.EncodeToString(newblock.Hash))
+					if tx.Share {
 						BC.LocalWallets.ShareTailBlockHashMap[BC.GenerateUserShareKey(tx.ShareAddress)] = newblock.Hash
 
+					} else {
+						BC.LocalWallets.TailBlockHashMap[BC.GenerateAddressFromPubkey(tx.PublicKey)] = newblock.Hash
 					}
-				} else {
-					BC.LocalWallets.TailBlockHashMap[user_address] = newblock.Hash
+
 				}
 				BC.LocalWallets.SaveToFile()
 				fmt.Println("block:", newblock.BlockId, "校验成功")
@@ -190,7 +193,7 @@ func Del(key string, user_address string, share bool, shareuser []string, strict
 	}
 	tx, e := BC.NewTransaction("del", key, []byte{}, "", user_address, share, shareaddress)
 	if e != nil {
-		go quorum.Request(user_address, strict, &BC.Transaction{
+		go quorum.Request(user_address, false, &BC.Transaction{
 			Key:          key,
 			DelMark:      true,
 			Share:        share,
@@ -210,12 +213,16 @@ func Del(key string, user_address string, share bool, shareuser []string, strict
 			if flag {
 				localBlockChain.AddBlock(newblock)
 
-				if share {
-					for _, tx := range newblock.TxInfos {
+				for _, tx := range newblock.TxInfos {
+
+					// fmt.Println(tx.Share, tx.ShareAddress, base64.RawStdEncoding.EncodeToString(newblock.Hash))
+					if tx.Share {
 						BC.LocalWallets.ShareTailBlockHashMap[BC.GenerateUserShareKey(tx.ShareAddress)] = newblock.Hash
+
+					} else {
+						BC.LocalWallets.TailBlockHashMap[BC.GenerateAddressFromPubkey(tx.PublicKey)] = newblock.Hash
 					}
-				} else {
-					BC.LocalWallets.TailBlockHashMap[user_address] = newblock.Hash
+
 				}
 				BC.LocalWallets.SaveToFile()
 				fmt.Println("block:", newblock.BlockId, "校验成功")
@@ -256,6 +263,10 @@ func Get(key string, user_address string, sharemode bool, shareuser []string) (*
 		tailhash, _ = BC.LocalWallets.ShareTailBlockHashMap[shareaddressKey]
 	} else {
 		tailhash, _ = BC.LocalWallets.TailBlockHashMap[user_address]
+	}
+	fmt.Println("tailhash", base64.RawStdEncoding.EncodeToString(tailhash))
+	for k, v := range BC.LocalWallets.ShareTailBlockHashMap {
+		fmt.Println(k, base64.RawStdEncoding.EncodeToString(v))
 	}
 	for {
 		b, e := localBlockChain.GetBlockByHash(tailhash)

@@ -106,13 +106,14 @@ func NewTransaction(method, key string, value []byte, datatype string, user_addr
 		}
 	case "create_user":
 		Tx = &Transaction{
-			Key:       key,
-			Value:     value,
-			Share:     share,
-			DataType:  datatype,
-			Timestamp: uint64(time.Now().Unix()),
-			DelMark:   false,
-			PublicKey: wallet.PubKey,
+			Key:          key,
+			Value:        value,
+			Share:        share,
+			DataType:     datatype,
+			Timestamp:    uint64(time.Now().Unix()),
+			DelMark:      false,
+			PublicKey:    wallet.PubKey,
+			ShareAddress: shareuser_address,
 		}
 	default:
 		return nil, errors.New(" 未知的操作")
@@ -131,7 +132,7 @@ func (tx *Transaction) Sign() {
 	wa, _ := LocalWallets.GetUserWallet(user_address)
 	privateKey = wa.Private
 	if tx.Share {
-		tx.PreBlockHash, _ = LocalWallets.GetUserTailBlockHash(GenerateUserShareKey(tx.ShareAddress))
+		tx.PreBlockHash, _ = LocalWallets.ShareTailBlockHashMap[GenerateUserShareKey(tx.ShareAddress)]
 	} else {
 		tx.PreBlockHash, _ = LocalWallets.GetUserTailBlockHash(user_address)
 	}
@@ -170,7 +171,7 @@ func (tx *Transaction) Verify() bool {
 	user_address := GenerateAddressFromPubkey(tx.PublicKey)
 	// fmt.Println(user_address)
 	if tx.Share {
-		tx.PreBlockHash, _ = LocalWallets.GetUserTailBlockHash(GenerateUserShareKey(tx.ShareAddress))
+		tx.PreBlockHash, _ = LocalWallets.ShareTailBlockHashMap[GenerateUserShareKey(tx.ShareAddress)]
 	} else {
 		tx.PreBlockHash, _ = LocalWallets.GetUserTailBlockHash(user_address)
 	}
