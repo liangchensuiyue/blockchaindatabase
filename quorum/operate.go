@@ -46,7 +46,7 @@ func Broadcast(lbc *BC.BlockChain) {
 
 }
 
-func Request(useraddress string, tx *BC.Transaction) error {
+func Request(useraddress string, strict bool, tx *BC.Transaction) error {
 	for _, rnode := range localNode.Quorum {
 		if rnode.LocalIp == localNode.LocalIp && rnode.LocalPort == localNode.LocalPort {
 			continue
@@ -64,16 +64,13 @@ func Request(useraddress string, tx *BC.Transaction) error {
 		//通过句柄调用函数
 		re, err := c.Request(context.Background(), &bcgrpc.RequestBody{
 			UserAddress: useraddress,
+			Strict:      strict,
 			Tx: &bcgrpc.Transaction{
 				Key:              tx.Key,
 				Value:            tx.Value, // []byte
 				DataType:         tx.DataType,
-				Timestamp:        tx.Timestamp,    // 时间错
-				DelMark:          tx.DelMark,      // 是否删除
-				PublicKey:        tx.PublicKey,    // 用户公钥， 可以有多个(用户共享数据)
-				Hash:             tx.Hash,         // 交易 hash
-				PreBlockHash:     tx.PreBlockHash, // 在链中，用户相同交易所在前一个区块hahs(可以有多个，如果该数据类型是共享的话)
-				Signature:        tx.Signature,    // 用户对交易的签名
+				Timestamp:        tx.Timestamp, // 时间错
+				DelMark:          tx.DelMark,   // 是否删除
 				Shareuseraddress: tx.ShareAddress,
 				Share:            tx.Share,
 			},
@@ -235,14 +232,15 @@ func CopyBlock2(block *bcgrpc.Block) *BC.Block {
 	new_grpc_block.TxInfos = []*BC.Transaction{}
 	for _, tx := range block.TxInfos {
 		new_grpc_block.TxInfos = append(new_grpc_block.TxInfos, &BC.Transaction{
-			Key:       tx.Key,
-			Value:     tx.Value,
-			DataType:  tx.DataType,
-			Timestamp: tx.Timestamp,
-			DelMark:   tx.DelMark,
-			PublicKey: tx.PublicKey,
-			Hash:      tx.Hash,
-
+			Key:          tx.Key,
+			Value:        tx.Value,
+			DataType:     tx.DataType,
+			Timestamp:    tx.Timestamp,
+			DelMark:      tx.DelMark,
+			PublicKey:    tx.PublicKey,
+			Hash:         tx.Hash,
+			Share:        tx.Share,
+			ShareAddress: tx.Shareuseraddress,
 			// 当交易打包时在填上
 			PreBlockHash: tx.PreBlockHash,
 			Signature:    tx.Signature,

@@ -44,15 +44,15 @@ func _starDistributeBlock(blockQueue chan queueObject) {
 				if err != nil {
 					fmt.Println(err)
 					fail++
-					fmt.Printf("节点 %s:%d 接受失败", blockBlockChainNode.LocalIp, blockBlockChainNode.LocalPort)
+					fmt.Printf("节点 %s:%d 接受失败\n", blockBlockChainNode.LocalIp, blockBlockChainNode.LocalPort)
 					return
 				}
 				if !res.Status {
 					fail++
-					fmt.Printf("节点 %s:%d 校验失败", blockBlockChainNode.LocalIp, blockBlockChainNode.LocalPort)
+					fmt.Printf("节点 %s:%d 校验失败\n", blockBlockChainNode.LocalIp, blockBlockChainNode.LocalPort)
 					return
 				}
-				fmt.Printf("节点 %s:%d 接受成功", blockBlockChainNode.LocalIp, blockBlockChainNode.LocalPort)
+				fmt.Printf("节点 %s:%d 接受成功\n", blockBlockChainNode.LocalIp, blockBlockChainNode.LocalPort)
 			})
 		}
 		el.Handle(total, fail)

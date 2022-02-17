@@ -2,19 +2,20 @@ package blockchain
 
 import (
 	// "github.com/btcsuite/btcutil/base58"
+	"bytes"
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/gob"
 	"errors"
+	"fmt"
 	"log"
 	"math/big"
 	"time"
-
 	// "log"
 	// "go_code/区块链/demo1/block"
-	"bytes"
 )
 
 const reword = 12.5
@@ -36,14 +37,31 @@ type Transaction struct {
 }
 
 // 设置交易ID
+// func (tx *Transaction) SetHash() {
+// 	var buffer bytes.Buffer
+// 	encoder := gob.NewEncoder(&buffer)
+// 	err := encoder.Encode(tx)
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// 	data := buffer.Bytes()
+// 	// hash := sha256.Sum256(data)
+// 	tx.Hash = data
+// }
+
 func (tx *Transaction) SetHash() {
-	var buffer bytes.Buffer
-	encoder := gob.NewEncoder(&buffer)
-	err := encoder.Encode(tx)
-	if err != nil {
-		panic(err)
+	data := []byte{}
+	data = append(data, []byte(tx.Key)...)
+	data = append(data, tx.Value...)
+	data = append(data, []byte(tx.DataType)...)
+	data = append(data, []byte(fmt.Sprintf("%d", tx.Timestamp))...)
+	data = append(data, tx.PublicKey...)
+	data = append(data, tx.PreBlockHash...)
+	data = append(data, []byte(fmt.Sprintf("%d", tx.Share))...)
+	data = append(data, []byte(fmt.Sprintf("%d", tx.DelMark))...)
+	for _, addr := range tx.ShareAddress {
+		data = append(data, []byte(addr)...)
 	}
-	data := buffer.Bytes()
 	hash := sha256.Sum256(data)
 	tx.Hash = hash[:]
 }
@@ -112,7 +130,12 @@ func (tx *Transaction) Sign() {
 	var privateKey *ecdsa.PrivateKey
 	wa, _ := LocalWallets.GetUserWallet(user_address)
 	privateKey = wa.Private
-	tx.PreBlockHash, _ = LocalWallets.GetUserTailBlockHash(user_address)
+	if tx.Share {
+		tx.PreBlockHash, _ = LocalWallets.GetUserTailBlockHash(GenerateUserShareKey(tx.ShareAddress))
+	} else {
+		tx.PreBlockHash, _ = LocalWallets.GetUserTailBlockHash(user_address)
+	}
+	tx.Hash = []byte{}
 	tx.SetHash()
 	// fmt.Println("sign", string(tx.Hash), tx)
 	r, s, err := ecdsa.Sign(rand.Reader, privateKey, tx.Hash)
@@ -121,14 +144,39 @@ func (tx *Transaction) Sign() {
 	}
 	tx.Signature = append(r.Bytes(), s.Bytes()...)
 }
-
+func Printx(hash []byte) {
+	var buffer *bytes.Buffer = bytes.NewBuffer(hash)
+	decore := gob.NewDecoder(bytes.NewReader(buffer.Bytes()))
+	var otx Transaction
+	err := decore.Decode(&otx)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(otx.Key)
+	fmt.Println(otx.Value)
+	fmt.Println(otx.DataType)
+	fmt.Println(otx.DelMark)
+	fmt.Println("hash", base64.RawStdEncoding.EncodeToString(otx.Hash))
+	fmt.Println("pubkey", base64.RawStdEncoding.EncodeToString(otx.PublicKey))
+	fmt.Println(otx.Share)
+	fmt.Println(otx.ShareAddress)
+	fmt.Println(base64.RawStdEncoding.EncodeToString(otx.Signature))
+	fmt.Println(otx.Timestamp)
+	fmt.Println(base64.RawStdEncoding.EncodeToString(otx.PreBlockHash))
+}
 func (tx *Transaction) Verify() bool {
 	signature := tx.Signature
 	tx.Signature = []byte{}
 	user_address := GenerateAddressFromPubkey(tx.PublicKey)
-	tx.PreBlockHash, _ = LocalWallets.GetUserTailBlockHash(user_address)
+	// fmt.Println(user_address)
+	if tx.Share {
+		tx.PreBlockHash, _ = LocalWallets.GetUserTailBlockHash(GenerateUserShareKey(tx.ShareAddress))
+	} else {
+		tx.PreBlockHash, _ = LocalWallets.GetUserTailBlockHash(user_address)
+	}
 	tx.Hash = []byte{}
 	tx.SetHash()
+
 	// fmt.Println("verift", string(tx.Hash), tx)
 
 	tx.Signature = signature
@@ -146,6 +194,7 @@ func (tx *Transaction) Verify() bool {
 
 	pubKeyOrigin := ecdsa.PublicKey{Curve: elliptic.P256(), X: &X, Y: &Y}
 	if !ecdsa.Verify(&pubKeyOrigin, tx.Hash, &r, &s) {
+		fmt.Println(tx.Key, "校验失败")
 		return false
 	}
 	return true

@@ -1,6 +1,9 @@
 package main
 
 import (
+	"bytes"
+	"crypto/sha256"
+	"encoding/gob"
 	"errors"
 	"fmt"
 	"net"
@@ -52,11 +55,33 @@ func getIpFromAddr(addr net.Addr) net.IP {
 	return ip
 }
 
-func main() {
-	ip, err := externalIP()
-	if err != nil {
-		fmt.Println(err)
-	}
+type Transaction struct {
+	Key          string
+	Value        []byte
+	DataType     string
+	Timestamp    uint64
+	DelMark      bool
+	PublicKey    []byte
+	Hash         []byte
+	Share        bool
+	ShareAddress []string
+	// 当交易打包时在填上
+	PreBlockHash []byte
+	Signature    []byte
+}
 
-	fmt.Println(ip.String())
+func (tx *Transaction) SetHash() {
+	var buffer bytes.Buffer
+	encoder := gob.NewEncoder(&buffer)
+	err := encoder.Encode(tx)
+	if err != nil {
+		panic(err)
+	}
+	data := buffer.Bytes()
+	hash := sha256.Sum256(data)
+	tx.Hash = hash[:]
+}
+func main() {
+	a := make(map[string][]byte)
+	fmt.Println(a["gds"], len(a["gds"]))
 }

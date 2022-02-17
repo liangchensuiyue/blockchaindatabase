@@ -25,8 +25,9 @@ var _lock *sync.Mutex = &sync.Mutex{}
 
 // 定义一个 Wallets 结构，它保存所有的wallet以及它的地址
 type Wallets struct {
-	WalletsMap       map[string]*Wallet
-	TailBlockHashMap map[string][]byte
+	WalletsMap            map[string]*Wallet
+	TailBlockHashMap      map[string][]byte
+	ShareTailBlockHashMap map[string][]byte
 }
 
 func LoadLocalWallets() {
@@ -85,6 +86,13 @@ func (ws *Wallets) GetUserTailBlockHash(user_address string) ([]byte, error) {
 	}
 	return hash, nil
 }
+func (ws *Wallets) GetUserShareTailBlockHash(key string) ([]byte, error) {
+	hash, flag := ws.ShareTailBlockHashMap[key]
+	if !flag {
+		return []byte{}, errors.New("not found")
+	}
+	return hash, nil
+}
 func (ws *Wallets) PutTailBlockHash(user_address string, blockhash []byte) {
 	ws.TailBlockHashMap[user_address] = blockhash
 }
@@ -93,6 +101,7 @@ func (ws *Wallets) loadFile() {
 	if os.IsNotExist(err) {
 		ws.WalletsMap = make(map[string]*Wallet)
 		ws.TailBlockHashMap = make(map[string][]byte)
+		ws.ShareTailBlockHashMap = make(map[string][]byte)
 		ws.SaveToFile()
 		return
 	}
@@ -115,6 +124,7 @@ func (ws *Wallets) loadFile() {
 	// ws = &wsLocal
 	ws.WalletsMap = wsLocal.WalletsMap
 	ws.TailBlockHashMap = wsLocal.TailBlockHashMap
+	ws.ShareTailBlockHashMap = wsLocal.ShareTailBlockHashMap
 }
 func (ws *Wallets) GetAllAddresses() []string {
 	var addresses []string
@@ -154,4 +164,20 @@ func GetPubKeyFromAddress(address string) []byte {
 	length := len(addressByte)
 	pubKeyHash := addressByte[1 : length-4]
 	return pubKeyHash
+}
+func GenerateUserShareKey(usersaddrs []string) string {
+	for i := 0; i < len(usersaddrs)-1; i++ {
+		for j := i + 1; j < len(usersaddrs); j++ {
+			if usersaddrs[i] > usersaddrs[j] {
+				a := usersaddrs[i]
+				usersaddrs[i] = usersaddrs[j]
+				usersaddrs[j] = a
+			}
+		}
+	}
+	key := "_"
+	for _, v := range usersaddrs {
+		key = key + v + "_"
+	}
+	return key
 }

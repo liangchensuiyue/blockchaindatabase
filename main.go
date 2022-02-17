@@ -39,17 +39,23 @@ func StartDraftWork() {
 					return
 				}
 				for _, tx := range newblock.TxInfos {
-					BC.LocalWallets.TailBlockHashMap[BC.GenerateAddressFromPubkey(tx.PublicKey)] = newblock.Hash
-					for _, addr := range tx.ShareAddress {
-						BC.LocalWallets.TailBlockHashMap[addr] = newblock.Hash
+					// BC.LocalWallets.TailBlockHashMap[BC.GenerateAddressFromPubkey(tx.PublicKey)] = newblock.Hash
+					// for _, addr := range tx.ShareAddress {
+					// 	BC.LocalWallets.TailBlockHashMap[addr] = newblock.Hash
+					// }
+					if tx.Share {
+						BC.LocalWallets.ShareTailBlockHashMap[BC.GenerateUserShareKey(tx.ShareAddress)] = newblock.Hash
+
+					} else {
+						BC.LocalWallets.TailBlockHashMap[BC.GenerateAddressFromPubkey(tx.PublicKey)] = newblock.Hash
 					}
 
 				}
 				BC.LocalWallets.SaveToFile()
-				fmt.Println("校验成功")
+				fmt.Println("同步区块", newblock.BlockId, "校验成功")
 				return
 			}
-			fmt.Println("区块校验失败")
+			fmt.Println("同步区块", newblock.BlockId, "校验失败")
 		})
 	})
 }
@@ -62,14 +68,14 @@ func addblocks(blocks []*BC.Block) {
 			localBlockChain.AddBlock(newblock)
 			if newblock.IsGenesisBlock() {
 				BC.LocalWallets.TailBlockHashMap[rw.NewAddress()] = newblock.Hash
-
 			}
 			for _, tx := range newblock.TxInfos {
-				BC.LocalWallets.TailBlockHashMap[BC.GenerateAddressFromPubkey(tx.PublicKey)] = newblock.Hash
-				for _, addr := range tx.ShareAddress {
-					BC.LocalWallets.TailBlockHashMap[addr] = newblock.Hash
-				}
+				if tx.Share {
+					BC.LocalWallets.ShareTailBlockHashMap[BC.GenerateUserShareKey(tx.ShareAddress)] = newblock.Hash
 
+				} else {
+					BC.LocalWallets.TailBlockHashMap[BC.GenerateAddressFromPubkey(tx.PublicKey)] = newblock.Hash
+				}
 			}
 			BC.LocalWallets.SaveToFile()
 		} else {
@@ -94,11 +100,11 @@ func runLocalTestCli() {
 		switch cmds[0] {
 		case "put":
 			// put age 15 int
-			err := db.Put(cmds[1], []byte(cmds[2]), cmds[3], cmds[4], false, []string{}, true)
+			err := db.Put(cmds[1], []byte(cmds[2]), cmds[3], cmds[4], true, []string{"lc"}, true)
 			fmt.Println("put", err)
 		case "del":
 			// del age
-			db.Del(cmds[1], cmds[2], false, []string{}, true)
+			db.Del(cmds[1], cmds[2], true, []string{"lc"}, true)
 		case "get":
 			// get age
 			block, index := db.Get(cmds[1], cmds[2], false, []string{})
@@ -113,7 +119,10 @@ func runLocalTestCli() {
 				fmt.Println("未查询到")
 			}
 		case "newuser":
-			db.CreateUser(cmds[1], cmds[2])
+			err := db.CreateUser(cmds[1], cmds[2])
+			if err != nil {
+				fmt.Println(err.Error())
+			}
 		case "print_quorum":
 			for _, node := range localNode.Quorum {
 				if node.LocalIp == localNode.LocalIp {
@@ -203,12 +212,17 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	fmt.Println("=======================ffsdfsdfs")
+
 	localBlockChain = BC.NewBlockChain(
 		localNode.BCInfo.BlockTailHashKey,
 
 		localNode.BCInfo.BlockChainDB)
+	fmt.Println("=======================fffffffffff")
+
 	BC.LoadLocalWallets()
 	_, err = localBlockChain.GetAddressFromUsername("liangchen")
+	fmt.Println("=======================")
 	if err != nil {
 		wa := BC.NewWallet("liangchen", localNode.BCInfo.PassWorld)
 		wa.Private = localNode.BCInfo.PriKey
@@ -216,6 +230,7 @@ func main() {
 		BC.LocalWallets.WalletsMap[wa.NewAddress()] = wa
 		BC.LocalWallets.SaveToFile()
 	}
+	fmt.Println("...........")
 	quorum.Broadcast(localBlockChain)
 
 	newbllocks, e := quorum.BlockSynchronization()
@@ -240,6 +255,7 @@ func main() {
 			panic(err)
 		}
 		BC.LocalWallets.TailBlockHashMap[rw.NewAddress()] = genesis_block.Hash
+		BC.LocalWallets.SaveToFile()
 	}
 
 	quorum.StartGrpcWork()

@@ -1,16 +1,17 @@
 package database
 
 import (
-	"bytes"
 	"encoding/base64"
 	"errors"
 	"fmt"
 	BC "go_code/基于区块链的非关系型数据库/blockchain"
 	"go_code/基于区块链的非关系型数据库/quorum"
 	"strings"
+	"time"
 )
 
 func CreateUser(username string, passworld string) error {
+	fmt.Println("正在创建用户...")
 	user_address := BC.LocalWallets.GetBlockChainRootWallet().NewAddress()
 
 	// 判断用户是否创建
@@ -62,10 +63,7 @@ func CreateUser(username string, passworld string) error {
 		}
 		fmt.Println("区块校验失败")
 	})
-	_, e = GetAddressFromUsername(username)
-	if e != nil {
-		return errors.New("创建失败")
-	}
+
 	return nil
 }
 
@@ -99,20 +97,37 @@ func VeriftUser(username string, passworld string) error {
 }
 
 func Put(key string, value []byte, datatype string, user_address string, share bool, shareuser []string, strict bool) error {
+	shareaddress := []string{}
 	if share {
 		for i := 0; i < len(shareuser); i++ {
 			addr, e := GetAddressFromUsername(shareuser[i])
+			if addr == user_address {
+				continue
+			}
 			if e != nil {
 				return e
 			}
-			shareuser[i] = addr
+			shareaddress = append(shareaddress, addr)
 		}
 	} else {
 		shareuser = []string{}
 	}
-	tx, e := BC.NewTransaction("put", key, value, datatype, user_address, share, shareuser)
+	if len(shareaddress) == 0 {
+		share = false
+	} else {
+		shareaddress = append(shareaddress, user_address)
+	}
+	tx, e := BC.NewTransaction("put", key, value, datatype, user_address, share, shareaddress)
 	if e != nil {
-		go quorum.Request(user_address, tx)
+		go quorum.Request(user_address, strict, &BC.Transaction{
+			Key:          key,
+			Value:        value,
+			DelMark:      false,
+			Share:        share,
+			DataType:     datatype,
+			Timestamp:    uint64(time.Now().Unix()),
+			ShareAddress: shareuser,
+		})
 		return nil
 	}
 	if strict {
@@ -130,44 +145,58 @@ func Put(key string, value []byte, datatype string, user_address string, share b
 					return
 				}
 
-				BC.LocalWallets.TailBlockHashMap[user_address] = newblock.Hash
-
 				if share {
 					for _, tx := range newblock.TxInfos {
-
-						for _, addr := range tx.ShareAddress {
-							BC.LocalWallets.TailBlockHashMap[addr] = newblock.Hash
-						}
+						BC.LocalWallets.ShareTailBlockHashMap[BC.GenerateUserShareKey(tx.ShareAddress)] = newblock.Hash
 
 					}
+				} else {
+					BC.LocalWallets.TailBlockHashMap[user_address] = newblock.Hash
 				}
 				BC.LocalWallets.SaveToFile()
-				fmt.Println("校验成功")
+				fmt.Println("block:", newblock.BlockId, "校验成功")
 				return
 			}
-			fmt.Println("区块校验失败")
+			fmt.Println("block:", newblock.BlockId, "校验失败")
 		})
 
+	} else {
+		draft := BC.GetLocalDraft()
+		draft.PutTx(tx)
 	}
-	draft := BC.GetLocalDraft()
-	draft.PutTx(tx)
+
 	return nil
 }
 func Del(key string, user_address string, share bool, shareuser []string, strict bool) {
+	shareaddress := []string{}
 	if share {
 		for i := 0; i < len(shareuser); i++ {
 			addr, e := GetAddressFromUsername(shareuser[i])
+			if user_address == addr {
+				continue
+			}
 			if e != nil {
 				return
 			}
-			shareuser[i] = addr
+			shareaddress = append(shareaddress, addr)
 		}
 	} else {
 		shareuser = []string{}
 	}
-	tx, e := BC.NewTransaction("del", key, []byte{}, "", user_address, share, shareuser)
+	if len(shareaddress) == 0 {
+		share = false
+	} else {
+		shareaddress = append(shareaddress, user_address)
+	}
+	tx, e := BC.NewTransaction("del", key, []byte{}, "", user_address, share, shareaddress)
 	if e != nil {
-		go quorum.Request(user_address, tx)
+		go quorum.Request(user_address, strict, &BC.Transaction{
+			Key:          key,
+			DelMark:      true,
+			Share:        share,
+			Timestamp:    uint64(time.Now().Unix()),
+			ShareAddress: shareuser,
+		})
 		return
 	}
 	if strict {
@@ -181,76 +210,74 @@ func Del(key string, user_address string, share bool, shareuser []string, strict
 			if flag {
 				localBlockChain.AddBlock(newblock)
 
-				BC.LocalWallets.TailBlockHashMap[user_address] = newblock.Hash
-
 				if share {
 					for _, tx := range newblock.TxInfos {
-
-						for _, addr := range tx.ShareAddress {
-							BC.LocalWallets.TailBlockHashMap[addr] = newblock.Hash
-						}
-
+						BC.LocalWallets.ShareTailBlockHashMap[BC.GenerateUserShareKey(tx.ShareAddress)] = newblock.Hash
 					}
+				} else {
+					BC.LocalWallets.TailBlockHashMap[user_address] = newblock.Hash
 				}
 				BC.LocalWallets.SaveToFile()
-				fmt.Println("区块校验成功")
+				fmt.Println("block:", newblock.BlockId, "校验成功")
 				return
 			}
-			fmt.Println("database.operate 121 区块校验失败")
+			fmt.Println("block:", newblock.BlockId, "校验失败")
 			return
 
 		})
 
+	} else {
+		draft := BC.GetLocalDraft()
+		draft.PutTx(tx)
 	}
-	draft := BC.GetLocalDraft()
-	draft.PutTx(tx)
+
 	return
 }
 func Get(key string, user_address string, sharemode bool, shareuser []string) (*BC.Block, int) {
-	user_wa, _ := BC.LocalWallets.GetUserWallet(user_address)
-	tailhash, ok := BC.LocalWallets.TailBlockHashMap[user_address]
-	if !ok {
-		return nil, -1
-	}
-	user_addrs_map := map[string]bool{}
+	// user_wa, _ := BC.LocalWallets.GetUserWallet(user_address)
+	var tailhash []byte
+	shareaddress := []string{}
 	for j := 0; j < len(shareuser); j++ {
 		addr, e := GetAddressFromUsername(shareuser[j])
-		if e == nil {
-			user_addrs_map[addr] = true
+		if addr == user_address {
+			continue
 		}
+		if e == nil {
+			shareaddress = append(shareaddress, addr)
+		}
+	}
+	if len(shareaddress) == 0 {
+		sharemode = false
+	} else {
+		shareaddress = append(shareaddress, user_address)
+	}
+	shareaddressKey := BC.GenerateUserShareKey(shareaddress)
+	if sharemode {
+		tailhash, _ = BC.LocalWallets.ShareTailBlockHashMap[shareaddressKey]
+	} else {
+		tailhash, _ = BC.LocalWallets.TailBlockHashMap[user_address]
 	}
 	for {
 		b, e := localBlockChain.GetBlockByHash(tailhash)
-		if e != nil {
+		if e != nil || b.IsGenesisBlock() {
 			fmt.Println(e, tailhash)
 			return nil, -1
 		}
 		for i := len(b.TxInfos) - 1; i >= 0; i-- {
 			if sharemode {
-				if bytes.Equal(b.TxInfos[i].PublicKey, user_wa.PubKey) {
+				if b.TxInfos[i].Share && BC.GenerateUserShareKey(b.TxInfos[i].ShareAddress) == shareaddressKey {
 					if b.TxInfos[i].Key == key {
-
-						flag := false
-						for _, _addr := range b.TxInfos[i].ShareAddress {
-							_, ok := user_addrs_map[_addr]
-							if !ok {
-								flag = true
-							}
-						}
-						if flag {
-							continue
-						}
-
 						if !b.TxInfos[i].DelMark {
 							return b, i
 						} else {
 							return nil, -1
 						}
 					}
+
 					tailhash = b.TxInfos[i].PreBlockHash
 				}
 			} else {
-				if bytes.Equal(b.TxInfos[i].PublicKey, user_wa.PubKey) {
+				if BC.GenerateAddressFromPubkey(b.TxInfos[i].PublicKey) == user_address {
 					if b.TxInfos[i].Key == key {
 						if !b.TxInfos[i].DelMark {
 							return b, i
@@ -261,7 +288,6 @@ func Get(key string, user_address string, sharemode bool, shareuser []string) (*
 
 					tailhash = b.TxInfos[i].PreBlockHash
 				}
-				continue
 			}
 		}
 	}
@@ -282,6 +308,7 @@ func GetAddressFromUsername(username string) (string, error) {
 			break
 		}
 		for _, tx := range b.TxInfos {
+			fmt.Println("t.Key", tx.Key, username)
 			_hash = tx.PreBlockHash
 			if tx.Key == username {
 				addr := strings.Split(string(tx.Value), " ")[1]

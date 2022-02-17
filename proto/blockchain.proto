@@ -52,7 +52,8 @@ message NodeInfo{
 }
 message RequestBody{
     string user_address = 1;
-    Transaction Tx = 2;
+    bool strict = 2;
+    Transaction Tx = 3;
 }
 message Nodes{
     repeated NodeInfo nodes = 1;
