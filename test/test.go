@@ -82,6 +82,7 @@ func (tx *Transaction) SetHash() {
 	tx.Hash = hash[:]
 }
 func main() {
-	a := make(map[string][]byte)
-	fmt.Println(a["gds"], len(a["gds"]))
+	var nums chan int = make(chan int, 103)
+	nums <- 10
+	fmt.Println(len(nums), cap(nums))
 }

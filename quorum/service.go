@@ -12,6 +12,28 @@ import (
 
 type Server struct{}
 
+func (this *Server) GetAccountant(ctx context.Context, req *bcgrpc.Heartbeat) (info *bcgrpc.VerifyInfo, err error) {
+	info = &bcgrpc.VerifyInfo{}
+	info.Status = false
+	if int(req.BlockNums) > len(BlockQueue) && isAccountant {
+		isAccountant = false
+		info.Status = true
+		return info, nil
+	} else {
+		return info, errors.New("获取记账权失败")
+	}
+}
+func (this *Server) QuorumHeartbeat(ctx context.Context, req *bcgrpc.NodeInfo) (info *bcgrpc.Heartbeat, err error) {
+	info = &bcgrpc.Heartbeat{}
+	// fmt.Println("心跳检测", req.Passworld == localNode.BCInfo.PassWorld)
+	if req.Passworld != localNode.BCInfo.PassWorld {
+		return info, errors.New("没有访问权限")
+	}
+	info.IsAccountant = isAccountant
+	info.BlockNums = int32(len(BlockQueue))
+
+	return info, nil
+}
 func (this *Server) DistributeBlock(ctx context.Context, req *bcgrpc.Block) (info *bcgrpc.VerifyInfo, err error) {
 	info = &bcgrpc.VerifyInfo{}
 	info.Info = "区块校验成功"
@@ -125,37 +147,39 @@ func (this *Server) Request(ctx context.Context, req *bcgrpc.RequestBody) (info 
 			newblock, _ := lcdraft.PackBlock(tx)
 			rw := BC.LocalWallets.GetBlockChainRootWallet()
 			localBlockChain.SignBlock(rw.Private, false, newblock)
-
-			localNode.DistribuBlock(newblock, func(total, fail int) {
-				flag := localBlockChain.VerifyBlock(rw.PubKey, newblock)
-				if flag {
-					e := localBlockChain.AddBlock(newblock)
-					if e != nil {
-						fmt.Println(e)
-						return
-					}
-
-					// BC.LocalWallets.TailBlockHashMap[req.UserAddress] = newblock.Hash
-
-					// if req.Tx.Share {
-					for _, tx := range newblock.TxInfos {
-
-						// fmt.Println(tx.Share, tx.ShareAddress, base64.RawStdEncoding.EncodeToString(newblock.Hash))
-						if tx.Share {
-							BC.LocalWallets.ShareTailBlockHashMap[BC.GenerateUserShareKey(tx.ShareAddress)] = newblock.Hash
-
-						} else {
-							BC.LocalWallets.TailBlockHashMap[BC.GenerateAddressFromPubkey(tx.PublicKey)] = newblock.Hash
+			BlockQueue <- QueueObject{
+				TargetBlock: newblock,
+				Handle: func(total, fail int) {
+					flag := localBlockChain.VerifyBlock(rw.PubKey, newblock)
+					if flag {
+						e := localBlockChain.AddBlock(newblock)
+						if e != nil {
+							fmt.Println(e)
+							return
 						}
 
+						// BC.LocalWallets.TailBlockHashMap[req.UserAddress] = newblock.Hash
+
+						// if req.Tx.Share {
+						for _, tx := range newblock.TxInfos {
+
+							// fmt.Println(tx.Share, tx.ShareAddress, base64.RawStdEncoding.EncodeToString(newblock.Hash))
+							if tx.Share {
+								BC.LocalWallets.ShareTailBlockHashMap[BC.GenerateUserShareKey(tx.ShareAddress)] = newblock.Hash
+
+							} else {
+								BC.LocalWallets.TailBlockHashMap[BC.GenerateAddressFromPubkey(tx.PublicKey)] = newblock.Hash
+							}
+
+						}
+						// }
+						BC.LocalWallets.SaveToFile()
+						fmt.Println("block:", newblock.BlockId, "校验成功")
+						return
 					}
-					// }
-					BC.LocalWallets.SaveToFile()
-					fmt.Println("block:", newblock.BlockId, "校验成功")
-					return
-				}
-				fmt.Println("block:", newblock.BlockId, "校验失败")
-			})
+					fmt.Println("block:", newblock.BlockId, "校验失败")
+				},
+			}
 		} else {
 			draft := BC.GetLocalDraft()
 			draft.PutTx(tx)

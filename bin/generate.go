@@ -11,46 +11,22 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"strings"
 	"time"
 )
 
-func main1() {
+func main() {
 	var localNode quorum.BlockChainNode
 	localNode.BCInfo = &quorum.BlockChainInfo{}
+	localNode.LocalPort = 3300
 	localNode.BCInfo.TailBlockId = 0
-	for {
-		fmt.Printf("绑定端口:")
-		fmt.Scanf("%d\n", &localNode.LocalPort)
-		// 校验端口是否合规
-		if localNode.LocalPort >= 65535 {
-			continue
-		}
-		break
-	}
+	localNode.BCInfo.PassWorld = "pass_" + fmt.Sprintf("%d", time.Now().Unix())
+	localNode.BCInfo.BlockChainDB = "block"
 	// ip, err := util.GetLocalIp()
 	// if err != nil {
 	// 	fmt.Println(err)
 	// }
 	// localNode.LocalIp = ip.String()
 	localNode.LocalIp = "10.0.0.1"
-	for {
-		fmt.Printf("集群访问密码:")
-		fmt.Scanf("%s\n", &localNode.BCInfo.PassWorld)
-		if strings.TrimSpace(localNode.BCInfo.PassWorld) == "" {
-			continue
-		}
-		break
-	}
-	for {
-		fmt.Printf("块数据存储文件名称:")
-		fmt.Scanf("%s", &localNode.BCInfo.BlockChainDB)
-		if strings.TrimSpace(localNode.BCInfo.BlockChainDB) == "" {
-			continue
-		}
-		break
-	}
-
 	curve := elliptic.P256()
 
 	privateKey, err := ecdsa.GenerateKey(curve, rand.Reader)

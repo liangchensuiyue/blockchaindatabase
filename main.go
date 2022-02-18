@@ -30,33 +30,36 @@ func StartDraftWork() {
 		} else {
 			localBlockChain.SignBlock(rw.Private, false, newblock)
 		}
-		localNode.DistribuBlock(newblock, func(total, fail int) {
-			flag := localBlockChain.VerifyBlock(rw.PubKey, newblock)
-			if flag {
-				e := localBlockChain.AddBlock(newblock)
-				if e != nil {
-					fmt.Println(e)
+		quorum.BlockQueue <- quorum.QueueObject{
+			TargetBlock: newblock,
+			Handle: func(total, fail int) {
+				flag := localBlockChain.VerifyBlock(rw.PubKey, newblock)
+				if flag {
+					e := localBlockChain.AddBlock(newblock)
+					if e != nil {
+						fmt.Println(e)
+						return
+					}
+					for _, tx := range newblock.TxInfos {
+						// BC.LocalWallets.TailBlockHashMap[BC.GenerateAddressFromPubkey(tx.PublicKey)] = newblock.Hash
+						// for _, addr := range tx.ShareAddress {
+						// 	BC.LocalWallets.TailBlockHashMap[addr] = newblock.Hash
+						// }
+						if tx.Share {
+							BC.LocalWallets.ShareTailBlockHashMap[BC.GenerateUserShareKey(tx.ShareAddress)] = newblock.Hash
+
+						} else {
+							BC.LocalWallets.TailBlockHashMap[BC.GenerateAddressFromPubkey(tx.PublicKey)] = newblock.Hash
+						}
+
+					}
+					BC.LocalWallets.SaveToFile()
+					fmt.Println("同步区块", newblock.BlockId, "校验成功")
 					return
 				}
-				for _, tx := range newblock.TxInfos {
-					// BC.LocalWallets.TailBlockHashMap[BC.GenerateAddressFromPubkey(tx.PublicKey)] = newblock.Hash
-					// for _, addr := range tx.ShareAddress {
-					// 	BC.LocalWallets.TailBlockHashMap[addr] = newblock.Hash
-					// }
-					if tx.Share {
-						BC.LocalWallets.ShareTailBlockHashMap[BC.GenerateUserShareKey(tx.ShareAddress)] = newblock.Hash
-
-					} else {
-						BC.LocalWallets.TailBlockHashMap[BC.GenerateAddressFromPubkey(tx.PublicKey)] = newblock.Hash
-					}
-
-				}
-				BC.LocalWallets.SaveToFile()
-				fmt.Println("同步区块", newblock.BlockId, "校验成功")
-				return
-			}
-			fmt.Println("同步区块", newblock.BlockId, "校验失败")
-		})
+				fmt.Println("同步区块", newblock.BlockId, "校验失败")
+			},
+		}
 	})
 }
 func addblocks(blocks []*BC.Block) {
@@ -87,8 +90,9 @@ func addblocks(blocks []*BC.Block) {
 }
 func runLocalTestCli() {
 	reader := bufio.NewReader(os.Stdin)
-	for {
+	fmt.Println("start cli:")
 
+	for {
 		_clistr, _, _ := reader.ReadLine()
 		clistr := string(_clistr)
 		_cmds := strings.Split(clistr, " ")
@@ -98,17 +102,18 @@ func runLocalTestCli() {
 				cmds = append(cmds, v)
 			}
 		}
+
 		switch cmds[0] {
 		case "put":
 			// put age 15 int
-			err := db.Put(cmds[1], []byte(cmds[2]), cmds[3], cmds[4], true, []string{"lc"}, true)
+			err := db.Put(cmds[1], []byte(cmds[2]), cmds[3], cmds[4], false, []string{"lc"}, true)
 			fmt.Println("put", err)
 		case "del":
 			// del age
-			db.Del(cmds[1], cmds[2], true, []string{"lc"}, true)
+			db.Del(cmds[1], cmds[2], false, []string{"lc"}, true)
 		case "get":
 			// get age
-			block, index := db.Get(cmds[1], cmds[2], true, []string{"gds"})
+			block, index := db.Get(cmds[1], cmds[2], false, []string{"gds"})
 			fmt.Println("get:")
 			if block != nil {
 				fmt.Println("blockid:", block.BlockId)
@@ -130,6 +135,8 @@ func runLocalTestCli() {
 					fmt.Println(node.LocalIp, "(本机)")
 				}
 			}
+		case "isaccountant":
+			fmt.Println(quorum.LocalNodeIsAccount())
 		case "print":
 			localBlockChain.Traverse(func(block *BC.Block, err error) {
 				if block != nil {

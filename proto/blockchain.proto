@@ -36,6 +36,10 @@ service BlockChainService{
     rpc JoinGroup(NodeInfo)returns(Nodes){}
 
     rpc Request(RequestBody)returns(VerifyInfo){}
+
+    rpc QuorumHeartbeat(NodeInfo)returns(Heartbeat){}
+
+    rpc GetAccountant(Heartbeat)returns(VerifyInfo){}
     // // 客户端向 follower 发送数据
     // rpc ClientYieldMsgDataRequest(stream MessageData)returns (Response){}
 
@@ -44,6 +48,12 @@ service BlockChainService{
 
     // // 客户端关闭管道
     // rpc ClientCloseChannel(ClientRegistToFollower)returns(Response){}
+}
+message Heartbeat{
+    bool is_accountant = 1;
+    int32 block_nums = 2;
+    string local_ip = 3;
+    int32 local_port =4;
 }
 message NodeInfo{
     string passworld = 1;

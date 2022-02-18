@@ -32,24 +32,30 @@ type BlockChainNode struct {
 	BCInfo *BlockChainInfo
 	Quorum []*BlockChainNode
 }
-type queueObject struct {
+type QueueObject struct {
 	TargetBlock *BC.Block
 	Handle      func(int, int)
 }
 
-var blockQueue chan queueObject
+var BlockQueue chan QueueObject
+var isAccountant bool = false
 
 func StartGrpcWork() {
-	blockQueue = make(chan queueObject, 100)
-	go _starDistributeBlock(blockQueue)
+	BlockQueue = make(chan QueueObject, 100)
 	go _startServer()
+
+	go _starDistributeBlock(BlockQueue)
+	go _startHeartbeat()
 }
 
 func (node *BlockChainNode) DistribuBlock(newblock *BC.Block, handle func(int, int)) {
-	blockQueue <- queueObject{
+	BlockQueue <- QueueObject{
 		TargetBlock: newblock,
 		Handle:      handle,
 	}
+}
+func LocalNodeIsAccount() bool {
+	return isAccountant
 }
 
 func SaveGenesisFileToDisk() {
