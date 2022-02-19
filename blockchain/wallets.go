@@ -5,7 +5,6 @@ import (
 	"crypto/elliptic"
 	"encoding/gob"
 	"errors"
-	"fmt"
 
 	// quorum "go_code/基于区块链的非关系型数据库/quorum"
 	"io/ioutil"
@@ -39,7 +38,7 @@ func (ws *Wallets) GetBlockChainRootWallet() *Wallet {
 			return wa
 		}
 	}
-	fmt.Println("区块链root用户未找到")
+	// fmt.Println("区块链root用户未找到")
 	return nil
 }
 

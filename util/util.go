@@ -5,6 +5,13 @@ import (
 	"net"
 )
 
+func GetBoolFromStr(str string) bool {
+	if str == "true" || str == "True" || str == "1" {
+		return true
+	} else {
+		return false
+	}
+}
 func GetLocalIp() (net.IP, error) {
 	ifaces, err := net.Interfaces()
 	if err != nil {

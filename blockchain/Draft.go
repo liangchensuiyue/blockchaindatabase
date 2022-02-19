@@ -51,7 +51,7 @@ func initDraft() {
 	encoder := gob.NewEncoder(&content)
 	err := encoder.Encode(draft)
 	if err != nil {
-		log.Panic(err)
+		// log.Panic(err)
 	}
 	err = ioutil.WriteFile(draft_datat_file_name, content.Bytes(), 0644)
 	if err != nil {
@@ -62,7 +62,7 @@ func initDraft() {
 func GetLocalDraftFromDisk() *Draft {
 	_, err := os.Stat(draft_datat_file_name)
 	if os.IsNotExist(err) {
-		fmt.Println("---", draft_datat_file_name, "---", err)
+		// fmt.Println("---", draft_datat_file_name, "---", err)
 		initDraft()
 	}
 	// 读取钱包

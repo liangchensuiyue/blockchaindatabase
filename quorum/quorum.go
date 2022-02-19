@@ -54,7 +54,7 @@ func _startHeartbeat() {
 				Passworld: localNode.BCInfo.PassWorld,
 			})
 			if err != nil {
-				fmt.Println("DistributeBlock 服务调用失败", err.Error())
+				// fmt.Println("DistributeBlock 服务调用失败", err.Error())
 			} else {
 				if re.IsAccountant {
 					flag = true
@@ -98,7 +98,7 @@ func getAccountant() bool {
 		}
 		conn, err := grpc.Dial(fmt.Sprintf("%s:%d", node.LocalIp, node.LocalPort), grpc.WithInsecure())
 		if err != nil {
-			fmt.Println("网络异常", err)
+			// fmt.Println("网络异常", err)
 		}
 
 		//获得grpc句柄
@@ -135,7 +135,7 @@ func _starDistributeBlock(blockQueue chan QueueObject) {
 		block := el.TargetBlock
 		total := 0
 		fail := 0
-		fmt.Printf("区块 %d 分发:\n", block.BlockId)
+		fmt.Printf("区块 %d 分发\n", block.BlockId)
 		for _, blockBlockChainNode := range localNode.Quorum {
 			if blockBlockChainNode.LocalIp == localNode.LocalIp {
 				continue

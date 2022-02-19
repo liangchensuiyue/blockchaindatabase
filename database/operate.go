@@ -327,7 +327,7 @@ func GetAddressFromUsername(username string) (string, error) {
 			break
 		}
 		for _, tx := range b.TxInfos {
-			fmt.Println("t.Key", tx.Key, username)
+			// fmt.Println("t.Key", tx.Key, username)
 			_hash = tx.PreBlockHash
 			if tx.Key == username {
 				addr := strings.Split(string(tx.Value), " ")[1]

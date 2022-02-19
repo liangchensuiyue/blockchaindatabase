@@ -91,7 +91,7 @@ func (bc *BlockChain) GetTailBlock() (*Block, error) {
 	hash := bc.GetTailBlockHash()
 	bl, err := bc.GetBlockByHash(hash)
 	if err != nil {
-		fmt.Println(err)
+		// fmt.Println(err)
 		return bl, err
 	}
 	return bl, nil
@@ -102,7 +102,7 @@ func (bc *BlockChain) GetTailUserBlock() (*Block, error) {
 	hash := bc.GetTailBlockHash()
 	bl, err := bc.GetBlockByHash(hash)
 	if err != nil {
-		fmt.Println(err)
+		// fmt.Println(err)
 		return bl, err
 	}
 	return bl, nil

@@ -9,8 +9,10 @@ import (
 	"strings"
 
 	BC "go_code/基于区块链的非关系型数据库/blockchain"
+	"go_code/基于区块链的非关系型数据库/database"
 	db "go_code/基于区块链的非关系型数据库/database"
 	quorum "go_code/基于区块链的非关系型数据库/quorum"
+	"go_code/基于区块链的非关系型数据库/util"
 )
 
 var localBlockChain *BC.BlockChain
@@ -90,9 +92,81 @@ func addblocks(blocks []*BC.Block) {
 }
 func runLocalTestCli() {
 	reader := bufio.NewReader(os.Stdin)
-	fmt.Println("start cli:")
-
+	// fmt.Println("start cli:")
+	flag := false
+	// username := ""
+	address := ""
 	for {
+		if flag {
+			break
+		}
+		_clistr, _, _ := reader.ReadLine()
+		clistr := string(_clistr)
+		_cmds := strings.Split(clistr, " ")
+		cmds := []string{}
+		for _, v := range _cmds {
+			if v != "" {
+				cmds = append(cmds, v)
+			}
+		}
+		switch cmds[0] {
+		case "help":
+			fmt.Println("createuser [username] [passworld] -- 创建用户")
+			fmt.Println("latestblock --打印最新的块信息")
+			fmt.Println("isaccountant --是否有记账权力")
+			fmt.Println("login [username] [passworld] --登录")
+			fmt.Println("print_quorum --打印集群信息")
+		case "createuser":
+			if len(cmds) < 3 {
+				fmt.Println("格式错误")
+				break
+			}
+			err := db.CreateUser(cmds[1], cmds[2])
+			if err != nil {
+				fmt.Println("创建失败:", err.Error())
+			} else {
+				fmt.Println("创建成功")
+			}
+		case "latestblock":
+			b, _ := localBlockChain.GetTailBlock()
+			fmt.Println("BlockId:", b.BlockId)
+			fmt.Println("PreBLockHash:", base64.RawStdEncoding.EncodeToString(b.PreBlockHash))
+			fmt.Println("Hash:", base64.RawStdEncoding.EncodeToString(b.Hash))
+			fmt.Println("Timestamp:", b.Timestamp)
+			fmt.Println("TxNums:", len(b.TxInfos))
+		case "isaccountant":
+			fmt.Println(quorum.LocalNodeIsAccount())
+		case "login":
+			if len(cmds) < 3 {
+				fmt.Println("格式错误")
+				break
+			}
+			e := database.VeriftUser(cmds[1], cmds[2])
+			if e != nil {
+				fmt.Println("登录失败:", e.Error())
+			} else {
+				address, e = db.GetAddressFromUsername(cmds[1])
+				if e != nil {
+					fmt.Println("登录失败:", e.Error())
+					break
+				}
+				flag = true
+				// username = cmds[1]
+			}
+		case "print_quorum":
+			for _, node := range localNode.Quorum {
+				if node.LocalIp == localNode.LocalIp {
+					fmt.Println(node.LocalIp, "(本机)")
+				}
+			}
+		default:
+			fmt.Println("格式错误")
+
+		}
+
+	}
+	for {
+		fmt.Printf(">>> ")
 		_clistr, _, _ := reader.ReadLine()
 		clistr := string(_clistr)
 		_cmds := strings.Split(clistr, " ")
@@ -106,15 +180,26 @@ func runLocalTestCli() {
 		switch cmds[0] {
 		case "put":
 			// put age 15 int
-			err := db.Put(cmds[1], []byte(cmds[2]), cmds[3], cmds[4], false, []string{"lc"}, true)
+			if len(cmds) < 6 {
+				fmt.Println("格式错误  put [key] [value] [datatype] [strict] [sharemode] [user1] [user2] ...")
+				break
+			}
+			err := db.Put(cmds[1], []byte(cmds[2]), cmds[3], address, util.GetBoolFromStr(cmds[5]), cmds[6:], util.GetBoolFromStr(cmds[4]))
 			fmt.Println("put", err)
 		case "del":
+			if len(cmds) < 4 {
+				fmt.Println("格式错误  del [key] [strict] [sharemode] [user1] [user2] ...")
+				break
+			}
 			// del age
-			db.Del(cmds[1], cmds[2], false, []string{"lc"}, true)
+			db.Del(cmds[1], address, util.GetBoolFromStr(cmds[3]), cmds[4:], util.GetBoolFromStr(cmds[2]))
 		case "get":
+			if len(cmds) < 3 {
+				fmt.Println("格式错误  get [key] [sharemode] [user1] [user2] ...")
+				break
+			}
 			// get age
-			block, index := db.Get(cmds[1], cmds[2], false, []string{"gds"})
-			fmt.Println("get:")
+			block, index := db.Get(cmds[1], address, util.GetBoolFromStr(cmds[2]), cmds[3:])
 			if block != nil {
 				fmt.Println("blockid:", block.BlockId)
 				// fmt.Println("block_hash", block.Hash)
@@ -123,11 +208,6 @@ func runLocalTestCli() {
 				fmt.Println("key-value:", block.TxInfos[index].Key, string(block.TxInfos[index].Value))
 			} else {
 				fmt.Println("未查询到")
-			}
-		case "newuser":
-			err := db.CreateUser(cmds[1], cmds[2])
-			if err != nil {
-				fmt.Println(err.Error())
 			}
 		case "print_quorum":
 			for _, node := range localNode.Quorum {
@@ -166,15 +246,13 @@ func runLocalTestCli() {
 			})
 			fmt.Printf("---------------------------\n\n")
 
-		case "print_tail_block":
-			block, _ := localBlockChain.GetTailBlock()
-			fmt.Println("tail_blockId", block.BlockId)
-			fmt.Println("tail_hash", block.Hash)
-			for i, tx := range block.TxInfos {
-				fmt.Println("交易", i)
-				fmt.Println(tx.Key)
-				fmt.Println(tx.Value)
-			}
+		case "latestblock":
+			b, _ := localBlockChain.GetTailBlock()
+			fmt.Println("BlockId:", b.BlockId)
+			fmt.Println("PreBLockHash:", base64.RawStdEncoding.EncodeToString(b.PreBlockHash))
+			fmt.Println("Hash:", base64.RawStdEncoding.EncodeToString(b.Hash))
+			fmt.Println("Timestamp:", b.Timestamp)
+			fmt.Println("TxNums:", len(b.TxInfos))
 		case "print_global_wallet":
 			rw := BC.LocalWallets.GetBlockChainRootWallet()
 			user_address := rw.NewAddress()
@@ -202,8 +280,10 @@ func runLocalTestCli() {
 			for addr, w := range BC.LocalWallets.WalletsMap {
 				fmt.Println(w.Username, addr)
 			}
+		case "exit":
+			break
 		default:
-			fmt.Println(cmds)
+			fmt.Println("格式错误")
 		}
 	}
 }
