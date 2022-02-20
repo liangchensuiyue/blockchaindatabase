@@ -2,10 +2,13 @@ package quorum
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	BC "go_code/基于区块链的非关系型数据库/blockchain"
 	bcgrpc "go_code/基于区块链的非关系型数据库/proto"
+	view "go_code/基于区块链的非关系型数据库/view"
 
 	"google.golang.org/grpc"
 )
@@ -174,8 +177,45 @@ func DistributeBlock(block *BC.Block, node *BlockChainNode, handle func(*bcgrpc.
 
 	//通过句柄调用函数
 	re, err := c.DistributeBlock(context.Background(), CopyBlock(block))
-	if err != nil {
-		fmt.Println("DistributeBlock 服务调用失败")
+	if err != nil || !re.Status {
+		// fmt.Println("DistributeBlock 服务调用失败")
+	}
+
+	infos := []map[string]interface{}{}
+	for i, tx := range block.TxInfos {
+
+		fmt.Println("交易索引:", i)
+		fmt.Println("user_address:", BC.GenerateAddressFromPubkey(tx.PublicKey))
+		fmt.Println("key-value:", tx.Key, string(tx.Value))
+		fmt.Println("sharemode:", tx.Share)
+		fmt.Println("delmark:", tx.DelMark)
+		fmt.Println("shareuser:")
+		addrs := []string{}
+		for _, uaddr := range tx.ShareAddress {
+			// w, e = BC.LocalWallets.GetUserWallet(uaddr)
+			// if e == nil {
+			addrs = append(addrs, uaddr)
+			// }
+		}
+
+		infos = append(infos, map[string]interface{}{
+			"Index":            i,
+			"UserAddress":      BC.GenerateAddressFromPubkey(tx.PublicKey),
+			"Hash":             base64.RawStdEncoding.EncodeToString(tx.Hash),
+			"Timestamp":        tx.Timestamp,
+			"ShareUserAddress": addrs,
+		})
+	}
+	datastr, _ := json.Marshal(map[string]interface{}{
+		"BlockId":       block.BlockId,
+		"PrevBlockHash": base64.RawStdEncoding.EncodeToString(block.PreBlockHash),
+		"Hash":          base64.RawStdEncoding.EncodeToString(block.Hash),
+		"Timestamp":     block.Timestamp,
+		"TxInfos":       infos,
+	})
+	view.MsgQueue <- view.Message{
+		Type:       "DistributeBlock",
+		MsgJsonStr: string(datastr),
 	}
 	handle(re, err)
 }

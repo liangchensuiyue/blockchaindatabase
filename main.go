@@ -13,6 +13,7 @@ import (
 	db "go_code/基于区块链的非关系型数据库/database"
 	quorum "go_code/基于区块链的非关系型数据库/quorum"
 	"go_code/基于区块链的非关系型数据库/util"
+	view "go_code/基于区块链的非关系型数据库/view"
 )
 
 var localBlockChain *BC.BlockChain
@@ -342,6 +343,11 @@ func main() {
 		BC.LocalWallets.SaveToFile()
 	}
 
+	_nodes := []string{}
+	for _, v := range localNode.Quorum {
+		_nodes = append(_nodes, v.LocalIp)
+	}
+	go view.Run(localBlockChain, _nodes)
 	quorum.StartGrpcWork()
 	StartDraftWork()
 

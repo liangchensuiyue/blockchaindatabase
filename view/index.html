@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        *{
+            padding:0px;
+            margin:0px;
+        }
+        html,body{
+            height:100%;
+            width:100%;
+        }
+        .current{
+            background-color: brown;
+            color:wheat
+        }
+        .col{
+            width:100%;
+            border-bottom: 1px solid black;
+            padding:15px;
+            padding-right: 0px;
+            padding-left: 0px;
+        }
+        .quorum div{
+            display: inline;
+            height:30px;
+            margin-left: 10px;
+            border:1px solid black;
+            line-height: 15px;
+            cursor: pointer;
+        }
+        .blockchain{
+            height:600px;
+            border-bottom: 0px;
+        }
+        .block{
+            border:1px solid black;
+            display: inline-block;
+            padding:10px;
+            margin:15px;
+
+        }
+        .block:hover{
+            background-color: gray;
+            /* transition: all 0.5s; */
+            color: wheat;
+            cursor: pointer;
+        }
+        .txinfo{
+            position: absolute;
+            width:500px;
+            height:500px;
+            top:0px;
+            bottom: 0px;
+            left:0px;
+            right:0px;
+            margin:auto;
+            background-color: gray;
+            visibility: hidden;
+        }
+        .tx{
+            padding:15px;
+            color:white;
+            border:1px solid black;
+        }
+    </style>
+    <script src="./jquery.1.12.4.js"></script>
+    <title>区块链数据库视图</title>
+</head>
+<body>
+    <div class="txinfo" onclick="" >
+    </div>
+    <div class="col quorum">
+
+    </div>
+    <div class="col blockchain">
+    </div>
+    <script>
+                 Globalobject = {
+
+                }
+function TxView(blockId){
+    $('.txinfo').css("visibility","visible").html("")
+    $(`        <span class="cancel" style="float:right;border:1px;cursor:pointer; solid white;">取消</span>
+`).appendTo(".txinfo").click(function(){
+                $(".txinfo").css("visibility","hidden")
+            })
+    var blockdata = Globalobject[blockId]
+    for(i = 0;i < blockdata.TxInfos.length;i++){
+        $(` <div class="tx">
+            <p>交易 ${i + 1}</p>
+            <p>
+                useraddress: ${blockdata.TxInfos[i].UserAddress}
+            </p>
+            <p>
+                Hash: ${blockdata.TxInfos[i].Hash}
+            </p>
+            <p>
+                TimeStamp: ${blockdata.TxInfos[i].Timestamp}
+            </p>
+            <p>
+                shareuser: ${blockdata.TxInfos[i].ShareUserAddress}
+            </p>
+        </div>`).appendTo('.txinfo')
+        console.log(i)
+    }
+
+
+}
+        window.onload = function(){
+            $("<div></div>").attr("ip",location.hostname).html("<a class=\"current\">" + location.hostname+"</a>").appendTo(".quorum")
+
+            var sock = new WebSocket("ws://" + location.hostname+":3500/msg");
+
+                sock.onmessage = function(e) {
+                    var data
+                    try {
+                     data = JSON.parse(e.data)
+
+                    } catch (error) {
+                        console.log(e.data)
+                        return
+                    }
+                    console.log('---',data)
+
+                    switch(data.type){
+                        case "DistributeBlock":
+                            console.log("distri")
+                            msg = JSON.parse(data.msg)
+                            
+                            Globalobject[msg.BlockId] = msg
+                            var dom = $(`   <div class="block"  onclick="TxView(` + msg.BlockId    + `)"    >
+                         <p>BlockId: ${msg.BlockId}</span>
+                            <p>Hash: ${msg.Hash}</span>
+                         <p>PrevHash: ${msg.PrevBlockHash}</span>
+                             <p>TimeStamp: ${msg.Timestamp}</span>
+
+                             </div>`).click(function(){
+
+                             })
+
+                                $(".blockchain").append(dom)
+                            break;
+                        case "Block":
+                        
+                            console.log("block")
+                            msg = JSON.parse(data.msg)
+                            
+                            Globalobject[msg.BlockId] = msg
+                            var dom = $(`   <div class="block"  onclick="TxView(` + msg.BlockId    + `)"    >
+                         <p>BlockId: ${msg.BlockId}</span>
+                            <p>Hash: ${msg.Hash}</span>
+                         <p>PrevHash: ${msg.PrevBlockHash}</span>
+                             <p>TimeStamp: ${msg.Timestamp}</span>
+
+                             </div>`).click(function(){
+
+                             })
+
+                                $(".blockchain").prepend(dom)
+                            
+
+                            break;
+
+                        case "quorum":
+                        msg = JSON.parse(data.msg)
+                        // console.log(msg)
+                        $(".quorum").html("")
+                        for(var i =0 ;i < msg.Nodes.length;i++){
+                            if(msg.Nodes[i] == location.hostname){
+                                $("<div></div>").attr("ip",location.hostname).html("<a class=\"current\">" + location.hostname+"</a>").appendTo(".quorum")
+
+                            }else{
+                                $("<div></div>").attr("ip",location.hostname).html("<a target=\"blank\" href=\"http:// " + msg.Nodes[i]+":3400\">" + msg.Nodes[i]+"</a>").appendTo(".quorum")
+
+                            }
+                        }
+
+                        $(".quorum div").click(function(e){
+                // $(".quorum div").removeClass("current")
+                // $(this).addClass("current")
+
+                // sock.onload = function(){
+                //     sock.send("0")
+                // }
+                $(".blockchain").html("")
+
+                          console.log("send")
+                             sock.send("0")
+                        })
+                        break;
+
+                    }
+            // console.log("收到消息后触发 message received: " + e.data);
+                }
+                sock.onerror = function(){
+                    $(".blockchain").html("<p>" +e.target.getAttribute("ip")+ " 失去连接</p>")
+                    console.log("error")
+                }
+
+                // sock.send("0")
+
+            $(".block").click(function(){
+
+            })
+        }
+        </script>
+</body>
+</html>

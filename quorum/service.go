@@ -4,10 +4,12 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	BC "go_code/基于区块链的非关系型数据库/blockchain"
 	bcgrpc "go_code/基于区块链的非关系型数据库/proto"
+	view "go_code/基于区块链的非关系型数据库/view"
 )
 
 type Server struct{}
@@ -81,6 +83,18 @@ func (this *Server) GetLatestBlock(ctx context.Context, req *bcgrpc.ReqBlock) (i
 func (this *Server) JoinGroup(ctx context.Context, req *bcgrpc.NodeInfo) (info *bcgrpc.Nodes, err error) {
 	info = &bcgrpc.Nodes{}
 	err = JointoGroup(req.Passworld, req.LocalIp, int32(req.LocalPort))
+
+	_nodes := []string{}
+	for _, v := range localNode.Quorum {
+		_nodes = append(_nodes, v.LocalIp)
+	}
+	data, _ := json.Marshal(map[string]interface{}{
+		"Nodes": _nodes,
+	})
+	view.MsgQueue <- view.Message{
+		Type:       "quorum",
+		MsgJsonStr: string(data),
+	}
 	if err != nil {
 		return
 	}
