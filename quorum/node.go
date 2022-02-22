@@ -32,27 +32,22 @@ type BlockChainNode struct {
 	BCInfo *BlockChainInfo
 	Quorum []*BlockChainNode
 }
-type QueueObject struct {
-	TargetBlock *BC.Block
-	Handle      func(int, int)
-}
 
-var BlockQueue chan QueueObject
 var isAccountant bool = false
 
 func StartGrpcWork() {
-	BlockQueue = make(chan QueueObject, 100)
 	go _startServer()
 
-	go _starDistributeBlock(BlockQueue)
+	go _starDistributeBlock()
 	go _startHeartbeat()
 }
 
 func (node *BlockChainNode) DistribuBlock(newblock *BC.Block, handle func(int, int)) {
-	BlockQueue <- QueueObject{
+	BC.BlockQueue.Insert(BC.QueueObject{
 		TargetBlock: newblock,
 		Handle:      handle,
-	}
+	})
+	// BlockQueue <-
 }
 func LocalNodeIsAccount() bool {
 	return isAccountant

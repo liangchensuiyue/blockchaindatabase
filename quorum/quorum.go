@@ -3,6 +3,7 @@ package quorum
 import (
 	"context"
 	"fmt"
+	BC "go_code/基于区块链的非关系型数据库/blockchain"
 	bcgrpc "go_code/基于区块链的非关系型数据库/proto"
 	"net"
 	"time"
@@ -70,7 +71,7 @@ func _startHeartbeat() {
 			nodes = append(nodes, &bcgrpc.Heartbeat{
 				LocalIp:   localNode.LocalIp,
 				LocalPort: int32(localNode.LocalPort),
-				BlockNums: int32(len(BlockQueue)),
+				BlockNums: int32(BC.BlockQueue.Len()),
 			})
 			winner := nodes[0]
 			for i := 1; i < len(nodes); i++ {
@@ -106,7 +107,7 @@ func getAccountant() bool {
 
 		//通过句柄调用函数
 		re, err := c.GetAccountant(context.Background(), &bcgrpc.Heartbeat{
-			BlockNums: int32(len(BlockQueue)),
+			BlockNums: int32(BC.BlockQueue.Len()),
 		})
 		if err == nil && re.Status {
 			return true
@@ -116,9 +117,9 @@ func getAccountant() bool {
 	}
 	return false
 }
-func _starDistributeBlock(blockQueue chan QueueObject) {
+func _starDistributeBlock() {
 	for {
-		if len(blockQueue) > 0 && !isAccountant {
+		if BC.BlockQueue.Len() > 0 && !isAccountant {
 			// time.Sleep(time.Second)
 			flag := getAccountant()
 			if flag {
@@ -127,14 +128,28 @@ func _starDistributeBlock(blockQueue chan QueueObject) {
 				continue
 			}
 		}
-		if !isAccountant || len(blockQueue) == 0 {
+		if !isAccountant {
 			time.Sleep(time.Second)
 			continue
 		}
-		el := <-blockQueue
+		if BC.BlockQueue.Len() == 0 {
+			time.Sleep(time.Second)
+			continue
+		}
+		el, _ := BC.BlockQueue.Front()
+		BC.BlockQueue.Delete()
+		BC.BlockQueue.SaveToDisk()
 		block := el.TargetBlock
 		total := 0
 		fail := 0
+		rw := BC.LocalWallets.GetBlockChainRootWallet()
+		if block.IsGenesisBlock() {
+			localBlockChain.SignBlock(rw.Private, true, block)
+
+		} else {
+			localBlockChain.SignBlock(rw.Private, false, block)
+
+		}
 		fmt.Printf("区块 %d 分发\n", block.BlockId)
 		for _, blockBlockChainNode := range localNode.Quorum {
 			if blockBlockChainNode.LocalIp == localNode.LocalIp {

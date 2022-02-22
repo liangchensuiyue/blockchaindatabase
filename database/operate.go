@@ -43,9 +43,9 @@ func CreateUser(username string, passworld string) error {
 	lcdraft := BC.GetLocalDraft()
 	newblock, _ := lcdraft.PackBlock(tx)
 	rw := BC.LocalWallets.GetBlockChainRootWallet()
-	localBlockChain.SignBlock(rw.Private, false, newblock)
+	// localBlockChain.SignBlock(rw.Private, false, newblock)
 
-	quorum.BlockQueue <- quorum.QueueObject{
+	BC.BlockQueue.Insert(BC.QueueObject{
 		TargetBlock: newblock,
 		Handle: func(total, fail int) {
 			flag := localBlockChain.VerifyBlock(rw.PubKey, newblock)
@@ -65,7 +65,7 @@ func CreateUser(username string, passworld string) error {
 			}
 			fmt.Println("区块校验失败")
 		},
-	}
+	})
 
 	return nil
 }
@@ -97,6 +97,84 @@ func VeriftUser(username string, passworld string) error {
 		b, _ = localBlockChain.GetBlockByHash(_hash)
 	}
 	return errors.New("未知的用户")
+}
+func PutTest(key string, value []byte, datatype string, user_address string, share bool, shareuser []string, strict bool, TestHandler func()) error {
+	shareaddress := []string{}
+	if share {
+		for i := 0; i < len(shareuser); i++ {
+			addr, e := GetAddressFromUsername(shareuser[i])
+			if addr == user_address {
+				continue
+			}
+			if e != nil {
+				return e
+			}
+			shareaddress = append(shareaddress, addr)
+		}
+	} else {
+		shareuser = []string{}
+	}
+	if len(shareaddress) == 0 {
+		share = false
+	} else {
+		shareaddress = append(shareaddress, user_address)
+	}
+	tx, e := BC.NewTransaction("put", key, value, datatype, user_address, share, shareaddress)
+	if e != nil {
+		TestHandler()
+		go quorum.Request(user_address, false, &BC.Transaction{
+			Key:          key,
+			Value:        value,
+			DelMark:      false,
+			Share:        share,
+			DataType:     datatype,
+			Timestamp:    uint64(time.Now().Unix()),
+			ShareAddress: shareuser,
+		})
+		return nil
+	}
+	if strict {
+		lcdraft := BC.GetLocalDraft()
+		newblock, _ := lcdraft.PackBlock(tx)
+		rw := BC.LocalWallets.GetBlockChainRootWallet()
+		// localBlockChain.SignBlock(rw.Private, false, newblock)
+		BC.BlockQueue.Insert(BC.QueueObject{
+			TargetBlock: newblock,
+			Handle: func(total, fail int) {
+				flag := localBlockChain.VerifyBlock(rw.PubKey, newblock)
+				if flag {
+					e := localBlockChain.AddBlock(newblock)
+					TestHandler()
+					if e != nil {
+						fmt.Println(e)
+						return
+					}
+
+					for _, tx := range newblock.TxInfos {
+
+						// fmt.Println(tx.Share, tx.ShareAddress, base64.RawStdEncoding.EncodeToString(newblock.Hash))
+						if tx.Share {
+							BC.LocalWallets.ShareTailBlockHashMap[BC.GenerateUserShareKey(tx.ShareAddress)] = newblock.Hash
+
+						} else {
+							BC.LocalWallets.TailBlockHashMap[BC.GenerateAddressFromPubkey(tx.PublicKey)] = newblock.Hash
+						}
+
+					}
+					BC.LocalWallets.SaveToFile()
+					fmt.Println("block:", newblock.BlockId, "校验成功")
+					return
+				}
+				fmt.Println("block:", newblock.BlockId, "校验失败")
+			},
+		})
+
+	} else {
+		draft := BC.GetLocalDraft()
+		draft.PutTx(tx)
+	}
+
+	return nil
 }
 
 func Put(key string, value []byte, datatype string, user_address string, share bool, shareuser []string, strict bool) error {
@@ -137,8 +215,8 @@ func Put(key string, value []byte, datatype string, user_address string, share b
 		lcdraft := BC.GetLocalDraft()
 		newblock, _ := lcdraft.PackBlock(tx)
 		rw := BC.LocalWallets.GetBlockChainRootWallet()
-		localBlockChain.SignBlock(rw.Private, false, newblock)
-		quorum.BlockQueue <- quorum.QueueObject{
+		// localBlockChain.SignBlock(rw.Private, false, newblock)
+		BC.BlockQueue.Insert(BC.QueueObject{
 			TargetBlock: newblock,
 			Handle: func(total, fail int) {
 				flag := localBlockChain.VerifyBlock(rw.PubKey, newblock)
@@ -166,7 +244,7 @@ func Put(key string, value []byte, datatype string, user_address string, share b
 				}
 				fmt.Println("block:", newblock.BlockId, "校验失败")
 			},
-		}
+		})
 
 	} else {
 		draft := BC.GetLocalDraft()
@@ -212,8 +290,8 @@ func Del(key string, user_address string, share bool, shareuser []string, strict
 		newblock, _ := lcdraft.PackBlock(tx)
 		rw := BC.LocalWallets.GetBlockChainRootWallet()
 
-		localBlockChain.SignBlock(rw.Private, false, newblock)
-		quorum.BlockQueue <- quorum.QueueObject{
+		// localBlockChain.SignBlock(rw.Private, false, newblock)
+		BC.BlockQueue.Insert(BC.QueueObject{
 			TargetBlock: newblock,
 			Handle: func(total, fail int) {
 				flag := localBlockChain.VerifyBlock(rw.PubKey, newblock)
@@ -239,7 +317,7 @@ func Del(key string, user_address string, share bool, shareuser []string, strict
 				return
 
 			},
-		}
+		})
 
 	} else {
 		draft := BC.GetLocalDraft()
@@ -272,9 +350,43 @@ func Get(key string, user_address string, sharemode bool, shareuser []string) (*
 	} else {
 		tailhash, _ = BC.LocalWallets.TailBlockHashMap[user_address]
 	}
-	fmt.Println("tailhash", base64.RawStdEncoding.EncodeToString(tailhash))
-	for k, v := range BC.LocalWallets.ShareTailBlockHashMap {
-		fmt.Println(k, base64.RawStdEncoding.EncodeToString(v))
+	// fmt.Println("tailhash", base64.RawStdEncoding.EncodeToString(tailhash))
+	// for k, v := range BC.LocalWallets.ShareTailBlockHashMap {
+	// 	fmt.Println(k, base64.RawStdEncoding.EncodeToString(v))
+	// }
+	_index := -1
+	_b, e := BC.BlockQueue.Find(func(b *BC.Block) bool {
+		for i := len(b.TxInfos) - 1; i >= 0; i-- {
+			if sharemode {
+				if b.TxInfos[i].Share && BC.GenerateUserShareKey(b.TxInfos[i].ShareAddress) == shareaddressKey {
+					if b.TxInfos[i].Key == key {
+						if !b.TxInfos[i].DelMark {
+							_index = i
+							return false
+						} else {
+							return true
+						}
+					}
+
+				}
+			} else {
+				if BC.GenerateAddressFromPubkey(b.TxInfos[i].PublicKey) == user_address {
+					if b.TxInfos[i].Key == key {
+						if !b.TxInfos[i].DelMark {
+							_index = i
+							return false
+						} else {
+							return true
+						}
+					}
+
+				}
+			}
+		}
+		return true
+	})
+	if e == nil {
+		return _b, _index
 	}
 	for {
 		b, e := localBlockChain.GetBlockByHash(tailhash)

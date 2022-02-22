@@ -7,11 +7,13 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	BC "go_code/基于区块链的非关系型数据库/blockchain"
 	"go_code/基于区块链的非关系型数据库/database"
 	db "go_code/基于区块链的非关系型数据库/database"
 	quorum "go_code/基于区块链的非关系型数据库/quorum"
+	Test "go_code/基于区块链的非关系型数据库/test"
 	"go_code/基于区块链的非关系型数据库/util"
 	view "go_code/基于区块链的非关系型数据库/view"
 )
@@ -27,13 +29,13 @@ func StartDraftWork() {
 			// 如果不是创世块，并且交易数目为0 ，则不能打包
 			return
 		}
-		if newblock.IsGenesisBlock() {
-			localBlockChain.SignBlock(rw.Private, true, newblock)
+		// if newblock.IsGenesisBlock() {
+		// 	localBlockChain.SignBlock(rw.Private, true, newblock)
 
-		} else {
-			localBlockChain.SignBlock(rw.Private, false, newblock)
-		}
-		quorum.BlockQueue <- quorum.QueueObject{
+		// } else {
+		// 	localBlockChain.SignBlock(rw.Private, false, newblock)
+		// }
+		BC.BlockQueue.Insert(BC.QueueObject{
 			TargetBlock: newblock,
 			Handle: func(total, fail int) {
 				flag := localBlockChain.VerifyBlock(rw.PubKey, newblock)
@@ -62,7 +64,7 @@ func StartDraftWork() {
 				}
 				fmt.Println("同步区块", newblock.BlockId, "校验失败")
 			},
-		}
+		})
 	})
 }
 func addblocks(blocks []*BC.Block) {
@@ -200,13 +202,16 @@ func runLocalTestCli() {
 				break
 			}
 			// get age
+			pre := time.Now().UnixNano()
 			block, index := db.Get(cmds[1], address, util.GetBoolFromStr(cmds[2]), cmds[3:])
 			if block != nil {
-				fmt.Println("blockid:", block.BlockId)
+				// fmt.Println("blockid:", block.BlockId)
 				// fmt.Println("block_hash", block.Hash)
-				fmt.Println("pre_block_hash:", base64.RawStdEncoding.EncodeToString(block.PreBlockHash))
-				fmt.Println("block_hash:", base64.RawStdEncoding.EncodeToString(block.Hash))
+				// fmt.Println("pre_block_hash:", base64.RawStdEncoding.EncodeToString(block.PreBlockHash))
+				// fmt.Println("block_hash:", base64.RawStdEncoding.EncodeToString(block.Hash))
 				fmt.Println("key-value:", block.TxInfos[index].Key, string(block.TxInfos[index].Value))
+				cur := time.Now().UnixNano()
+				fmt.Println("耗时:", (cur-pre)/1000000, "(ms)")
 			} else {
 				fmt.Println("未查询到")
 			}
@@ -353,6 +358,8 @@ func main() {
 
 	db.Run(localBlockChain, localNode)
 	fmt.Println("hello world")
-
+	Test.Test2()
+	// Test.Test1()
+	Test.Test3()
 	runLocalTestCli()
 }

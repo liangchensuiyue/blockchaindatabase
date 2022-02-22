@@ -4,8 +4,11 @@ import (
 	// "crypto/sha256"
 	"bytes"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/binary"
 	"encoding/gob"
+	"fmt"
+	rbtree "go_code/基于区块链的非关系型数据库/RBTree"
 	"time"
 )
 
@@ -26,6 +29,37 @@ type Block struct {
 	// 由集群私钥加密
 	Signature []byte
 	//
+}
+
+func (x Block) Less(then rbtree.Item) bool {
+	fmt.Println(base64.RawStdEncoding.EncodeToString(x.Hash), base64.RawStdEncoding.EncodeToString(then.(Block).Hash))
+	return base64.RawStdEncoding.EncodeToString(x.Hash) < base64.RawStdEncoding.EncodeToString(then.(Block).Hash)
+	y := then.(Block)
+	a := len(x.Hash)
+	b := len(y.Hash)
+	length := 0
+	if a < b {
+		length = a
+	} else {
+		length = b
+	}
+	for i := 0; i < length; i++ {
+		if x.Hash[i] == y.Hash[i] {
+			continue
+		}
+		if x.Hash[i] < y.Hash[i] {
+			return true
+		} else {
+			return false
+		}
+	}
+	if a == b {
+		return false
+	}
+	if a < b {
+		return false
+	}
+	return true
 }
 
 // 实现一个辅助函数，uint64 -> []byte

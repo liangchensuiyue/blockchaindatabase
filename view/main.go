@@ -71,6 +71,7 @@ func ws_handle(conn *websocket.Conn) {
 								"Hash":             base64.RawStdEncoding.EncodeToString(tx.Hash),
 								"Timestamp":        tx.Timestamp,
 								"ShareUserAddress": addrs,
+								"PrevBlockHash":    base64.RawStdEncoding.EncodeToString(tx.PreBlockHash),
 							})
 						}
 						datastr, _ := json.Marshal(map[string]interface{}{

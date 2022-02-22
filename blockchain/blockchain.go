@@ -4,10 +4,14 @@ import (
 	"bytes"
 	"crypto/ecdsa"
 	"crypto/elliptic"
+	"encoding/base64"
+
 	"crypto/rand"
 	"crypto/sha256"
 	"errors"
 	"fmt"
+	lru "go_code/基于区块链的非关系型数据库/LRU"
+
 	"log"
 	"math/big"
 	"strings"
@@ -29,6 +33,10 @@ type BlockChain struct {
 const blockChainDB = "blockChain.db"
 const blockBucket = "blockBucket"
 const LastHashKey = "lastkey"
+
+// var RBTREE *rbtree.RBtree = rbtree.NewRBTree()
+var LRU *lru.Cache = lru.NewCache(100)
+var BlockQueue *Queue = NewQueue()
 
 func NewBlockChain(blockTailHashKey, blockChainDBFileName string) *BlockChain {
 	// 创建一个创世块，并作为第一个区块添加到区块链中
@@ -261,6 +269,15 @@ func (bc *BlockChain) GetBlockByHash(hash []byte) (*Block, error) {
 		return nil, errors.New("错误的hash")
 
 	}
+
+	b, ok := LRU.Get(base64.RawStdEncoding.EncodeToString(hash))
+	if ok {
+		// fmt.Println("找到", b.(Block))
+		v := b.(Block)
+		return &v, nil
+	} else {
+		// fmt.Println("未找到")
+	}
 	err := bc.Db.View(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket([]byte(bc.BlockBucket))
 		if bucket == nil {
@@ -271,6 +288,7 @@ func (bc *BlockChain) GetBlockByHash(hash []byte) (*Block, error) {
 			return errors.New(fmt.Sprintf(" not the key"))
 		}
 		block = BlockDeserialize(value)
+		LRU.Add(base64.RawStdEncoding.EncodeToString(block.Hash), block)
 		return nil
 	})
 	return &block, err

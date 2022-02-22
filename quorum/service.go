@@ -17,7 +17,7 @@ type Server struct{}
 func (this *Server) GetAccountant(ctx context.Context, req *bcgrpc.Heartbeat) (info *bcgrpc.VerifyInfo, err error) {
 	info = &bcgrpc.VerifyInfo{}
 	info.Status = false
-	if int(req.BlockNums) > len(BlockQueue) && isAccountant {
+	if int(req.BlockNums) > BC.BlockQueue.Len() && isAccountant {
 		isAccountant = false
 		info.Status = true
 		return info, nil
@@ -32,7 +32,7 @@ func (this *Server) QuorumHeartbeat(ctx context.Context, req *bcgrpc.NodeInfo) (
 		return info, errors.New("没有访问权限")
 	}
 	info.IsAccountant = isAccountant
-	info.BlockNums = int32(len(BlockQueue))
+	info.BlockNums = int32(BC.BlockQueue.Len())
 
 	return info, nil
 }
@@ -160,8 +160,8 @@ func (this *Server) Request(ctx context.Context, req *bcgrpc.RequestBody) (info 
 			lcdraft := BC.GetLocalDraft()
 			newblock, _ := lcdraft.PackBlock(tx)
 			rw := BC.LocalWallets.GetBlockChainRootWallet()
-			localBlockChain.SignBlock(rw.Private, false, newblock)
-			BlockQueue <- QueueObject{
+			// localBlockChain.SignBlock(rw.Private, false, newblock)
+			BC.BlockQueue.Insert(BC.QueueObject{
 				TargetBlock: newblock,
 				Handle: func(total, fail int) {
 					flag := localBlockChain.VerifyBlock(rw.PubKey, newblock)
@@ -193,7 +193,7 @@ func (this *Server) Request(ctx context.Context, req *bcgrpc.RequestBody) (info 
 					}
 					fmt.Println("block:", newblock.BlockId, "校验失败")
 				},
-			}
+			})
 		} else {
 			draft := BC.GetLocalDraft()
 			draft.PutTx(tx)

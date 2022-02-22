@@ -104,6 +104,9 @@ function TxView(blockId){
             <p>
                 shareuser: ${blockdata.TxInfos[i].ShareUserAddress}
             </p>
+            <p>
+                PrevBlockHash ${blockdata.TxInfos[i].PrevBlockHash}
+            </p>
         </div>`).appendTo('.txinfo')
         console.log(i)
     }
@@ -174,7 +177,7 @@ function TxView(blockId){
                                 $("<div></div>").attr("ip",location.hostname).html("<a class=\"current\">" + location.hostname+"</a>").appendTo(".quorum")
 
                             }else{
-                                $("<div></div>").attr("ip",location.hostname).html("<a target=\"blank\" href=\"http:// " + msg.Nodes[i]+":3400\">" + msg.Nodes[i]+"</a>").appendTo(".quorum")
+                                $("<div></div>").attr("ip",location.hostname).html("<a target=\"blank\" href=\"http://" + msg.Nodes[i]+":3400\">" + msg.Nodes[i]+"</a>").appendTo(".quorum")
 
                             }
                         }

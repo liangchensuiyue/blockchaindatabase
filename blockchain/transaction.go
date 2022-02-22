@@ -169,12 +169,15 @@ func (tx *Transaction) Verify() bool {
 	signature := tx.Signature
 	tx.Signature = []byte{}
 	user_address := GenerateAddressFromPubkey(tx.PublicKey)
+	pre := base64.RawStdEncoding.EncodeToString(tx.PreBlockHash)
 	// fmt.Println(user_address)
 	if tx.Share {
 		tx.PreBlockHash, _ = LocalWallets.ShareTailBlockHashMap[GenerateUserShareKey(tx.ShareAddress)]
 	} else {
 		tx.PreBlockHash, _ = LocalWallets.GetUserTailBlockHash(user_address)
 	}
+	cur := base64.RawStdEncoding.EncodeToString(tx.PreBlockHash)
+	preh := base64.RawStdEncoding.EncodeToString(tx.Hash)
 	tx.Hash = []byte{}
 	tx.SetHash()
 
@@ -196,6 +199,11 @@ func (tx *Transaction) Verify() bool {
 	pubKeyOrigin := ecdsa.PublicKey{Curve: elliptic.P256(), X: &X, Y: &Y}
 	if !ecdsa.Verify(&pubKeyOrigin, tx.Hash, &r, &s) {
 		fmt.Println(tx.Key, "校验失败")
+		fmt.Println(pre, cur)
+		fmt.Println(preh, base64.RawStdEncoding.EncodeToString(tx.Hash))
+		if preh == base64.RawStdEncoding.EncodeToString(tx.Hash) {
+			return true
+		}
 		return false
 	}
 	return true

@@ -204,6 +204,7 @@ func DistributeBlock(block *BC.Block, node *BlockChainNode, handle func(*bcgrpc.
 			"Hash":             base64.RawStdEncoding.EncodeToString(tx.Hash),
 			"Timestamp":        tx.Timestamp,
 			"ShareUserAddress": addrs,
+			"PrevBlockHash":    base64.RawStdEncoding.EncodeToString(tx.PreBlockHash),
 		})
 	}
 	datastr, _ := json.Marshal(map[string]interface{}{
