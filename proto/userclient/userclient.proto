@@ -1,0 +1,30 @@
+syntax = "proto3";
+option java_multiple_files = true;//以非外部类模式生成
+package userclientgrpc;
+service UserClientService{
+    rpc Get(GetBody)returns(ResQuery){}
+    rpc Put(PutBody)returns(VerifyInfo){}
+}
+message GetBody{
+    string key = 1;
+    string user_address = 2;
+    bool sharemode = 3;
+    repeated string shareuser = 4;
+}
+message PutBody{
+    string key = 1;
+    bytes value = 2;
+    string datatype = 3;
+    string user_address =4;
+    bool share = 5;
+    repeated string shareuser = 6;
+    bool strict = 7;
+}
+message VerifyInfo{
+    bool status = 1;
+    string info = 2;
+}
+message ResQuery{
+    bool status = 1; // 查找状态
+    bytes data = 2; // 数据(如果找到的)
+}

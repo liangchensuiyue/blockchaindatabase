@@ -153,8 +153,7 @@ func (bc *BlockChain) SignBlock(groupPriKey *ecdsa.PrivateKey, IsGenesisBlock bo
 		newblock.PreBlockHash = bc_pre_block.Hash
 
 		newblock.MerkelRoot = newblock.MakeMerkelRoot()
-		hash := sha256.Sum256(newblock.Serialize())
-		newblock.Hash = hash[:]
+		newblock.SetHash()
 	}
 
 	r, s, err := ecdsa.Sign(rand.Reader, groupPriKey, newblock.Hash)
@@ -227,14 +226,17 @@ func (bc *BlockChain) VerifyBlock(groupPubKey []byte, newblock *Block) bool {
 	s.SetBytes(newblock.Signature[len(newblock.Signature)/2:])
 
 	_sig := newblock.Signature
+	_hash := newblock.Hash
 	newblock.Signature = []byte{}
 	newblock.Hash = []byte{}
-	_hash := sha256.Sum256(newblock.Serialize())
-	if !ecdsa.Verify(&pubKeyOrigin, _hash[:], &r, &s) {
+	newblock.SetHash()
+	if !ecdsa.Verify(&pubKeyOrigin, newblock.Hash, &r, &s) {
+		if bytes.Equal(_hash, newblock.Hash) {
+			return true
+		}
 		return false
 	}
 	newblock.Signature = _sig
-	newblock.Hash = _hash[:]
 	return true
 }
 

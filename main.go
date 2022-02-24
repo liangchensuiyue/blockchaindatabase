@@ -10,6 +10,7 @@ import (
 	"time"
 
 	BC "go_code/基于区块链的非关系型数据库/blockchain"
+	uc "go_code/基于区块链的非关系型数据库/client"
 	"go_code/基于区块链的非关系型数据库/database"
 	db "go_code/基于区块链的非关系型数据库/database"
 	quorum "go_code/基于区块链的非关系型数据库/quorum"
@@ -114,12 +115,12 @@ func runLocalTestCli() {
 		}
 		switch cmds[0] {
 		case "help":
-			fmt.Println("createuser [username] [passworld] -- 创建用户")
+			fmt.Println("newuser [username] [passworld] -- 创建用户")
 			fmt.Println("latestblock --打印最新的块信息")
 			fmt.Println("isaccountant --是否有记账权力")
 			fmt.Println("login [username] [passworld] --登录")
 			fmt.Println("print_quorum --打印集群信息")
-		case "createuser":
+		case "newuser":
 			if len(cmds) < 3 {
 				fmt.Println("格式错误")
 				break
@@ -221,6 +222,28 @@ func runLocalTestCli() {
 					fmt.Println(node.LocalIp, "(本机)")
 				}
 			}
+		case "detail":
+			if len(cmds) < 2 {
+				break
+			}
+			localBlockChain.Traverse(func(block *BC.Block, err error) {
+				if fmt.Sprintf("%d", block.BlockId) == cmds[1] {
+					for i, tx := range block.TxInfos {
+						fmt.Println("交易索引:", i)
+						fmt.Println("user_address:", BC.GenerateAddressFromPubkey(tx.PublicKey))
+						fmt.Println("key-value:", tx.Key, string(tx.Value))
+						fmt.Println("sharemode:", tx.Share)
+						fmt.Println("delmark:", tx.DelMark)
+						fmt.Println("shareuser:")
+						for _, uaddr := range tx.ShareAddress {
+							// w, e = BC.LocalWallets.GetUserWallet(uaddr)
+							// if e == nil {
+							fmt.Println(uaddr)
+							// }
+						}
+					}
+				}
+			})
 		case "isaccountant":
 			fmt.Println(quorum.LocalNodeIsAccount())
 		case "print":
@@ -357,9 +380,10 @@ func main() {
 	StartDraftWork()
 
 	db.Run(localBlockChain, localNode)
+	go uc.Run()
 	fmt.Println("hello world")
 	Test.Test2()
 	// Test.Test1()
-	Test.Test3()
+	// Test.Test3()
 	runLocalTestCli()
 }

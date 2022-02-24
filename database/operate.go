@@ -355,6 +355,7 @@ func Get(key string, user_address string, sharemode bool, shareuser []string) (*
 	// 	fmt.Println(k, base64.RawStdEncoding.EncodeToString(v))
 	// }
 	_index := -1
+	fmt.Println("length", BC.BlockQueue.Len())
 	_b, e := BC.BlockQueue.Find(func(b *BC.Block) bool {
 		for i := len(b.TxInfos) - 1; i >= 0; i-- {
 			if sharemode {
@@ -364,7 +365,8 @@ func Get(key string, user_address string, sharemode bool, shareuser []string) (*
 							_index = i
 							return false
 						} else {
-							return true
+							_index = -1
+							return false
 						}
 					}
 
@@ -376,7 +378,8 @@ func Get(key string, user_address string, sharemode bool, shareuser []string) (*
 							_index = i
 							return false
 						} else {
-							return true
+							_index = -1
+							return false
 						}
 					}
 

@@ -90,25 +90,33 @@ func NewBlock(txinfos []*Transaction) *Block {
 	return &block
 }
 
+// 前区块hash
+// PreBlockHash []byte
+// // 块 序号
+// BlockId uint64
+// // 时间戳
+// Timestamp uint64
+// // 当前区块hash,正常比特币区块中没有当前区块hash，这里是为了方便做了简化
+// Hash []byte
+
+// MerkelRoot []byte
+
+// TxInfos []*Transaction
+
+// // 由集群私钥加密
+// Signature []byte
 // 生成 hash
-// func (block *Block) SetHash() {
-// 	// blockInfo := append(block.PrevHash, Uint64Tobyte(block.Version)...)
-// 	// blockInfo  = append(blockInfo, block.MerkelRoot...)
-// 	// blockInfo  = append(blockInfo, Uint64Tobyte(block.TimeStamp)...)
-// 	// blockInfo  = append(blockInfo, Uint64Tobyte(block.Difficulty)...)
-// 	// blockInfo  = append(blockInfo, Uint64Tobyte(block.Nonce)...)
-// 	// blockInfo  = append(blockInfo, block.Data...)
-// 	sc := bytes.Join([][]byte{
-// 		Uint64Tobyte(block.Version),
-// 		block.MerkelRoot,
-// 		Uint64Tobyte(block.TimeStamp),
-// 		Uint64Tobyte(block.Difficulty),
-// 		Uint64Tobyte(block.Nonce),
-// 		block.Data,
-// 	}, []byte(""))
-// 	hash := sha256.Sum256(sc)
-// 	block.Hash = hash[:]
-// }
+func (block *Block) SetHash() {
+	blockInfo := append(block.PreBlockHash, Uint64Tobyte(block.BlockId)...)
+	blockInfo = append(blockInfo, block.MerkelRoot...)
+	blockInfo = append(blockInfo, Uint64Tobyte(block.Timestamp)...)
+	blockInfo = append(blockInfo, block.MerkelRoot...)
+	for _, v := range block.TxInfos {
+		blockInfo = append(blockInfo, v.Hash...)
+	}
+	hash := sha256.Sum256(blockInfo)
+	block.Hash = hash[:]
+}
 func (block *Block) Serialize() []byte {
 	var buffer bytes.Buffer
 	encoder := gob.NewEncoder(&buffer)

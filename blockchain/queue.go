@@ -46,6 +46,8 @@ func (Q *Queue) Insert(v QueueObject) {
 	node.Pre = Q.rear
 	Q.rear = node
 	Q.num++
+	Q.SaveToDisk()
+
 }
 func (Q *Queue) Delete() {
 	Q.lock.Lock()
@@ -62,6 +64,7 @@ func (Q *Queue) Delete() {
 	Q.front = Q.front.Next
 	Q.front.Pre = nil
 	Q.num--
+	Q.SaveToDisk()
 }
 func (Q *Queue) Load() {
 	blocks := []QueueObject{}
@@ -142,7 +145,7 @@ func (Q *Queue) Find(handle func(*Block) bool) (*Block, error) {
 	}
 	r := Q.rear
 	for r != nil {
-		if handle(r.Value.TargetBlock) {
+		if !handle(r.Value.TargetBlock) {
 			return r.Value.TargetBlock, nil
 		}
 		r = r.Pre

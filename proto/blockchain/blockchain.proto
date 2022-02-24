@@ -49,6 +49,7 @@ service BlockChainService{
     // // 客户端关闭管道
     // rpc ClientCloseChannel(ClientRegistToFollower)returns(Response){}
 }
+
 message Heartbeat{
     bool is_accountant = 1;
     int32 block_nums = 2;
@@ -118,6 +119,6 @@ message PackBlock{
     bytes hash = 1; // 区块hash
 }
 message ResQuery{
-    bool code = 1; // 查找状态
-    Transaction datas = 2; // 数据(如果找到的)
+    bool status = 1; // 查找状态
+    bytes data = 2; // 数据(如果找到的)
 }

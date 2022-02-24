@@ -8,7 +8,7 @@ import (
 	"errors"
 	"fmt"
 	BC "go_code/基于区块链的非关系型数据库/blockchain"
-	bcgrpc "go_code/基于区块链的非关系型数据库/proto"
+	bcgrpc "go_code/基于区块链的非关系型数据库/proto/blockchain"
 	view "go_code/基于区块链的非关系型数据库/view"
 )
 
@@ -72,6 +72,7 @@ func (this *Server) DistributeBlock(ctx context.Context, req *bcgrpc.Block) (inf
 	BC.LocalWallets.SaveToFile()
 	return
 }
+
 func (this *Server) GetLatestBlock(ctx context.Context, req *bcgrpc.ReqBlock) (info *bcgrpc.Block, err error) {
 	latestblock, err := localBlockChain.GetTailBlock()
 	if err != nil {

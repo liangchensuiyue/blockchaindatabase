@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	BC "go_code/基于区块链的非关系型数据库/blockchain"
-	bcgrpc "go_code/基于区块链的非关系型数据库/proto"
+	bcgrpc "go_code/基于区块链的非关系型数据库/proto/blockchain"
 	"net"
 	"time"
 
@@ -137,9 +137,13 @@ func _starDistributeBlock() {
 			continue
 		}
 		el, _ := BC.BlockQueue.Front()
-		BC.BlockQueue.Delete()
-		BC.BlockQueue.SaveToDisk()
+		// BC.BlockQueue.SaveToDisk()
 		block := el.TargetBlock
+		if len(block.TxInfos) > 0 {
+			fmt.Println("打包", block.TxInfos[0].Key)
+
+		}
+
 		total := 0
 		fail := 0
 		rw := BC.LocalWallets.GetBlockChainRootWallet()
@@ -172,6 +176,7 @@ func _starDistributeBlock() {
 			})
 		}
 		el.Handle(total, fail)
+		BC.BlockQueue.Delete()
 
 	}
 }
