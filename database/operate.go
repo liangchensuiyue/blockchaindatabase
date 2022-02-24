@@ -200,7 +200,7 @@ func Put(key string, value []byte, datatype string, user_address string, share b
 	}
 	tx, e := BC.NewTransaction("put", key, value, datatype, user_address, share, shareaddress)
 	if e != nil {
-		go quorum.Request(user_address, false, &BC.Transaction{
+		quorum.Request(user_address, true, &BC.Transaction{
 			Key:          key,
 			Value:        value,
 			DelMark:      false,
@@ -276,7 +276,7 @@ func Del(key string, user_address string, share bool, shareuser []string, strict
 	}
 	tx, e := BC.NewTransaction("del", key, []byte{}, "", user_address, share, shareaddress)
 	if e != nil {
-		go quorum.Request(user_address, false, &BC.Transaction{
+		go quorum.Request(user_address, true, &BC.Transaction{
 			Key:          key,
 			DelMark:      true,
 			Share:        share,
@@ -355,7 +355,6 @@ func Get(key string, user_address string, sharemode bool, shareuser []string) (*
 	// 	fmt.Println(k, base64.RawStdEncoding.EncodeToString(v))
 	// }
 	_index := -1
-	fmt.Println("length", BC.BlockQueue.Len())
 	_b, e := BC.BlockQueue.Find(func(b *BC.Block) bool {
 		for i := len(b.TxInfos) - 1; i >= 0; i-- {
 			if sharemode {

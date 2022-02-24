@@ -10,7 +10,7 @@ import (
 )
 
 func put(key string, value []byte, datatype string, user_address string, share bool, shareuser []string, strict bool) {
-	conn, err := grpc.Dial(fmt.Sprintf("%s:%d", "10.0.0.1", 3600), grpc.WithInsecure())
+	conn, err := grpc.Dial(fmt.Sprintf("%s:%d", "10.0.0.100", 3600), grpc.WithInsecure())
 	if err != nil {
 		fmt.Println("网络异常")
 	}
@@ -35,7 +35,7 @@ func put(key string, value []byte, datatype string, user_address string, share b
 	}
 }
 func get(key string, user_address string, share bool, shareuser []string) bool {
-	conn, err := grpc.Dial(fmt.Sprintf("%s:%d", "10.0.0.1", 3600), grpc.WithInsecure())
+	conn, err := grpc.Dial(fmt.Sprintf("%s:%d", "10.0.0.100", 3600), grpc.WithInsecure())
 	if err != nil {
 		fmt.Println("网络异常")
 	}
@@ -60,9 +60,9 @@ func get(key string, user_address string, share bool, shareuser []string) bool {
 func main() {
 	nums := 200
 	pre := time.Now().UnixNano()
-	for i := nums; i < 400; i++ {
-		// put(fmt.Sprintf("key_%d", i), []byte(fmt.Sprintf("%d", i)), "int", "18oX6V6GEVRfYDpq3WoXAnr93yqTLWmoFR", false, []string{}, true)
-		flag := get(fmt.Sprintf("key_%d", i), "18oX6V6GEVRfYDpq3WoXAnr93yqTLWmoFR", false, []string{})
+	for i := nums; i < 300; i++ {
+		// put(fmt.Sprintf("key_%d", i), []byte(fmt.Sprintf("%d", i)), "int", "1Q3kMaWxJxU44GxKVGwLscB3EQZX4u7vSH", false, []string{}, true)
+		flag := get(fmt.Sprintf("key_%d", i), "1Q3kMaWxJxU44GxKVGwLscB3EQZX4u7vSH", false, []string{})
 		if !flag {
 			fmt.Println("失败", fmt.Sprintf("key_%d", i))
 		} else {

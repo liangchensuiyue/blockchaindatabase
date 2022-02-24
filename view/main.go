@@ -21,7 +21,7 @@ type Message struct {
 	MsgJsonStr string `json:"msg"`
 }
 
-var MsgQueue chan Message = make(chan Message, 100)
+var MsgQueue chan Message = make(chan Message, 1000)
 
 func Handler(msg Message) {
 	MsgQueue <- msg

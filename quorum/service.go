@@ -156,51 +156,50 @@ func (this *Server) Request(ctx context.Context, req *bcgrpc.RequestBody) (info 
 
 	info.Status = true
 	info.Info = "请求成功"
-	go func() {
-		if req.Strict {
-			lcdraft := BC.GetLocalDraft()
-			newblock, _ := lcdraft.PackBlock(tx)
-			rw := BC.LocalWallets.GetBlockChainRootWallet()
-			// localBlockChain.SignBlock(rw.Private, false, newblock)
-			BC.BlockQueue.Insert(BC.QueueObject{
-				TargetBlock: newblock,
-				Handle: func(total, fail int) {
-					flag := localBlockChain.VerifyBlock(rw.PubKey, newblock)
-					if flag {
-						e := localBlockChain.AddBlock(newblock)
-						if e != nil {
-							fmt.Println(e)
-							return
-						}
 
-						// BC.LocalWallets.TailBlockHashMap[req.UserAddress] = newblock.Hash
-
-						// if req.Tx.Share {
-						for _, tx := range newblock.TxInfos {
-
-							// fmt.Println(tx.Share, tx.ShareAddress, base64.RawStdEncoding.EncodeToString(newblock.Hash))
-							if tx.Share {
-								BC.LocalWallets.ShareTailBlockHashMap[BC.GenerateUserShareKey(tx.ShareAddress)] = newblock.Hash
-
-							} else {
-								BC.LocalWallets.TailBlockHashMap[BC.GenerateAddressFromPubkey(tx.PublicKey)] = newblock.Hash
-							}
-
-						}
-						// }
-						BC.LocalWallets.SaveToFile()
-						fmt.Println("block:", newblock.BlockId, "校验成功")
+	if req.Strict {
+		lcdraft := BC.GetLocalDraft()
+		newblock, _ := lcdraft.PackBlock(tx)
+		rw := BC.LocalWallets.GetBlockChainRootWallet()
+		// localBlockChain.SignBlock(rw.Private, false, newblock)
+		BC.BlockQueue.Insert(BC.QueueObject{
+			TargetBlock: newblock,
+			Handle: func(total, fail int) {
+				flag := localBlockChain.VerifyBlock(rw.PubKey, newblock)
+				if flag {
+					e := localBlockChain.AddBlock(newblock)
+					if e != nil {
+						fmt.Println(e)
 						return
 					}
-					fmt.Println("block:", newblock.BlockId, "校验失败")
-				},
-			})
-		} else {
-			draft := BC.GetLocalDraft()
-			draft.PutTx(tx)
-		}
 
-	}()
+					// BC.LocalWallets.TailBlockHashMap[req.UserAddress] = newblock.Hash
+
+					// if req.Tx.Share {
+					for _, tx := range newblock.TxInfos {
+
+						// fmt.Println(tx.Share, tx.ShareAddress, base64.RawStdEncoding.EncodeToString(newblock.Hash))
+						if tx.Share {
+							BC.LocalWallets.ShareTailBlockHashMap[BC.GenerateUserShareKey(tx.ShareAddress)] = newblock.Hash
+
+						} else {
+							BC.LocalWallets.TailBlockHashMap[BC.GenerateAddressFromPubkey(tx.PublicKey)] = newblock.Hash
+						}
+
+					}
+					// }
+					BC.LocalWallets.SaveToFile()
+					fmt.Println("block:", newblock.BlockId, "校验成功")
+					return
+				}
+				fmt.Println("block:", newblock.BlockId, "校验失败")
+			},
+		})
+	} else {
+		draft := BC.GetLocalDraft()
+		draft.PutTx(tx)
+	}
+
 	return
 }
 func GetUserAddressByUsername(username string) (string, error) {
