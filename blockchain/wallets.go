@@ -5,6 +5,9 @@ import (
 	"crypto/elliptic"
 	"encoding/gob"
 	"errors"
+	"go_code/基于区块链的非关系型数据库/util"
+	"math/rand"
+	"time"
 
 	// quorum "go_code/基于区块链的非关系型数据库/quorum"
 	"io/ioutil"
@@ -22,16 +25,38 @@ const walletFile = "wallet.dat"
 var LocalWallets *Wallets = &Wallets{}
 var _lock *sync.Mutex = &sync.Mutex{}
 
+type ShareChan struct {
+	TailBlockHash []byte
+	ShareUser     []string
+	Key           []byte
+}
+
 // 定义一个 Wallets 结构，它保存所有的wallet以及它的地址
 type Wallets struct {
-	WalletsMap            map[string]*Wallet
-	TailBlockHashMap      map[string][]byte
-	ShareTailBlockHashMap map[string][]byte
+	WalletsMap       map[string]*Wallet
+	TailBlockHashMap map[string][]byte
+
+	ShareChanMap map[string]*ShareChan
 }
 
 func LoadLocalWallets() {
 	LocalWallets.loadFile()
 }
+func (sch *ShareChan) HasUser(user string) bool {
+	for _, v := range sch.ShareUser {
+		if v == user {
+			return true
+		}
+	}
+	return false
+}
+func (sch *ShareChan) YieldKey() {
+	rand.Seed(time.Now().Unix())
+	key := util.Uint64Tobyte(uint64(time.Now().Unix() + rand.Int63n(1000)))
+	key = util.Yield16ByteKey(key)
+	sch.Key = key
+}
+
 func (ws *Wallets) GetBlockChainRootWallet() *Wallet {
 	for _, wa := range LocalWallets.WalletsMap {
 		if wa.Username == "liangchen" {
@@ -40,6 +65,10 @@ func (ws *Wallets) GetBlockChainRootWallet() *Wallet {
 	}
 	// fmt.Println("区块链root用户未找到")
 	return nil
+}
+func (ws *Wallets) HasShareChan(name string) bool {
+	_, ok := ws.ShareChanMap[name]
+	return ok
 }
 
 func (ws *Wallets) GetUserWallet(user_address string) (*Wallet, error) {
@@ -85,13 +114,14 @@ func (ws *Wallets) GetUserTailBlockHash(user_address string) ([]byte, error) {
 	}
 	return hash, nil
 }
-func (ws *Wallets) GetUserShareTailBlockHash(key string) ([]byte, error) {
-	hash, flag := ws.ShareTailBlockHashMap[key]
-	if !flag {
-		return []byte{}, errors.New("not found")
-	}
-	return hash, nil
-}
+
+// func (ws *Wallets) GetUserShareTailBlockHash(key string) ([]byte, error) {
+// 	hash, flag := ws.ShareTailBlockHashMap[key]
+// 	if !flag {
+// 		return []byte{}, errors.New("not found")
+// 	}
+// 	return hash, nil
+// }
 func (ws *Wallets) PutTailBlockHash(user_address string, blockhash []byte) {
 	ws.TailBlockHashMap[user_address] = blockhash
 }
@@ -100,7 +130,7 @@ func (ws *Wallets) loadFile() {
 	if os.IsNotExist(err) {
 		ws.WalletsMap = make(map[string]*Wallet)
 		ws.TailBlockHashMap = make(map[string][]byte)
-		ws.ShareTailBlockHashMap = make(map[string][]byte)
+		ws.ShareChanMap = make(map[string]*ShareChan)
 		ws.SaveToFile()
 		return
 	}
@@ -123,7 +153,7 @@ func (ws *Wallets) loadFile() {
 	// ws = &wsLocal
 	ws.WalletsMap = wsLocal.WalletsMap
 	ws.TailBlockHashMap = wsLocal.TailBlockHashMap
-	ws.ShareTailBlockHashMap = wsLocal.ShareTailBlockHashMap
+	ws.ShareChanMap = wsLocal.ShareChanMap
 }
 func (ws *Wallets) GetAllAddresses() []string {
 	var addresses []string

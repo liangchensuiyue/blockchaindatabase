@@ -5,10 +5,10 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/base64"
-	"encoding/binary"
 	"encoding/gob"
 	"fmt"
 	rbtree "go_code/基于区块链的非关系型数据库/RBTree"
+	"go_code/基于区块链的非关系型数据库/util"
 	"time"
 )
 
@@ -63,11 +63,6 @@ func (x Block) Less(then rbtree.Item) bool {
 }
 
 // 实现一个辅助函数，uint64 -> []byte
-func Uint64Tobyte(src uint64) []byte {
-	buffer := bytes.NewBuffer([]byte{})
-	binary.Write(buffer, binary.BigEndian, src)
-	return buffer.Bytes()
-}
 
 // 创建区块
 func NewBlock(txinfos []*Transaction) *Block {
@@ -107,9 +102,9 @@ func NewBlock(txinfos []*Transaction) *Block {
 // Signature []byte
 // 生成 hash
 func (block *Block) SetHash() {
-	blockInfo := append(block.PreBlockHash, Uint64Tobyte(block.BlockId)...)
+	blockInfo := append(block.PreBlockHash, util.Uint64Tobyte(block.BlockId)...)
 	blockInfo = append(blockInfo, block.MerkelRoot...)
-	blockInfo = append(blockInfo, Uint64Tobyte(block.Timestamp)...)
+	blockInfo = append(blockInfo, util.Uint64Tobyte(block.Timestamp)...)
 	blockInfo = append(blockInfo, block.MerkelRoot...)
 	for _, v := range block.TxInfos {
 		blockInfo = append(blockInfo, v.Hash...)

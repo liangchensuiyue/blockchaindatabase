@@ -29,6 +29,108 @@ const (
 // of the legacy proto package is being used.
 const _ = proto.ProtoPackageIsVersion4
 
+type ShareChanName struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+}
+
+func (x *ShareChanName) Reset() {
+	*x = ShareChanName{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_blockchain_proto_msgTypes[0]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ShareChanName) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ShareChanName) ProtoMessage() {}
+
+func (x *ShareChanName) ProtoReflect() protoreflect.Message {
+	mi := &file_blockchain_proto_msgTypes[0]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ShareChanName.ProtoReflect.Descriptor instead.
+func (*ShareChanName) Descriptor() ([]byte, []int) {
+	return file_blockchain_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *ShareChanName) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+type ShareChanBody struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Users []string `protobuf:"bytes,1,rep,name=users,proto3" json:"users,omitempty"`
+	Key   []byte   `protobuf:"bytes,2,opt,name=Key,proto3" json:"Key,omitempty"`
+}
+
+func (x *ShareChanBody) Reset() {
+	*x = ShareChanBody{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_blockchain_proto_msgTypes[1]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ShareChanBody) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ShareChanBody) ProtoMessage() {}
+
+func (x *ShareChanBody) ProtoReflect() protoreflect.Message {
+	mi := &file_blockchain_proto_msgTypes[1]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ShareChanBody.ProtoReflect.Descriptor instead.
+func (*ShareChanBody) Descriptor() ([]byte, []int) {
+	return file_blockchain_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *ShareChanBody) GetUsers() []string {
+	if x != nil {
+		return x.Users
+	}
+	return nil
+}
+
+func (x *ShareChanBody) GetKey() []byte {
+	if x != nil {
+		return x.Key
+	}
+	return nil
+}
+
 type Heartbeat struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -43,7 +145,7 @@ type Heartbeat struct {
 func (x *Heartbeat) Reset() {
 	*x = Heartbeat{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_blockchain_proto_msgTypes[0]
+		mi := &file_blockchain_proto_msgTypes[2]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -56,7 +158,7 @@ func (x *Heartbeat) String() string {
 func (*Heartbeat) ProtoMessage() {}
 
 func (x *Heartbeat) ProtoReflect() protoreflect.Message {
-	mi := &file_blockchain_proto_msgTypes[0]
+	mi := &file_blockchain_proto_msgTypes[2]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -69,7 +171,7 @@ func (x *Heartbeat) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Heartbeat.ProtoReflect.Descriptor instead.
 func (*Heartbeat) Descriptor() ([]byte, []int) {
-	return file_blockchain_proto_rawDescGZIP(), []int{0}
+	return file_blockchain_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *Heartbeat) GetIsAccountant() bool {
@@ -113,7 +215,7 @@ type NodeInfo struct {
 func (x *NodeInfo) Reset() {
 	*x = NodeInfo{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_blockchain_proto_msgTypes[1]
+		mi := &file_blockchain_proto_msgTypes[3]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -126,7 +228,7 @@ func (x *NodeInfo) String() string {
 func (*NodeInfo) ProtoMessage() {}
 
 func (x *NodeInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_blockchain_proto_msgTypes[1]
+	mi := &file_blockchain_proto_msgTypes[3]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -139,7 +241,7 @@ func (x *NodeInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NodeInfo.ProtoReflect.Descriptor instead.
 func (*NodeInfo) Descriptor() ([]byte, []int) {
-	return file_blockchain_proto_rawDescGZIP(), []int{1}
+	return file_blockchain_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *NodeInfo) GetPassworld() string {
@@ -176,7 +278,7 @@ type RequestBody struct {
 func (x *RequestBody) Reset() {
 	*x = RequestBody{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_blockchain_proto_msgTypes[2]
+		mi := &file_blockchain_proto_msgTypes[4]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -189,7 +291,7 @@ func (x *RequestBody) String() string {
 func (*RequestBody) ProtoMessage() {}
 
 func (x *RequestBody) ProtoReflect() protoreflect.Message {
-	mi := &file_blockchain_proto_msgTypes[2]
+	mi := &file_blockchain_proto_msgTypes[4]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -202,7 +304,7 @@ func (x *RequestBody) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RequestBody.ProtoReflect.Descriptor instead.
 func (*RequestBody) Descriptor() ([]byte, []int) {
-	return file_blockchain_proto_rawDescGZIP(), []int{2}
+	return file_blockchain_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *RequestBody) GetUserAddress() string {
@@ -237,7 +339,7 @@ type Nodes struct {
 func (x *Nodes) Reset() {
 	*x = Nodes{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_blockchain_proto_msgTypes[3]
+		mi := &file_blockchain_proto_msgTypes[5]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -250,7 +352,7 @@ func (x *Nodes) String() string {
 func (*Nodes) ProtoMessage() {}
 
 func (x *Nodes) ProtoReflect() protoreflect.Message {
-	mi := &file_blockchain_proto_msgTypes[3]
+	mi := &file_blockchain_proto_msgTypes[5]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -263,7 +365,7 @@ func (x *Nodes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Nodes.ProtoReflect.Descriptor instead.
 func (*Nodes) Descriptor() ([]byte, []int) {
-	return file_blockchain_proto_rawDescGZIP(), []int{3}
+	return file_blockchain_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *Nodes) GetNodes() []*NodeInfo {
@@ -285,7 +387,7 @@ type VerifyInfo struct {
 func (x *VerifyInfo) Reset() {
 	*x = VerifyInfo{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_blockchain_proto_msgTypes[4]
+		mi := &file_blockchain_proto_msgTypes[6]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -298,7 +400,7 @@ func (x *VerifyInfo) String() string {
 func (*VerifyInfo) ProtoMessage() {}
 
 func (x *VerifyInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_blockchain_proto_msgTypes[4]
+	mi := &file_blockchain_proto_msgTypes[6]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -311,7 +413,7 @@ func (x *VerifyInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VerifyInfo.ProtoReflect.Descriptor instead.
 func (*VerifyInfo) Descriptor() ([]byte, []int) {
-	return file_blockchain_proto_rawDescGZIP(), []int{4}
+	return file_blockchain_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *VerifyInfo) GetStatus() bool {
@@ -333,23 +435,23 @@ type Transaction struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Key              string   `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
-	Value            []byte   `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"` // []byte
-	DataType         string   `protobuf:"bytes,3,opt,name=data_type,json=dataType,proto3" json:"data_type,omitempty"`
-	Timestamp        uint64   `protobuf:"varint,4,opt,name=timestamp,proto3" json:"timestamp,omitempty"`                            // 时间错
-	DelMark          bool     `protobuf:"varint,5,opt,name=del_mark,json=delMark,proto3" json:"del_mark,omitempty"`                 // 是否删除
-	PublicKey        []byte   `protobuf:"bytes,6,opt,name=public_key,json=publicKey,proto3" json:"public_key,omitempty"`            // 用户公钥， 可以有多个(用户共享数据)
-	Hash             []byte   `protobuf:"bytes,7,opt,name=hash,proto3" json:"hash,omitempty"`                                       // 交易 hash
-	PreBlockHash     []byte   `protobuf:"bytes,8,opt,name=pre_block_hash,json=preBlockHash,proto3" json:"pre_block_hash,omitempty"` // 在链中，用户相同交易所在前一个区块hahs(可以有多个，如果该数据类型是共享的话)
-	Signature        []byte   `protobuf:"bytes,9,opt,name=signature,proto3" json:"signature,omitempty"`                             // 用户对交易的签名
-	Shareuseraddress []string `protobuf:"bytes,10,rep,name=shareuseraddress,proto3" json:"shareuseraddress,omitempty"`
-	Share            bool     `protobuf:"varint,11,opt,name=share,proto3" json:"share,omitempty"`
+	Key          string `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
+	Value        []byte `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"` // []byte
+	DataType     string `protobuf:"bytes,3,opt,name=data_type,json=dataType,proto3" json:"data_type,omitempty"`
+	Timestamp    uint64 `protobuf:"varint,4,opt,name=timestamp,proto3" json:"timestamp,omitempty"`                            // 时间错
+	DelMark      bool   `protobuf:"varint,5,opt,name=del_mark,json=delMark,proto3" json:"del_mark,omitempty"`                 // 是否删除
+	PublicKey    []byte `protobuf:"bytes,6,opt,name=public_key,json=publicKey,proto3" json:"public_key,omitempty"`            // 用户公钥， 可以有多个(用户共享数据)
+	Hash         []byte `protobuf:"bytes,7,opt,name=hash,proto3" json:"hash,omitempty"`                                       // 交易 hash
+	PreBlockHash []byte `protobuf:"bytes,8,opt,name=pre_block_hash,json=preBlockHash,proto3" json:"pre_block_hash,omitempty"` // 在链中，用户相同交易所在前一个区块hahs(可以有多个，如果该数据类型是共享的话)
+	Signature    []byte `protobuf:"bytes,9,opt,name=signature,proto3" json:"signature,omitempty"`                             // 用户对交易的签名
+	ShareChan    string `protobuf:"bytes,10,opt,name=ShareChan,proto3" json:"ShareChan,omitempty"`
+	Share        bool   `protobuf:"varint,11,opt,name=share,proto3" json:"share,omitempty"`
 }
 
 func (x *Transaction) Reset() {
 	*x = Transaction{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_blockchain_proto_msgTypes[5]
+		mi := &file_blockchain_proto_msgTypes[7]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -362,7 +464,7 @@ func (x *Transaction) String() string {
 func (*Transaction) ProtoMessage() {}
 
 func (x *Transaction) ProtoReflect() protoreflect.Message {
-	mi := &file_blockchain_proto_msgTypes[5]
+	mi := &file_blockchain_proto_msgTypes[7]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -375,7 +477,7 @@ func (x *Transaction) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Transaction.ProtoReflect.Descriptor instead.
 func (*Transaction) Descriptor() ([]byte, []int) {
-	return file_blockchain_proto_rawDescGZIP(), []int{5}
+	return file_blockchain_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *Transaction) GetKey() string {
@@ -441,11 +543,11 @@ func (x *Transaction) GetSignature() []byte {
 	return nil
 }
 
-func (x *Transaction) GetShareuseraddress() []string {
+func (x *Transaction) GetShareChan() string {
 	if x != nil {
-		return x.Shareuseraddress
+		return x.ShareChan
 	}
-	return nil
+	return ""
 }
 
 func (x *Transaction) GetShare() bool {
@@ -472,7 +574,7 @@ type Block struct {
 func (x *Block) Reset() {
 	*x = Block{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_blockchain_proto_msgTypes[6]
+		mi := &file_blockchain_proto_msgTypes[8]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -485,7 +587,7 @@ func (x *Block) String() string {
 func (*Block) ProtoMessage() {}
 
 func (x *Block) ProtoReflect() protoreflect.Message {
-	mi := &file_blockchain_proto_msgTypes[6]
+	mi := &file_blockchain_proto_msgTypes[8]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -498,7 +600,7 @@ func (x *Block) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Block.ProtoReflect.Descriptor instead.
 func (*Block) Descriptor() ([]byte, []int) {
-	return file_blockchain_proto_rawDescGZIP(), []int{6}
+	return file_blockchain_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *Block) GetHash() []byte {
@@ -563,7 +665,7 @@ type ReqBlock struct {
 func (x *ReqBlock) Reset() {
 	*x = ReqBlock{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_blockchain_proto_msgTypes[7]
+		mi := &file_blockchain_proto_msgTypes[9]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -576,7 +678,7 @@ func (x *ReqBlock) String() string {
 func (*ReqBlock) ProtoMessage() {}
 
 func (x *ReqBlock) ProtoReflect() protoreflect.Message {
-	mi := &file_blockchain_proto_msgTypes[7]
+	mi := &file_blockchain_proto_msgTypes[9]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -589,7 +691,7 @@ func (x *ReqBlock) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReqBlock.ProtoReflect.Descriptor instead.
 func (*ReqBlock) Descriptor() ([]byte, []int) {
-	return file_blockchain_proto_rawDescGZIP(), []int{7}
+	return file_blockchain_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *ReqBlock) GetHash() []byte {
@@ -618,7 +720,7 @@ type ResBlocks struct {
 func (x *ResBlocks) Reset() {
 	*x = ResBlocks{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_blockchain_proto_msgTypes[8]
+		mi := &file_blockchain_proto_msgTypes[10]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -631,7 +733,7 @@ func (x *ResBlocks) String() string {
 func (*ResBlocks) ProtoMessage() {}
 
 func (x *ResBlocks) ProtoReflect() protoreflect.Message {
-	mi := &file_blockchain_proto_msgTypes[8]
+	mi := &file_blockchain_proto_msgTypes[10]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -644,7 +746,7 @@ func (x *ResBlocks) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResBlocks.ProtoReflect.Descriptor instead.
 func (*ResBlocks) Descriptor() ([]byte, []int) {
-	return file_blockchain_proto_rawDescGZIP(), []int{8}
+	return file_blockchain_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *ResBlocks) GetBlocks() []*Block {
@@ -666,7 +768,7 @@ type QueryInfo struct {
 func (x *QueryInfo) Reset() {
 	*x = QueryInfo{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_blockchain_proto_msgTypes[9]
+		mi := &file_blockchain_proto_msgTypes[11]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -679,7 +781,7 @@ func (x *QueryInfo) String() string {
 func (*QueryInfo) ProtoMessage() {}
 
 func (x *QueryInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_blockchain_proto_msgTypes[9]
+	mi := &file_blockchain_proto_msgTypes[11]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -692,7 +794,7 @@ func (x *QueryInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryInfo.ProtoReflect.Descriptor instead.
 func (*QueryInfo) Descriptor() ([]byte, []int) {
-	return file_blockchain_proto_rawDescGZIP(), []int{9}
+	return file_blockchain_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *QueryInfo) GetKey() string {
@@ -720,7 +822,7 @@ type ResPackBlock struct {
 func (x *ResPackBlock) Reset() {
 	*x = ResPackBlock{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_blockchain_proto_msgTypes[10]
+		mi := &file_blockchain_proto_msgTypes[12]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -733,7 +835,7 @@ func (x *ResPackBlock) String() string {
 func (*ResPackBlock) ProtoMessage() {}
 
 func (x *ResPackBlock) ProtoReflect() protoreflect.Message {
-	mi := &file_blockchain_proto_msgTypes[10]
+	mi := &file_blockchain_proto_msgTypes[12]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -746,7 +848,7 @@ func (x *ResPackBlock) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResPackBlock.ProtoReflect.Descriptor instead.
 func (*ResPackBlock) Descriptor() ([]byte, []int) {
-	return file_blockchain_proto_rawDescGZIP(), []int{10}
+	return file_blockchain_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *ResPackBlock) GetCode() bool {
@@ -767,7 +869,7 @@ type PackBlock struct {
 func (x *PackBlock) Reset() {
 	*x = PackBlock{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_blockchain_proto_msgTypes[11]
+		mi := &file_blockchain_proto_msgTypes[13]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -780,7 +882,7 @@ func (x *PackBlock) String() string {
 func (*PackBlock) ProtoMessage() {}
 
 func (x *PackBlock) ProtoReflect() protoreflect.Message {
-	mi := &file_blockchain_proto_msgTypes[11]
+	mi := &file_blockchain_proto_msgTypes[13]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -793,7 +895,7 @@ func (x *PackBlock) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PackBlock.ProtoReflect.Descriptor instead.
 func (*PackBlock) Descriptor() ([]byte, []int) {
-	return file_blockchain_proto_rawDescGZIP(), []int{11}
+	return file_blockchain_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *PackBlock) GetHash() []byte {
@@ -815,7 +917,7 @@ type ResQuery struct {
 func (x *ResQuery) Reset() {
 	*x = ResQuery{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_blockchain_proto_msgTypes[12]
+		mi := &file_blockchain_proto_msgTypes[14]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -828,7 +930,7 @@ func (x *ResQuery) String() string {
 func (*ResQuery) ProtoMessage() {}
 
 func (x *ResQuery) ProtoReflect() protoreflect.Message {
-	mi := &file_blockchain_proto_msgTypes[12]
+	mi := &file_blockchain_proto_msgTypes[14]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -841,7 +943,7 @@ func (x *ResQuery) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResQuery.ProtoReflect.Descriptor instead.
 func (*ResQuery) Descriptor() ([]byte, []int) {
-	return file_blockchain_proto_rawDescGZIP(), []int{12}
+	return file_blockchain_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *ResQuery) GetStatus() bool {
@@ -863,55 +965,60 @@ var File_blockchain_proto protoreflect.FileDescriptor
 var file_blockchain_proto_rawDesc = []byte{
 	0x0a, 0x10, 0x62, 0x6c, 0x6f, 0x63, 0x6b, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x2e, 0x70, 0x72, 0x6f,
 	0x74, 0x6f, 0x12, 0x0e, 0x62, 0x6c, 0x6f, 0x63, 0x6b, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x67, 0x72,
-	0x70, 0x63, 0x22, 0x89, 0x01, 0x0a, 0x09, 0x48, 0x65, 0x61, 0x72, 0x74, 0x62, 0x65, 0x61, 0x74,
-	0x12, 0x23, 0x0a, 0x0d, 0x69, 0x73, 0x5f, 0x61, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x61, 0x6e,
-	0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x08, 0x52, 0x0c, 0x69, 0x73, 0x41, 0x63, 0x63, 0x6f, 0x75,
-	0x6e, 0x74, 0x61, 0x6e, 0x74, 0x12, 0x1d, 0x0a, 0x0a, 0x62, 0x6c, 0x6f, 0x63, 0x6b, 0x5f, 0x6e,
-	0x75, 0x6d, 0x73, 0x18, 0x02, 0x20, 0x01, 0x28, 0x05, 0x52, 0x09, 0x62, 0x6c, 0x6f, 0x63, 0x6b,
-	0x4e, 0x75, 0x6d, 0x73, 0x12, 0x19, 0x0a, 0x08, 0x6c, 0x6f, 0x63, 0x61, 0x6c, 0x5f, 0x69, 0x70,
-	0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x6c, 0x6f, 0x63, 0x61, 0x6c, 0x49, 0x70, 0x12,
-	0x1d, 0x0a, 0x0a, 0x6c, 0x6f, 0x63, 0x61, 0x6c, 0x5f, 0x70, 0x6f, 0x72, 0x74, 0x18, 0x04, 0x20,
-	0x01, 0x28, 0x05, 0x52, 0x09, 0x6c, 0x6f, 0x63, 0x61, 0x6c, 0x50, 0x6f, 0x72, 0x74, 0x22, 0x62,
-	0x0a, 0x08, 0x4e, 0x6f, 0x64, 0x65, 0x49, 0x6e, 0x66, 0x6f, 0x12, 0x1c, 0x0a, 0x09, 0x70, 0x61,
-	0x73, 0x73, 0x77, 0x6f, 0x72, 0x6c, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x09, 0x70,
-	0x61, 0x73, 0x73, 0x77, 0x6f, 0x72, 0x6c, 0x64, 0x12, 0x19, 0x0a, 0x08, 0x6c, 0x6f, 0x63, 0x61,
-	0x6c, 0x5f, 0x69, 0x70, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x6c, 0x6f, 0x63, 0x61,
-	0x6c, 0x49, 0x70, 0x12, 0x1d, 0x0a, 0x0a, 0x6c, 0x6f, 0x63, 0x61, 0x6c, 0x5f, 0x70, 0x6f, 0x72,
-	0x74, 0x18, 0x03, 0x20, 0x01, 0x28, 0x05, 0x52, 0x09, 0x6c, 0x6f, 0x63, 0x61, 0x6c, 0x50, 0x6f,
-	0x72, 0x74, 0x22, 0x75, 0x0a, 0x0b, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x42, 0x6f, 0x64,
-	0x79, 0x12, 0x21, 0x0a, 0x0c, 0x75, 0x73, 0x65, 0x72, 0x5f, 0x61, 0x64, 0x64, 0x72, 0x65, 0x73,
-	0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x75, 0x73, 0x65, 0x72, 0x41, 0x64, 0x64,
-	0x72, 0x65, 0x73, 0x73, 0x12, 0x16, 0x0a, 0x06, 0x73, 0x74, 0x72, 0x69, 0x63, 0x74, 0x18, 0x02,
-	0x20, 0x01, 0x28, 0x08, 0x52, 0x06, 0x73, 0x74, 0x72, 0x69, 0x63, 0x74, 0x12, 0x2b, 0x0a, 0x02,
-	0x54, 0x78, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1b, 0x2e, 0x62, 0x6c, 0x6f, 0x63, 0x6b,
-	0x63, 0x68, 0x61, 0x69, 0x6e, 0x67, 0x72, 0x70, 0x63, 0x2e, 0x54, 0x72, 0x61, 0x6e, 0x73, 0x61,
-	0x63, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x02, 0x54, 0x78, 0x22, 0x37, 0x0a, 0x05, 0x4e, 0x6f, 0x64,
-	0x65, 0x73, 0x12, 0x2e, 0x0a, 0x05, 0x6e, 0x6f, 0x64, 0x65, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28,
-	0x0b, 0x32, 0x18, 0x2e, 0x62, 0x6c, 0x6f, 0x63, 0x6b, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x67, 0x72,
-	0x70, 0x63, 0x2e, 0x4e, 0x6f, 0x64, 0x65, 0x49, 0x6e, 0x66, 0x6f, 0x52, 0x05, 0x6e, 0x6f, 0x64,
-	0x65, 0x73, 0x22, 0x38, 0x0a, 0x0a, 0x56, 0x65, 0x72, 0x69, 0x66, 0x79, 0x49, 0x6e, 0x66, 0x6f,
-	0x12, 0x16, 0x0a, 0x06, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x08,
-	0x52, 0x06, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x12, 0x12, 0x0a, 0x04, 0x69, 0x6e, 0x66, 0x6f,
-	0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x69, 0x6e, 0x66, 0x6f, 0x22, 0xc4, 0x02, 0x0a,
-	0x0b, 0x54, 0x72, 0x61, 0x6e, 0x73, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x10, 0x0a, 0x03,
-	0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x14,
-	0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x05, 0x76,
-	0x61, 0x6c, 0x75, 0x65, 0x12, 0x1b, 0x0a, 0x09, 0x64, 0x61, 0x74, 0x61, 0x5f, 0x74, 0x79, 0x70,
-	0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x64, 0x61, 0x74, 0x61, 0x54, 0x79, 0x70,
-	0x65, 0x12, 0x1c, 0x0a, 0x09, 0x74, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x18, 0x04,
-	0x20, 0x01, 0x28, 0x04, 0x52, 0x09, 0x74, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x12,
-	0x19, 0x0a, 0x08, 0x64, 0x65, 0x6c, 0x5f, 0x6d, 0x61, 0x72, 0x6b, 0x18, 0x05, 0x20, 0x01, 0x28,
-	0x08, 0x52, 0x07, 0x64, 0x65, 0x6c, 0x4d, 0x61, 0x72, 0x6b, 0x12, 0x1d, 0x0a, 0x0a, 0x70, 0x75,
-	0x62, 0x6c, 0x69, 0x63, 0x5f, 0x6b, 0x65, 0x79, 0x18, 0x06, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x09,
-	0x70, 0x75, 0x62, 0x6c, 0x69, 0x63, 0x4b, 0x65, 0x79, 0x12, 0x12, 0x0a, 0x04, 0x68, 0x61, 0x73,
-	0x68, 0x18, 0x07, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x04, 0x68, 0x61, 0x73, 0x68, 0x12, 0x24, 0x0a,
-	0x0e, 0x70, 0x72, 0x65, 0x5f, 0x62, 0x6c, 0x6f, 0x63, 0x6b, 0x5f, 0x68, 0x61, 0x73, 0x68, 0x18,
-	0x08, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x0c, 0x70, 0x72, 0x65, 0x42, 0x6c, 0x6f, 0x63, 0x6b, 0x48,
-	0x61, 0x73, 0x68, 0x12, 0x1c, 0x0a, 0x09, 0x73, 0x69, 0x67, 0x6e, 0x61, 0x74, 0x75, 0x72, 0x65,
-	0x18, 0x09, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x09, 0x73, 0x69, 0x67, 0x6e, 0x61, 0x74, 0x75, 0x72,
-	0x65, 0x12, 0x2a, 0x0a, 0x10, 0x73, 0x68, 0x61, 0x72, 0x65, 0x75, 0x73, 0x65, 0x72, 0x61, 0x64,
-	0x64, 0x72, 0x65, 0x73, 0x73, 0x18, 0x0a, 0x20, 0x03, 0x28, 0x09, 0x52, 0x10, 0x73, 0x68, 0x61,
-	0x72, 0x65, 0x75, 0x73, 0x65, 0x72, 0x61, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x12, 0x14, 0x0a,
+	0x70, 0x63, 0x22, 0x23, 0x0a, 0x0d, 0x53, 0x68, 0x61, 0x72, 0x65, 0x43, 0x68, 0x61, 0x6e, 0x4e,
+	0x61, 0x6d, 0x65, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28,
+	0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x22, 0x37, 0x0a, 0x0d, 0x53, 0x68, 0x61, 0x72, 0x65,
+	0x43, 0x68, 0x61, 0x6e, 0x42, 0x6f, 0x64, 0x79, 0x12, 0x14, 0x0a, 0x05, 0x75, 0x73, 0x65, 0x72,
+	0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x09, 0x52, 0x05, 0x75, 0x73, 0x65, 0x72, 0x73, 0x12, 0x10,
+	0x0a, 0x03, 0x4b, 0x65, 0x79, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x03, 0x4b, 0x65, 0x79,
+	0x22, 0x89, 0x01, 0x0a, 0x09, 0x48, 0x65, 0x61, 0x72, 0x74, 0x62, 0x65, 0x61, 0x74, 0x12, 0x23,
+	0x0a, 0x0d, 0x69, 0x73, 0x5f, 0x61, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x61, 0x6e, 0x74, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x08, 0x52, 0x0c, 0x69, 0x73, 0x41, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74,
+	0x61, 0x6e, 0x74, 0x12, 0x1d, 0x0a, 0x0a, 0x62, 0x6c, 0x6f, 0x63, 0x6b, 0x5f, 0x6e, 0x75, 0x6d,
+	0x73, 0x18, 0x02, 0x20, 0x01, 0x28, 0x05, 0x52, 0x09, 0x62, 0x6c, 0x6f, 0x63, 0x6b, 0x4e, 0x75,
+	0x6d, 0x73, 0x12, 0x19, 0x0a, 0x08, 0x6c, 0x6f, 0x63, 0x61, 0x6c, 0x5f, 0x69, 0x70, 0x18, 0x03,
+	0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x6c, 0x6f, 0x63, 0x61, 0x6c, 0x49, 0x70, 0x12, 0x1d, 0x0a,
+	0x0a, 0x6c, 0x6f, 0x63, 0x61, 0x6c, 0x5f, 0x70, 0x6f, 0x72, 0x74, 0x18, 0x04, 0x20, 0x01, 0x28,
+	0x05, 0x52, 0x09, 0x6c, 0x6f, 0x63, 0x61, 0x6c, 0x50, 0x6f, 0x72, 0x74, 0x22, 0x62, 0x0a, 0x08,
+	0x4e, 0x6f, 0x64, 0x65, 0x49, 0x6e, 0x66, 0x6f, 0x12, 0x1c, 0x0a, 0x09, 0x70, 0x61, 0x73, 0x73,
+	0x77, 0x6f, 0x72, 0x6c, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x09, 0x70, 0x61, 0x73,
+	0x73, 0x77, 0x6f, 0x72, 0x6c, 0x64, 0x12, 0x19, 0x0a, 0x08, 0x6c, 0x6f, 0x63, 0x61, 0x6c, 0x5f,
+	0x69, 0x70, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x6c, 0x6f, 0x63, 0x61, 0x6c, 0x49,
+	0x70, 0x12, 0x1d, 0x0a, 0x0a, 0x6c, 0x6f, 0x63, 0x61, 0x6c, 0x5f, 0x70, 0x6f, 0x72, 0x74, 0x18,
+	0x03, 0x20, 0x01, 0x28, 0x05, 0x52, 0x09, 0x6c, 0x6f, 0x63, 0x61, 0x6c, 0x50, 0x6f, 0x72, 0x74,
+	0x22, 0x75, 0x0a, 0x0b, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x42, 0x6f, 0x64, 0x79, 0x12,
+	0x21, 0x0a, 0x0c, 0x75, 0x73, 0x65, 0x72, 0x5f, 0x61, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x75, 0x73, 0x65, 0x72, 0x41, 0x64, 0x64, 0x72, 0x65,
+	0x73, 0x73, 0x12, 0x16, 0x0a, 0x06, 0x73, 0x74, 0x72, 0x69, 0x63, 0x74, 0x18, 0x02, 0x20, 0x01,
+	0x28, 0x08, 0x52, 0x06, 0x73, 0x74, 0x72, 0x69, 0x63, 0x74, 0x12, 0x2b, 0x0a, 0x02, 0x54, 0x78,
+	0x18, 0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1b, 0x2e, 0x62, 0x6c, 0x6f, 0x63, 0x6b, 0x63, 0x68,
+	0x61, 0x69, 0x6e, 0x67, 0x72, 0x70, 0x63, 0x2e, 0x54, 0x72, 0x61, 0x6e, 0x73, 0x61, 0x63, 0x74,
+	0x69, 0x6f, 0x6e, 0x52, 0x02, 0x54, 0x78, 0x22, 0x37, 0x0a, 0x05, 0x4e, 0x6f, 0x64, 0x65, 0x73,
+	0x12, 0x2e, 0x0a, 0x05, 0x6e, 0x6f, 0x64, 0x65, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32,
+	0x18, 0x2e, 0x62, 0x6c, 0x6f, 0x63, 0x6b, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x67, 0x72, 0x70, 0x63,
+	0x2e, 0x4e, 0x6f, 0x64, 0x65, 0x49, 0x6e, 0x66, 0x6f, 0x52, 0x05, 0x6e, 0x6f, 0x64, 0x65, 0x73,
+	0x22, 0x38, 0x0a, 0x0a, 0x56, 0x65, 0x72, 0x69, 0x66, 0x79, 0x49, 0x6e, 0x66, 0x6f, 0x12, 0x16,
+	0x0a, 0x06, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x08, 0x52, 0x06,
+	0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x12, 0x12, 0x0a, 0x04, 0x69, 0x6e, 0x66, 0x6f, 0x18, 0x02,
+	0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x69, 0x6e, 0x66, 0x6f, 0x22, 0xb6, 0x02, 0x0a, 0x0b, 0x54,
+	0x72, 0x61, 0x6e, 0x73, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65,
+	0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x14, 0x0a, 0x05,
+	0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x05, 0x76, 0x61, 0x6c,
+	0x75, 0x65, 0x12, 0x1b, 0x0a, 0x09, 0x64, 0x61, 0x74, 0x61, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x18,
+	0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x64, 0x61, 0x74, 0x61, 0x54, 0x79, 0x70, 0x65, 0x12,
+	0x1c, 0x0a, 0x09, 0x74, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x18, 0x04, 0x20, 0x01,
+	0x28, 0x04, 0x52, 0x09, 0x74, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x12, 0x19, 0x0a,
+	0x08, 0x64, 0x65, 0x6c, 0x5f, 0x6d, 0x61, 0x72, 0x6b, 0x18, 0x05, 0x20, 0x01, 0x28, 0x08, 0x52,
+	0x07, 0x64, 0x65, 0x6c, 0x4d, 0x61, 0x72, 0x6b, 0x12, 0x1d, 0x0a, 0x0a, 0x70, 0x75, 0x62, 0x6c,
+	0x69, 0x63, 0x5f, 0x6b, 0x65, 0x79, 0x18, 0x06, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x09, 0x70, 0x75,
+	0x62, 0x6c, 0x69, 0x63, 0x4b, 0x65, 0x79, 0x12, 0x12, 0x0a, 0x04, 0x68, 0x61, 0x73, 0x68, 0x18,
+	0x07, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x04, 0x68, 0x61, 0x73, 0x68, 0x12, 0x24, 0x0a, 0x0e, 0x70,
+	0x72, 0x65, 0x5f, 0x62, 0x6c, 0x6f, 0x63, 0x6b, 0x5f, 0x68, 0x61, 0x73, 0x68, 0x18, 0x08, 0x20,
+	0x01, 0x28, 0x0c, 0x52, 0x0c, 0x70, 0x72, 0x65, 0x42, 0x6c, 0x6f, 0x63, 0x6b, 0x48, 0x61, 0x73,
+	0x68, 0x12, 0x1c, 0x0a, 0x09, 0x73, 0x69, 0x67, 0x6e, 0x61, 0x74, 0x75, 0x72, 0x65, 0x18, 0x09,
+	0x20, 0x01, 0x28, 0x0c, 0x52, 0x09, 0x73, 0x69, 0x67, 0x6e, 0x61, 0x74, 0x75, 0x72, 0x65, 0x12,
+	0x1c, 0x0a, 0x09, 0x53, 0x68, 0x61, 0x72, 0x65, 0x43, 0x68, 0x61, 0x6e, 0x18, 0x0a, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x09, 0x53, 0x68, 0x61, 0x72, 0x65, 0x43, 0x68, 0x61, 0x6e, 0x12, 0x14, 0x0a,
 	0x05, 0x73, 0x68, 0x61, 0x72, 0x65, 0x18, 0x0b, 0x20, 0x01, 0x28, 0x08, 0x52, 0x05, 0x73, 0x68,
 	0x61, 0x72, 0x65, 0x22, 0xef, 0x01, 0x0a, 0x05, 0x42, 0x6c, 0x6f, 0x63, 0x6b, 0x12, 0x12, 0x0a,
 	0x04, 0x68, 0x61, 0x73, 0x68, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x04, 0x68, 0x61, 0x73,
@@ -948,7 +1055,7 @@ var file_blockchain_proto_rawDesc = []byte{
 	0x68, 0x22, 0x36, 0x0a, 0x08, 0x52, 0x65, 0x73, 0x51, 0x75, 0x65, 0x72, 0x79, 0x12, 0x16, 0x0a,
 	0x06, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x08, 0x52, 0x06, 0x73,
 	0x74, 0x61, 0x74, 0x75, 0x73, 0x12, 0x12, 0x0a, 0x04, 0x64, 0x61, 0x74, 0x61, 0x18, 0x02, 0x20,
-	0x01, 0x28, 0x0c, 0x52, 0x04, 0x64, 0x61, 0x74, 0x61, 0x32, 0x89, 0x04, 0x0a, 0x11, 0x42, 0x6c,
+	0x01, 0x28, 0x0c, 0x52, 0x04, 0x64, 0x61, 0x74, 0x61, 0x32, 0xd9, 0x04, 0x0a, 0x11, 0x42, 0x6c,
 	0x6f, 0x63, 0x6b, 0x43, 0x68, 0x61, 0x69, 0x6e, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x12,
 	0x46, 0x0a, 0x0f, 0x44, 0x69, 0x73, 0x74, 0x72, 0x69, 0x62, 0x75, 0x74, 0x65, 0x42, 0x6c, 0x6f,
 	0x63, 0x6b, 0x12, 0x15, 0x2e, 0x62, 0x6c, 0x6f, 0x63, 0x6b, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x67,
@@ -981,7 +1088,12 @@ var file_blockchain_proto_rawDesc = []byte{
 	0x6c, 0x6f, 0x63, 0x6b, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x67, 0x72, 0x70, 0x63, 0x2e, 0x48, 0x65,
 	0x61, 0x72, 0x74, 0x62, 0x65, 0x61, 0x74, 0x1a, 0x1a, 0x2e, 0x62, 0x6c, 0x6f, 0x63, 0x6b, 0x63,
 	0x68, 0x61, 0x69, 0x6e, 0x67, 0x72, 0x70, 0x63, 0x2e, 0x56, 0x65, 0x72, 0x69, 0x66, 0x79, 0x49,
-	0x6e, 0x66, 0x6f, 0x22, 0x00, 0x42, 0x02, 0x50, 0x01, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f,
+	0x6e, 0x66, 0x6f, 0x22, 0x00, 0x12, 0x4e, 0x0a, 0x0c, 0x47, 0x65, 0x74, 0x53, 0x68, 0x61, 0x72,
+	0x65, 0x43, 0x68, 0x61, 0x6e, 0x12, 0x1d, 0x2e, 0x62, 0x6c, 0x6f, 0x63, 0x6b, 0x63, 0x68, 0x61,
+	0x69, 0x6e, 0x67, 0x72, 0x70, 0x63, 0x2e, 0x53, 0x68, 0x61, 0x72, 0x65, 0x43, 0x68, 0x61, 0x6e,
+	0x4e, 0x61, 0x6d, 0x65, 0x1a, 0x1d, 0x2e, 0x62, 0x6c, 0x6f, 0x63, 0x6b, 0x63, 0x68, 0x61, 0x69,
+	0x6e, 0x67, 0x72, 0x70, 0x63, 0x2e, 0x53, 0x68, 0x61, 0x72, 0x65, 0x43, 0x68, 0x61, 0x6e, 0x42,
+	0x6f, 0x64, 0x79, 0x22, 0x00, 0x42, 0x02, 0x50, 0x01, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f,
 	0x33,
 }
 
@@ -997,43 +1109,47 @@ func file_blockchain_proto_rawDescGZIP() []byte {
 	return file_blockchain_proto_rawDescData
 }
 
-var file_blockchain_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
+var file_blockchain_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
 var file_blockchain_proto_goTypes = []interface{}{
-	(*Heartbeat)(nil),    // 0: blockchaingrpc.Heartbeat
-	(*NodeInfo)(nil),     // 1: blockchaingrpc.NodeInfo
-	(*RequestBody)(nil),  // 2: blockchaingrpc.RequestBody
-	(*Nodes)(nil),        // 3: blockchaingrpc.Nodes
-	(*VerifyInfo)(nil),   // 4: blockchaingrpc.VerifyInfo
-	(*Transaction)(nil),  // 5: blockchaingrpc.Transaction
-	(*Block)(nil),        // 6: blockchaingrpc.Block
-	(*ReqBlock)(nil),     // 7: blockchaingrpc.ReqBlock
-	(*ResBlocks)(nil),    // 8: blockchaingrpc.ResBlocks
-	(*QueryInfo)(nil),    // 9: blockchaingrpc.QueryInfo
-	(*ResPackBlock)(nil), // 10: blockchaingrpc.ResPackBlock
-	(*PackBlock)(nil),    // 11: blockchaingrpc.PackBlock
-	(*ResQuery)(nil),     // 12: blockchaingrpc.ResQuery
+	(*ShareChanName)(nil), // 0: blockchaingrpc.ShareChanName
+	(*ShareChanBody)(nil), // 1: blockchaingrpc.ShareChanBody
+	(*Heartbeat)(nil),     // 2: blockchaingrpc.Heartbeat
+	(*NodeInfo)(nil),      // 3: blockchaingrpc.NodeInfo
+	(*RequestBody)(nil),   // 4: blockchaingrpc.RequestBody
+	(*Nodes)(nil),         // 5: blockchaingrpc.Nodes
+	(*VerifyInfo)(nil),    // 6: blockchaingrpc.VerifyInfo
+	(*Transaction)(nil),   // 7: blockchaingrpc.Transaction
+	(*Block)(nil),         // 8: blockchaingrpc.Block
+	(*ReqBlock)(nil),      // 9: blockchaingrpc.ReqBlock
+	(*ResBlocks)(nil),     // 10: blockchaingrpc.ResBlocks
+	(*QueryInfo)(nil),     // 11: blockchaingrpc.QueryInfo
+	(*ResPackBlock)(nil),  // 12: blockchaingrpc.ResPackBlock
+	(*PackBlock)(nil),     // 13: blockchaingrpc.PackBlock
+	(*ResQuery)(nil),      // 14: blockchaingrpc.ResQuery
 }
 var file_blockchain_proto_depIdxs = []int32{
-	5,  // 0: blockchaingrpc.RequestBody.Tx:type_name -> blockchaingrpc.Transaction
-	1,  // 1: blockchaingrpc.Nodes.nodes:type_name -> blockchaingrpc.NodeInfo
-	5,  // 2: blockchaingrpc.Block.TxInfos:type_name -> blockchaingrpc.Transaction
-	6,  // 3: blockchaingrpc.ResBlocks.blocks:type_name -> blockchaingrpc.Block
-	6,  // 4: blockchaingrpc.BlockChainService.DistributeBlock:input_type -> blockchaingrpc.Block
-	7,  // 5: blockchaingrpc.BlockChainService.BlockSynchronization:input_type -> blockchaingrpc.ReqBlock
-	7,  // 6: blockchaingrpc.BlockChainService.GetLatestBlock:input_type -> blockchaingrpc.ReqBlock
-	1,  // 7: blockchaingrpc.BlockChainService.JoinGroup:input_type -> blockchaingrpc.NodeInfo
-	2,  // 8: blockchaingrpc.BlockChainService.Request:input_type -> blockchaingrpc.RequestBody
-	1,  // 9: blockchaingrpc.BlockChainService.QuorumHeartbeat:input_type -> blockchaingrpc.NodeInfo
-	0,  // 10: blockchaingrpc.BlockChainService.GetAccountant:input_type -> blockchaingrpc.Heartbeat
-	4,  // 11: blockchaingrpc.BlockChainService.DistributeBlock:output_type -> blockchaingrpc.VerifyInfo
-	8,  // 12: blockchaingrpc.BlockChainService.BlockSynchronization:output_type -> blockchaingrpc.ResBlocks
-	6,  // 13: blockchaingrpc.BlockChainService.GetLatestBlock:output_type -> blockchaingrpc.Block
-	3,  // 14: blockchaingrpc.BlockChainService.JoinGroup:output_type -> blockchaingrpc.Nodes
-	4,  // 15: blockchaingrpc.BlockChainService.Request:output_type -> blockchaingrpc.VerifyInfo
-	0,  // 16: blockchaingrpc.BlockChainService.QuorumHeartbeat:output_type -> blockchaingrpc.Heartbeat
-	4,  // 17: blockchaingrpc.BlockChainService.GetAccountant:output_type -> blockchaingrpc.VerifyInfo
-	11, // [11:18] is the sub-list for method output_type
-	4,  // [4:11] is the sub-list for method input_type
+	7,  // 0: blockchaingrpc.RequestBody.Tx:type_name -> blockchaingrpc.Transaction
+	3,  // 1: blockchaingrpc.Nodes.nodes:type_name -> blockchaingrpc.NodeInfo
+	7,  // 2: blockchaingrpc.Block.TxInfos:type_name -> blockchaingrpc.Transaction
+	8,  // 3: blockchaingrpc.ResBlocks.blocks:type_name -> blockchaingrpc.Block
+	8,  // 4: blockchaingrpc.BlockChainService.DistributeBlock:input_type -> blockchaingrpc.Block
+	9,  // 5: blockchaingrpc.BlockChainService.BlockSynchronization:input_type -> blockchaingrpc.ReqBlock
+	9,  // 6: blockchaingrpc.BlockChainService.GetLatestBlock:input_type -> blockchaingrpc.ReqBlock
+	3,  // 7: blockchaingrpc.BlockChainService.JoinGroup:input_type -> blockchaingrpc.NodeInfo
+	4,  // 8: blockchaingrpc.BlockChainService.Request:input_type -> blockchaingrpc.RequestBody
+	3,  // 9: blockchaingrpc.BlockChainService.QuorumHeartbeat:input_type -> blockchaingrpc.NodeInfo
+	2,  // 10: blockchaingrpc.BlockChainService.GetAccountant:input_type -> blockchaingrpc.Heartbeat
+	0,  // 11: blockchaingrpc.BlockChainService.GetShareChan:input_type -> blockchaingrpc.ShareChanName
+	6,  // 12: blockchaingrpc.BlockChainService.DistributeBlock:output_type -> blockchaingrpc.VerifyInfo
+	10, // 13: blockchaingrpc.BlockChainService.BlockSynchronization:output_type -> blockchaingrpc.ResBlocks
+	8,  // 14: blockchaingrpc.BlockChainService.GetLatestBlock:output_type -> blockchaingrpc.Block
+	5,  // 15: blockchaingrpc.BlockChainService.JoinGroup:output_type -> blockchaingrpc.Nodes
+	6,  // 16: blockchaingrpc.BlockChainService.Request:output_type -> blockchaingrpc.VerifyInfo
+	2,  // 17: blockchaingrpc.BlockChainService.QuorumHeartbeat:output_type -> blockchaingrpc.Heartbeat
+	6,  // 18: blockchaingrpc.BlockChainService.GetAccountant:output_type -> blockchaingrpc.VerifyInfo
+	1,  // 19: blockchaingrpc.BlockChainService.GetShareChan:output_type -> blockchaingrpc.ShareChanBody
+	12, // [12:20] is the sub-list for method output_type
+	4,  // [4:12] is the sub-list for method input_type
 	4,  // [4:4] is the sub-list for extension type_name
 	4,  // [4:4] is the sub-list for extension extendee
 	0,  // [0:4] is the sub-list for field type_name
@@ -1046,7 +1162,7 @@ func file_blockchain_proto_init() {
 	}
 	if !protoimpl.UnsafeEnabled {
 		file_blockchain_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Heartbeat); i {
+			switch v := v.(*ShareChanName); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1058,7 +1174,7 @@ func file_blockchain_proto_init() {
 			}
 		}
 		file_blockchain_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*NodeInfo); i {
+			switch v := v.(*ShareChanBody); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1070,7 +1186,7 @@ func file_blockchain_proto_init() {
 			}
 		}
 		file_blockchain_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*RequestBody); i {
+			switch v := v.(*Heartbeat); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1082,7 +1198,7 @@ func file_blockchain_proto_init() {
 			}
 		}
 		file_blockchain_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Nodes); i {
+			switch v := v.(*NodeInfo); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1094,7 +1210,7 @@ func file_blockchain_proto_init() {
 			}
 		}
 		file_blockchain_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*VerifyInfo); i {
+			switch v := v.(*RequestBody); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1106,7 +1222,7 @@ func file_blockchain_proto_init() {
 			}
 		}
 		file_blockchain_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Transaction); i {
+			switch v := v.(*Nodes); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1118,7 +1234,7 @@ func file_blockchain_proto_init() {
 			}
 		}
 		file_blockchain_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Block); i {
+			switch v := v.(*VerifyInfo); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1130,7 +1246,7 @@ func file_blockchain_proto_init() {
 			}
 		}
 		file_blockchain_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ReqBlock); i {
+			switch v := v.(*Transaction); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1142,7 +1258,7 @@ func file_blockchain_proto_init() {
 			}
 		}
 		file_blockchain_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ResBlocks); i {
+			switch v := v.(*Block); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1154,7 +1270,7 @@ func file_blockchain_proto_init() {
 			}
 		}
 		file_blockchain_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*QueryInfo); i {
+			switch v := v.(*ReqBlock); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1166,7 +1282,7 @@ func file_blockchain_proto_init() {
 			}
 		}
 		file_blockchain_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ResPackBlock); i {
+			switch v := v.(*ResBlocks); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1178,7 +1294,7 @@ func file_blockchain_proto_init() {
 			}
 		}
 		file_blockchain_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*PackBlock); i {
+			switch v := v.(*QueryInfo); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1190,6 +1306,30 @@ func file_blockchain_proto_init() {
 			}
 		}
 		file_blockchain_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ResPackBlock); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_blockchain_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*PackBlock); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_blockchain_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ResQuery); i {
 			case 0:
 				return &v.state
@@ -1208,7 +1348,7 @@ func file_blockchain_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_blockchain_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   13,
+			NumMessages:   15,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
@@ -1245,6 +1385,7 @@ type BlockChainServiceClient interface {
 	Request(ctx context.Context, in *RequestBody, opts ...grpc.CallOption) (*VerifyInfo, error)
 	QuorumHeartbeat(ctx context.Context, in *NodeInfo, opts ...grpc.CallOption) (*Heartbeat, error)
 	GetAccountant(ctx context.Context, in *Heartbeat, opts ...grpc.CallOption) (*VerifyInfo, error)
+	GetShareChan(ctx context.Context, in *ShareChanName, opts ...grpc.CallOption) (*ShareChanBody, error)
 }
 
 type blockChainServiceClient struct {
@@ -1318,6 +1459,15 @@ func (c *blockChainServiceClient) GetAccountant(ctx context.Context, in *Heartbe
 	return out, nil
 }
 
+func (c *blockChainServiceClient) GetShareChan(ctx context.Context, in *ShareChanName, opts ...grpc.CallOption) (*ShareChanBody, error) {
+	out := new(ShareChanBody)
+	err := c.cc.Invoke(ctx, "/blockchaingrpc.BlockChainService/GetShareChan", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // BlockChainServiceServer is the server API for BlockChainService service.
 type BlockChainServiceServer interface {
 	/// 分发区块
@@ -1331,6 +1481,7 @@ type BlockChainServiceServer interface {
 	Request(context.Context, *RequestBody) (*VerifyInfo, error)
 	QuorumHeartbeat(context.Context, *NodeInfo) (*Heartbeat, error)
 	GetAccountant(context.Context, *Heartbeat) (*VerifyInfo, error)
+	GetShareChan(context.Context, *ShareChanName) (*ShareChanBody, error)
 }
 
 // UnimplementedBlockChainServiceServer can be embedded to have forward compatible implementations.
@@ -1357,6 +1508,9 @@ func (*UnimplementedBlockChainServiceServer) QuorumHeartbeat(context.Context, *N
 }
 func (*UnimplementedBlockChainServiceServer) GetAccountant(context.Context, *Heartbeat) (*VerifyInfo, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAccountant not implemented")
+}
+func (*UnimplementedBlockChainServiceServer) GetShareChan(context.Context, *ShareChanName) (*ShareChanBody, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetShareChan not implemented")
 }
 
 func RegisterBlockChainServiceServer(s *grpc.Server, srv BlockChainServiceServer) {
@@ -1489,6 +1643,24 @@ func _BlockChainService_GetAccountant_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _BlockChainService_GetShareChan_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ShareChanName)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BlockChainServiceServer).GetShareChan(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/blockchaingrpc.BlockChainService/GetShareChan",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BlockChainServiceServer).GetShareChan(ctx, req.(*ShareChanName))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _BlockChainService_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "blockchaingrpc.BlockChainService",
 	HandlerType: (*BlockChainServiceServer)(nil),
@@ -1520,6 +1692,10 @@ var _BlockChainService_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetAccountant",
 			Handler:    _BlockChainService_GetAccountant_Handler,
+		},
+		{
+			MethodName: "GetShareChan",
+			Handler:    _BlockChainService_GetShareChan_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

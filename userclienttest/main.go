@@ -9,8 +9,8 @@ import (
 	"google.golang.org/grpc"
 )
 
-func put(key string, value []byte, datatype string, user_address string, share bool, shareuser []string, strict bool) {
-	conn, err := grpc.Dial(fmt.Sprintf("%s:%d", "10.0.0.100", 3600), grpc.WithInsecure())
+func put(key string, value []byte, datatype string, pass string, user_address string, share bool, sharechan string, strict bool) {
+	conn, err := grpc.Dial(fmt.Sprintf("%s:%d", "10.0.0.1", 3600), grpc.WithInsecure())
 	if err != nil {
 		fmt.Println("网络异常")
 	}
@@ -22,20 +22,21 @@ func put(key string, value []byte, datatype string, user_address string, share b
 
 	//通过句柄调用函数
 	_, err = c.Put(context.Background(), &ucgrpc.PutBody{
+		Passworld:   pass,
 		Value:       value,
 		Datatype:    datatype,
 		Strict:      strict,
 		Key:         key,
 		UserAddress: user_address,
 		Share:       share,
-		Shareuser:   shareuser,
+		ShareChan:   sharechan,
 	})
 	if err != nil {
 		fmt.Println("put", err.Error())
 	}
 }
-func get(key string, user_address string, share bool, shareuser []string) bool {
-	conn, err := grpc.Dial(fmt.Sprintf("%s:%d", "10.0.0.100", 3600), grpc.WithInsecure())
+func get(key string, username string, user_address string, share bool, sharechan string) bool {
+	conn, err := grpc.Dial(fmt.Sprintf("%s:%d", "10.0.0.1", 3600), grpc.WithInsecure())
 	if err != nil {
 		fmt.Println("网络异常")
 	}
@@ -50,7 +51,8 @@ func get(key string, user_address string, share bool, shareuser []string) bool {
 		Key:         key,
 		UserAddress: user_address,
 		Sharemode:   share,
-		Shareuser:   shareuser,
+		Username:    username,
+		ShareChan:   sharechan,
 	})
 	if err != nil {
 		return false
@@ -58,11 +60,12 @@ func get(key string, user_address string, share bool, shareuser []string) bool {
 	return re.Status
 }
 func main() {
-	nums := 200
+
+	nums := 1
 	pre := time.Now().UnixNano()
-	for i := nums; i < 300; i++ {
-		// put(fmt.Sprintf("key_%d", i), []byte(fmt.Sprintf("%d", i)), "int", "1Q3kMaWxJxU44GxKVGwLscB3EQZX4u7vSH", false, []string{}, true)
-		flag := get(fmt.Sprintf("key_%d", i), "1Q3kMaWxJxU44GxKVGwLscB3EQZX4u7vSH", false, []string{})
+	for i := nums; i < 500; i++ {
+		put(fmt.Sprintf("key_%d", i), []byte(fmt.Sprintf("%d", i)), "int", "123", "1BZsJu1amTo2f5F3DZRYihk6Xjq3k7u4AD", false, "", true)
+		flag := get(fmt.Sprintf("key_%d", i), "gds", "1BZsJu1amTo2f5F3DZRYihk6Xjq3k7u4AD", false, "")
 		if !flag {
 			fmt.Println("失败", fmt.Sprintf("key_%d", i))
 		} else {

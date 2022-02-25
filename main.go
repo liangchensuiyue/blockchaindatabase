@@ -52,8 +52,8 @@ func StartDraftWork() {
 						// 	BC.LocalWallets.TailBlockHashMap[addr] = newblock.Hash
 						// }
 						if tx.Share {
-							BC.LocalWallets.ShareTailBlockHashMap[BC.GenerateUserShareKey(tx.ShareAddress)] = newblock.Hash
-
+							schn := BC.LocalWallets.ShareChanMap[tx.ShareChan]
+							schn.TailBlockHash = newblock.Hash
 						} else {
 							BC.LocalWallets.TailBlockHashMap[BC.GenerateAddressFromPubkey(tx.PublicKey)] = newblock.Hash
 						}
@@ -79,9 +79,10 @@ func addblocks(blocks []*BC.Block) {
 				BC.LocalWallets.TailBlockHashMap[rw.NewAddress()] = newblock.Hash
 			}
 			for _, tx := range newblock.TxInfos {
-				fmt.Println(tx.Share, tx.ShareAddress, base64.RawStdEncoding.EncodeToString(newblock.Hash))
+				// fmt.Println(tx.Share, tx.ShareAddress, base64.RawStdEncoding.EncodeToString(newblock.Hash))
 				if tx.Share {
-					BC.LocalWallets.ShareTailBlockHashMap[BC.GenerateUserShareKey(tx.ShareAddress)] = newblock.Hash
+					schn := BC.LocalWallets.ShareChanMap[tx.ShareChan]
+					schn.TailBlockHash = newblock.Hash
 
 				} else {
 					BC.LocalWallets.TailBlockHashMap[BC.GenerateAddressFromPubkey(tx.PublicKey)] = newblock.Hash
@@ -97,222 +98,290 @@ func addblocks(blocks []*BC.Block) {
 func runLocalTestCli() {
 	reader := bufio.NewReader(os.Stdin)
 	// fmt.Println("start cli:")
-	flag := false
-	// username := ""
-	address := ""
 	for {
-		if flag {
-			break
-		}
-		_clistr, _, _ := reader.ReadLine()
-		clistr := string(_clistr)
-		_cmds := strings.Split(clistr, " ")
-		cmds := []string{}
-		for _, v := range _cmds {
-			if v != "" {
-				cmds = append(cmds, v)
+		username := ""
+		address := ""
+		pass := ""
+		for {
+			flag := false
+
+			_clistr, _, _ := reader.ReadLine()
+			clistr := string(_clistr)
+			_cmds := strings.Split(clistr, " ")
+			cmds := []string{}
+			for _, v := range _cmds {
+				if v != "" {
+					cmds = append(cmds, v)
+				}
 			}
-		}
-		switch cmds[0] {
-		case "help":
-			fmt.Println("newuser [username] [passworld] -- 创建用户")
-			fmt.Println("latestblock --打印最新的块信息")
-			fmt.Println("isaccountant --是否有记账权力")
-			fmt.Println("login [username] [passworld] --登录")
-			fmt.Println("print_quorum --打印集群信息")
-		case "newuser":
-			if len(cmds) < 3 {
-				fmt.Println("格式错误")
-				break
-			}
-			err := db.CreateUser(cmds[1], cmds[2])
-			if err != nil {
-				fmt.Println("创建失败:", err.Error())
-			} else {
-				fmt.Println("创建成功")
-			}
-		case "latestblock":
-			b, _ := localBlockChain.GetTailBlock()
-			fmt.Println("BlockId:", b.BlockId)
-			fmt.Println("PreBLockHash:", base64.RawStdEncoding.EncodeToString(b.PreBlockHash))
-			fmt.Println("Hash:", base64.RawStdEncoding.EncodeToString(b.Hash))
-			fmt.Println("Timestamp:", b.Timestamp)
-			fmt.Println("TxNums:", len(b.TxInfos))
-		case "isaccountant":
-			fmt.Println(quorum.LocalNodeIsAccount())
-		case "login":
-			if len(cmds) < 3 {
-				fmt.Println("格式错误")
-				break
-			}
-			e := database.VeriftUser(cmds[1], cmds[2])
-			if e != nil {
-				fmt.Println("登录失败:", e.Error())
-			} else {
-				address, e = db.GetAddressFromUsername(cmds[1])
+			switch cmds[0] {
+			case "help":
+				fmt.Println("newuser [username] [passworld] -- 创建用户")
+				fmt.Println("latestblock --打印最新的块信息")
+				fmt.Println("isaccountant --是否有记账权力")
+				fmt.Println("login [username] [passworld] --登录")
+				fmt.Println("print_quorum --打印集群信息")
+			case "newuser":
+				if len(cmds) < 3 {
+					fmt.Println("格式错误")
+					break
+				}
+				err := db.CreateUser(cmds[1], cmds[2])
+				if err != nil {
+					fmt.Println("创建失败:", err.Error())
+				} else {
+					fmt.Println("创建成功")
+				}
+			case "latestblock":
+				b, _ := localBlockChain.GetTailBlock()
+				fmt.Println("BlockId:", b.BlockId)
+				fmt.Println("PreBLockHash:", base64.RawStdEncoding.EncodeToString(b.PreBlockHash))
+				fmt.Println("Hash:", base64.RawStdEncoding.EncodeToString(b.Hash))
+				fmt.Println("Timestamp:", b.Timestamp)
+				fmt.Println("TxNums:", len(b.TxInfos))
+			case "isaccountant":
+				fmt.Println(quorum.LocalNodeIsAccount())
+			case "login":
+				if len(cmds) < 3 {
+					fmt.Println("格式错误")
+					break
+				}
+				e := database.VeriftUser(cmds[1], cmds[2])
 				if e != nil {
 					fmt.Println("登录失败:", e.Error())
-					break
+				} else {
+					address, e = db.GetAddressFromUsername(cmds[1])
+					if e != nil {
+						fmt.Println("登录失败:", e.Error())
+						break
+					}
+					pass = cmds[2]
+					flag = true
+					username = cmds[1]
 				}
-				flag = true
-				// username = cmds[1]
-			}
-		case "print_quorum":
-			for _, node := range localNode.Quorum {
-				if node.LocalIp == localNode.LocalIp {
-					fmt.Println(node.LocalIp, "(本机)")
-				}
-			}
-		default:
-			fmt.Println("格式错误")
-
-		}
-
-	}
-	for {
-		fmt.Printf(">>> ")
-		_clistr, _, _ := reader.ReadLine()
-		clistr := string(_clistr)
-		_cmds := strings.Split(clistr, " ")
-		cmds := []string{}
-		for _, v := range _cmds {
-			if v != "" {
-				cmds = append(cmds, v)
-			}
-		}
-
-		switch cmds[0] {
-		case "put":
-			// put age 15 int
-			if len(cmds) < 6 {
-				fmt.Println("格式错误  put [key] [value] [datatype] [strict] [sharemode] [user1] [user2] ...")
-				break
-			}
-			err := db.Put(cmds[1], []byte(cmds[2]), cmds[3], address, util.GetBoolFromStr(cmds[5]), cmds[6:], util.GetBoolFromStr(cmds[4]))
-			fmt.Println("put", err)
-		case "del":
-			if len(cmds) < 4 {
-				fmt.Println("格式错误  del [key] [strict] [sharemode] [user1] [user2] ...")
-				break
-			}
-			// del age
-			db.Del(cmds[1], address, util.GetBoolFromStr(cmds[3]), cmds[4:], util.GetBoolFromStr(cmds[2]))
-		case "get":
-			if len(cmds) < 3 {
-				fmt.Println("格式错误  get [key] [sharemode] [user1] [user2] ...")
-				break
-			}
-			// get age
-			pre := time.Now().UnixNano()
-			block, index := db.Get(cmds[1], address, util.GetBoolFromStr(cmds[2]), cmds[3:])
-			if block != nil {
-				// fmt.Println("blockid:", block.BlockId)
-				// fmt.Println("block_hash", block.Hash)
-				// fmt.Println("pre_block_hash:", base64.RawStdEncoding.EncodeToString(block.PreBlockHash))
-				// fmt.Println("block_hash:", base64.RawStdEncoding.EncodeToString(block.Hash))
-				fmt.Println("key-value:", block.TxInfos[index].Key, string(block.TxInfos[index].Value))
-				cur := time.Now().UnixNano()
-				fmt.Println("耗时:", (cur-pre)/1000000, "(ms)")
-			} else {
-				fmt.Println("未查询到")
-			}
-		case "print_quorum":
-			for _, node := range localNode.Quorum {
-				if node.LocalIp == localNode.LocalIp {
-					fmt.Println(node.LocalIp, "(本机)")
-				}
-			}
-		case "detail":
-			if len(cmds) < 2 {
-				break
-			}
-			localBlockChain.Traverse(func(block *BC.Block, err error) {
-				if fmt.Sprintf("%d", block.BlockId) == cmds[1] {
-					for i, tx := range block.TxInfos {
-						fmt.Println("交易索引:", i)
-						fmt.Println("user_address:", BC.GenerateAddressFromPubkey(tx.PublicKey))
-						fmt.Println("key-value:", tx.Key, string(tx.Value))
-						fmt.Println("sharemode:", tx.Share)
-						fmt.Println("delmark:", tx.DelMark)
-						fmt.Println("shareuser:")
-						for _, uaddr := range tx.ShareAddress {
-							// w, e = BC.LocalWallets.GetUserWallet(uaddr)
-							// if e == nil {
-							fmt.Println(uaddr)
-							// }
-						}
+			case "print_quorum":
+				for _, node := range localNode.Quorum {
+					if node.LocalIp == localNode.LocalIp {
+						fmt.Println(node.LocalIp, "(本机)")
 					}
 				}
-			})
-		case "isaccountant":
-			fmt.Println(quorum.LocalNodeIsAccount())
-		case "print":
-			localBlockChain.Traverse(func(block *BC.Block, err error) {
+			default:
+				fmt.Println("格式错误")
+
+			}
+			if flag {
+				break
+			}
+
+		}
+		for {
+			fmt.Printf(">>> ")
+			_clistr, _, _ := reader.ReadLine()
+			clistr := string(_clistr)
+			_cmds := strings.Split(clistr, " ")
+			cmds := []string{}
+			flag := false
+			for _, v := range _cmds {
+				if v != "" {
+					cmds = append(cmds, v)
+				}
+			}
+
+			switch cmds[0] {
+			case "newchan":
+				if len(cmds) < 3 {
+					fmt.Println("格式错误 newchan [channanme] [user1] [user2] ...")
+					break
+				}
+				if BC.LocalWallets.HasShareChan(cmds[1]) {
+					fmt.Println("该 sharechan 已存在")
+					break
+				}
+				users := []string{}
+				_flag := false
+				for _, v := range cmds[2:] {
+					if v == username {
+						continue
+					}
+					users = append(users, v)
+					_, e := database.GetAddressFromUsername(v)
+					if e != nil {
+						_flag = true
+						fmt.Println(e.Error())
+						break
+					}
+				}
+				if _flag {
+					break
+				}
+				if len(users) == 0 {
+					fmt.Println("sharechan 至少包含一个用户")
+					break
+				}
+				users = append(users, username)
+				newchan := &BC.ShareChan{
+					ShareUser: users,
+				}
+				newchan.YieldKey()
+				BC.LocalWallets.ShareChanMap[cmds[1]] = newchan
+				BC.LocalWallets.SaveToFile()
+
+			case "listchan":
+				for k, v := range BC.LocalWallets.ShareChanMap {
+					fmt.Println(k, v.ShareUser)
+				}
+			case "put":
+				// put age 15 int
+				if len(cmds) < 6 {
+					fmt.Println("格式错误  put [key] [value] [datatype] [strict] [sharemode] [sharechan]")
+					break
+				}
+				var err error
+				if !util.GetBoolFromStr(cmds[5]) {
+					key := util.Yield16ByteKey([]byte(pass))
+					v := util.AesEncrypt([]byte(cmds[2]), key)
+					err = db.Put(cmds[1], v, cmds[3], address, util.GetBoolFromStr(cmds[5]), "", util.GetBoolFromStr(cmds[4]))
+
+				} else {
+					err = db.Put(cmds[1], []byte(cmds[2]), cmds[3], address, util.GetBoolFromStr(cmds[5]), cmds[6], util.GetBoolFromStr(cmds[4]))
+
+				}
+				if err != nil {
+					fmt.Println("put", err)
+
+				}
+			case "del":
+				if len(cmds) < 4 {
+					fmt.Println("格式错误  del [key] [strict] [sharemode] [sharechan]")
+					break
+				}
+				// del age
+				db.Del(cmds[1], address, util.GetBoolFromStr(cmds[3]), cmds[4], util.GetBoolFromStr(cmds[2]))
+			case "get":
+				if len(cmds) < 3 {
+					fmt.Println("格式错误  get [key] [sharemode] [sharechan]")
+					break
+				}
+				// get age
+				var block *BC.Block
+				var index int
+				pre := time.Now().UnixNano()
+				if !util.GetBoolFromStr(cmds[2]) {
+					block, index = db.Get(cmds[1], username, address, util.GetBoolFromStr(cmds[2]), "")
+
+				} else {
+					block, index = db.Get(cmds[1], username, address, util.GetBoolFromStr(cmds[2]), cmds[3])
+
+				}
 				if block != nil {
-					fmt.Println("---------------------------")
-					fmt.Println("blockid:", block.BlockId)
+					// fmt.Println("blockid:", block.BlockId)
 					// fmt.Println("block_hash", block.Hash)
-					fmt.Println("pre_block_hash:", base64.RawStdEncoding.EncodeToString(block.PreBlockHash))
-					fmt.Println("block_hash:", base64.RawStdEncoding.EncodeToString(block.Hash))
-
-					for i, tx := range block.TxInfos {
-						fmt.Println("交易索引:", i)
-						fmt.Println("user_address:", BC.GenerateAddressFromPubkey(tx.PublicKey))
-						fmt.Println("key-value:", tx.Key, string(tx.Value))
-						fmt.Println("sharemode:", tx.Share)
-						fmt.Println("delmark:", tx.DelMark)
-						fmt.Println("shareuser:")
-						for _, uaddr := range tx.ShareAddress {
-							// w, e = BC.LocalWallets.GetUserWallet(uaddr)
-							// if e == nil {
-							fmt.Println(uaddr)
-							// }
-						}
+					// fmt.Println("pre_block_hash:", base64.RawStdEncoding.EncodeToString(block.PreBlockHash))
+					// fmt.Println("block_hash:", base64.RawStdEncoding.EncodeToString(block.Hash))
+					if !block.TxInfos[index].Share {
+						key := util.Yield16ByteKey([]byte(pass))
+						v := util.AesDecrypt(block.TxInfos[index].Value, key)
+						fmt.Println("key-value:", block.TxInfos[index].Key, string(v))
+					} else {
+						v := util.AesDecrypt(block.TxInfos[index].Value, BC.LocalWallets.ShareChanMap[block.TxInfos[index].ShareChan].Key)
+						fmt.Println("key-value:", block.TxInfos[index].Key, string(v))
 					}
 
+					cur := time.Now().UnixNano()
+					fmt.Println("耗时:", (cur-pre)/1000000, "(ms)")
+				} else {
+					fmt.Println("未查询到")
 				}
-
-			})
-			fmt.Printf("---------------------------\n\n")
-
-		case "latestblock":
-			b, _ := localBlockChain.GetTailBlock()
-			fmt.Println("BlockId:", b.BlockId)
-			fmt.Println("PreBLockHash:", base64.RawStdEncoding.EncodeToString(b.PreBlockHash))
-			fmt.Println("Hash:", base64.RawStdEncoding.EncodeToString(b.Hash))
-			fmt.Println("Timestamp:", b.Timestamp)
-			fmt.Println("TxNums:", len(b.TxInfos))
-		case "print_global_wallet":
-			rw := BC.LocalWallets.GetBlockChainRootWallet()
-			user_address := rw.NewAddress()
-			fmt.Println(rw.Username, user_address)
-
-			// 判断用户是否创建
-			_hash, _ := BC.LocalWallets.GetUserTailBlockHash(user_address)
-
-			b, e := localBlockChain.GetBlockByHash(_hash)
-			if e != nil {
-				break
-			}
-			for {
-				if b.IsGenesisBlock() {
+			case "print_quorum":
+				for _, node := range localNode.Quorum {
+					if node.LocalIp == localNode.LocalIp {
+						fmt.Println(node.LocalIp, "(本机)")
+					}
+				}
+			case "detail":
+				if len(cmds) < 2 {
 					break
 				}
-				for _, tx := range b.TxInfos {
-					_hash = tx.PreBlockHash
-					fmt.Println(tx.Key, strings.Split(string(tx.Value), " ")[1])
+				localBlockChain.Traverse(func(block *BC.Block, err error) {
+					if fmt.Sprintf("%d", block.BlockId) == cmds[1] {
+						for i, tx := range block.TxInfos {
+							fmt.Println("交易索引:", i)
+							fmt.Println("user_address:", BC.GenerateAddressFromPubkey(tx.PublicKey))
+							fmt.Println("key-value:", tx.Key, string(tx.Value))
+							fmt.Println("sharemode:", tx.Share)
+							fmt.Println("delmark:", tx.DelMark)
+							fmt.Println("sharechan:", tx.ShareChan)
+						}
+					}
+				})
+			case "isaccountant":
+				fmt.Println(quorum.LocalNodeIsAccount())
+			case "print":
+				localBlockChain.Traverse(func(block *BC.Block, err error) {
+					if block != nil {
+						fmt.Println("---------------------------")
+						fmt.Println("blockid:", block.BlockId)
+						// fmt.Println("block_hash", block.Hash)
+						fmt.Println("pre_block_hash:", base64.RawStdEncoding.EncodeToString(block.PreBlockHash))
+						fmt.Println("block_hash:", base64.RawStdEncoding.EncodeToString(block.Hash))
 
+						for i, tx := range block.TxInfos {
+							fmt.Println("交易索引:", i)
+							fmt.Println("user_address:", BC.GenerateAddressFromPubkey(tx.PublicKey))
+							// fmt.Println("key-value:", tx.Key, string(tx.Value))
+							fmt.Println("sharemode:", tx.Share)
+							fmt.Println("delmark:", tx.DelMark)
+							fmt.Println("sharechan:", tx.ShareChan)
+						}
+
+					}
+
+				})
+				fmt.Printf("---------------------------\n\n")
+
+			case "latestblock":
+				b, _ := localBlockChain.GetTailBlock()
+				fmt.Println("BlockId:", b.BlockId)
+				fmt.Println("PreBLockHash:", base64.RawStdEncoding.EncodeToString(b.PreBlockHash))
+				fmt.Println("Hash:", base64.RawStdEncoding.EncodeToString(b.Hash))
+				fmt.Println("Timestamp:", b.Timestamp)
+				fmt.Println("TxNums:", len(b.TxInfos))
+			case "print_global_wallet":
+				rw := BC.LocalWallets.GetBlockChainRootWallet()
+				user_address := rw.NewAddress()
+				fmt.Println(rw.Username, user_address)
+
+				// 判断用户是否创建
+				_hash, _ := BC.LocalWallets.GetUserTailBlockHash(user_address)
+
+				b, e := localBlockChain.GetBlockByHash(_hash)
+				if e != nil {
+					break
 				}
-				b, _ = localBlockChain.GetBlockByHash(_hash)
+				for {
+					if b.IsGenesisBlock() {
+						break
+					}
+					for _, tx := range b.TxInfos {
+						_hash = tx.PreBlockHash
+						fmt.Println(tx.Key, strings.Split(string(tx.Value), " ")[1])
+
+					}
+					b, _ = localBlockChain.GetBlockByHash(_hash)
+				}
+			case "print_local_wallet":
+				for addr, w := range BC.LocalWallets.WalletsMap {
+					fmt.Println(w.Username, addr)
+				}
+			case "exit":
+				flag = true
+				break
+			default:
+				fmt.Println("格式错误")
 			}
-		case "print_local_wallet":
-			for addr, w := range BC.LocalWallets.WalletsMap {
-				fmt.Println(w.Username, addr)
+			if flag {
+				break
 			}
-		case "exit":
-			break
-		default:
-			fmt.Println("格式错误")
 		}
 	}
 }
@@ -333,7 +402,11 @@ func main() {
 	localBlockChain = BC.NewBlockChain(
 		localNode.BCInfo.BlockTailHashKey,
 
-		localNode.BCInfo.BlockChainDB)
+		localNode.BCInfo.BlockChainDB,
+		func(name string) {
+			quorum.GetShareChan(name)
+		},
+	)
 
 	BC.LoadLocalWallets()
 	_, err = localBlockChain.GetAddressFromUsername("liangchen")
@@ -381,7 +454,7 @@ func main() {
 
 	db.Run(localBlockChain, localNode)
 	go uc.Run()
-	fmt.Println("hello world")
+	// fmt.Println("hello world")
 	Test.Test2()
 	// Test.Test1()
 	// Test.Test3()

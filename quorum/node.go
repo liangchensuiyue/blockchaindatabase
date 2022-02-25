@@ -2,14 +2,13 @@ package quorum
 
 import (
 	"bytes"
-	"crypto/aes"
-	"crypto/cipher"
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"encoding/gob"
 	"errors"
 	"fmt"
 	BC "go_code/基于区块链的非关系型数据库/blockchain"
+	util "go_code/基于区块链的非关系型数据库/util"
 
 	"io/ioutil"
 	"os"
@@ -62,7 +61,7 @@ func SaveGenesisFileToDisk() {
 		fmt.Println("SaveGenesisFileToDisk 失败")
 		panic(err)
 	}
-	err = ioutil.WriteFile("genesis", AesEncrypt(buffer.Bytes(), []byte("1234567812345678")), 0644)
+	err = ioutil.WriteFile("genesis", util.AesEncrypt(buffer.Bytes(), []byte("1234567812345678")), 0644)
 	if err != nil {
 		panic(err)
 	}
@@ -83,7 +82,7 @@ func LoadGenesisFile(filename string) (*BlockChainNode, error) {
 	// 解码
 	gob.Register(elliptic.P256())
 
-	decoder := gob.NewDecoder(bytes.NewReader(AesDecrypt(content, []byte("1234567812345678"))))
+	decoder := gob.NewDecoder(bytes.NewReader(util.AesDecrypt(content, []byte("1234567812345678"))))
 	err = decoder.Decode(&info)
 	if err != nil {
 		panic(err)
@@ -118,37 +117,4 @@ func JointoGroup(passworld, local_ip string, local_port int32) error {
 	}
 	SaveGenesisFileToDisk()
 	return nil
-}
-
-func AesDecrypt(codeText, key []byte) []byte {
-	block, err := aes.NewCipher(key)
-	if err != nil {
-		panic(err)
-	}
-
-	// 创建一个使用 ctr 分组
-	iv := []byte("1234567812345678") // 这不是初始化向量，而是给一个随机种子，大小必须与blocksize 相等
-	stream := cipher.NewCTR(block, iv)
-	// 加密
-	dst := make([]byte, len(codeText))
-	stream.XORKeyStream(dst, codeText)
-	return dst
-}
-
-// AES  加解密
-func AesEncrypt(plainText, key []byte) []byte {
-	block, err := aes.NewCipher(key)
-	if err != nil {
-		panic(err)
-	}
-
-	// 创建一个使用 ctr 分组
-	iv := []byte("1234567812345678") // 这不是初始化向量，而是给一个随机种子，大小必须与blocksize 相等
-	stream := cipher.NewCTR(block, iv)
-	// 加密
-	dst := make([]byte, len(plainText))
-	a := make([]byte, len(plainText))
-	stream.XORKeyStream(dst, plainText)
-	stream.XORKeyStream(a, plainText) // dst != a
-	return dst
 }

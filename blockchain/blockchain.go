@@ -35,10 +35,12 @@ const blockBucket = "blockBucket"
 const LastHashKey = "lastkey"
 
 // var RBTREE *rbtree.RBtree = rbtree.NewRBTree()
-var LRU *lru.Cache = lru.NewCache(100)
+var LRU *lru.Cache = lru.NewCache(400)
 var BlockQueue *Queue = NewQueue()
+var _GetShareChan func(name string)
 
-func NewBlockChain(blockTailHashKey, blockChainDBFileName string) *BlockChain {
+func NewBlockChain(blockTailHashKey, blockChainDBFileName string, h func(name string)) *BlockChain {
+	_GetShareChan = h
 	// 创建一个创世块，并作为第一个区块添加到区块链中
 	db, err := bolt.Open(blockChainDBFileName, 0600, nil)
 	if err != nil {

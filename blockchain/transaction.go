@@ -22,15 +22,16 @@ const reword = 12.5
 
 //1. 定义交易结构
 type Transaction struct {
-	Key          string
-	Value        []byte
-	DataType     string
-	Timestamp    uint64
-	DelMark      bool
-	PublicKey    []byte
-	Hash         []byte
-	Share        bool
-	ShareAddress []string
+	Key       string
+	Value     []byte
+	DataType  string
+	Timestamp uint64
+	DelMark   bool
+	PublicKey []byte
+	Hash      []byte
+	Share     bool
+	ShareChan string
+	// ShareAddress []string
 	// 当交易打包时在填上
 	PreBlockHash []byte
 	Signature    []byte
@@ -54,20 +55,21 @@ func (tx *Transaction) SetHash() {
 	data = append(data, []byte(tx.Key)...)
 	data = append(data, tx.Value...)
 	data = append(data, []byte(tx.DataType)...)
+	data = append(data, []byte(tx.ShareChan)...)
 	data = append(data, []byte(fmt.Sprintf("%d", tx.Timestamp))...)
 	data = append(data, tx.PublicKey...)
 	data = append(data, tx.PreBlockHash...)
 	data = append(data, []byte(fmt.Sprintf("%d", tx.Share))...)
 	data = append(data, []byte(fmt.Sprintf("%d", tx.DelMark))...)
-	for _, addr := range tx.ShareAddress {
-		data = append(data, []byte(addr)...)
-	}
+	// for _, addr := range tx.ShareAddress {
+	// 	data = append(data, []byte(addr)...)
+	// }
 	hash := sha256.Sum256(data)
 	tx.Hash = hash[:]
 }
 
 // 创建普通的转账交易
-func NewTransaction(method, key string, value []byte, datatype string, user_address string, share bool, shareuser_address []string) (*Transaction, error) {
+func NewTransaction(method, key string, value []byte, datatype string, user_address string, share bool, ShareChanName string) (*Transaction, error) {
 
 	var Tx *Transaction
 
@@ -84,36 +86,36 @@ func NewTransaction(method, key string, value []byte, datatype string, user_addr
 	switch method {
 	case "put":
 		Tx = &Transaction{
-			Key:          key,
-			Value:        value,
-			Share:        share,
-			DataType:     datatype,
-			Timestamp:    uint64(time.Now().Unix()),
-			DelMark:      false,
-			PublicKey:    wallet.PubKey,
-			ShareAddress: shareuser_address,
+			Key:       key,
+			Value:     value,
+			Share:     share,
+			DataType:  datatype,
+			Timestamp: uint64(time.Now().Unix()),
+			DelMark:   false,
+			PublicKey: wallet.PubKey,
+			ShareChan: ShareChanName,
 		}
 	case "del":
 		Tx = &Transaction{
-			Key:          key,
-			Value:        value,
-			Share:        share,
-			DataType:     datatype,
-			Timestamp:    uint64(time.Now().Unix()),
-			DelMark:      true,
-			PublicKey:    wallet.PubKey,
-			ShareAddress: shareuser_address,
+			Key:       key,
+			Value:     value,
+			Share:     share,
+			DataType:  datatype,
+			Timestamp: uint64(time.Now().Unix()),
+			DelMark:   true,
+			PublicKey: wallet.PubKey,
+			ShareChan: ShareChanName,
 		}
 	case "create_user":
 		Tx = &Transaction{
-			Key:          key,
-			Value:        value,
-			Share:        share,
-			DataType:     datatype,
-			Timestamp:    uint64(time.Now().Unix()),
-			DelMark:      false,
-			PublicKey:    wallet.PubKey,
-			ShareAddress: shareuser_address,
+			Key:       key,
+			Value:     value,
+			Share:     share,
+			DataType:  datatype,
+			Timestamp: uint64(time.Now().Unix()),
+			DelMark:   false,
+			PublicKey: wallet.PubKey,
+			ShareChan: ShareChanName,
 		}
 	default:
 		return nil, errors.New(" 未知的操作")
@@ -132,7 +134,11 @@ func (tx *Transaction) Sign() {
 	wa, _ := LocalWallets.GetUserWallet(user_address)
 	privateKey = wa.Private
 	if tx.Share {
-		tx.PreBlockHash, _ = LocalWallets.ShareTailBlockHashMap[GenerateUserShareKey(tx.ShareAddress)]
+		if !LocalWallets.HasShareChan(tx.ShareChan) {
+			_GetShareChan(tx.ShareChan)
+		}
+		schn := LocalWallets.ShareChanMap[tx.ShareChan]
+		tx.PreBlockHash = schn.TailBlockHash
 	} else {
 		tx.PreBlockHash, _ = LocalWallets.GetUserTailBlockHash(user_address)
 	}
@@ -160,7 +166,7 @@ func Printx(hash []byte) {
 	fmt.Println("hash", base64.RawStdEncoding.EncodeToString(otx.Hash))
 	fmt.Println("pubkey", base64.RawStdEncoding.EncodeToString(otx.PublicKey))
 	fmt.Println(otx.Share)
-	fmt.Println(otx.ShareAddress)
+	fmt.Println(otx.ShareChan)
 	fmt.Println(base64.RawStdEncoding.EncodeToString(otx.Signature))
 	fmt.Println(otx.Timestamp)
 	fmt.Println(base64.RawStdEncoding.EncodeToString(otx.PreBlockHash))
@@ -172,7 +178,11 @@ func (tx *Transaction) Verify() bool {
 	pre := base64.RawStdEncoding.EncodeToString(tx.PreBlockHash)
 	// fmt.Println(user_address)
 	if tx.Share {
-		tx.PreBlockHash, _ = LocalWallets.ShareTailBlockHashMap[GenerateUserShareKey(tx.ShareAddress)]
+		if !LocalWallets.HasShareChan(tx.ShareChan) {
+			_GetShareChan(tx.ShareChan)
+		}
+		schn := LocalWallets.ShareChanMap[tx.ShareChan]
+		tx.PreBlockHash = schn.TailBlockHash
 	} else {
 		tx.PreBlockHash, _ = LocalWallets.GetUserTailBlockHash(user_address)
 	}

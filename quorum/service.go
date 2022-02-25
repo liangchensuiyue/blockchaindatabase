@@ -62,7 +62,8 @@ func (this *Server) DistributeBlock(ctx context.Context, req *bcgrpc.Block) (inf
 
 		// fmt.Println(tx.Share, tx.ShareAddress, base64.RawStdEncoding.EncodeToString(newblock.Hash))
 		if tx.Share {
-			BC.LocalWallets.ShareTailBlockHashMap[BC.GenerateUserShareKey(tx.ShareAddress)] = newblock.Hash
+			schn := BC.LocalWallets.ShareChanMap[tx.ShareChan]
+			schn.TailBlockHash = newblock.Hash
 
 		} else {
 			BC.LocalWallets.TailBlockHashMap[BC.GenerateAddressFromPubkey(tx.PublicKey)] = newblock.Hash
@@ -79,6 +80,16 @@ func (this *Server) GetLatestBlock(ctx context.Context, req *bcgrpc.ReqBlock) (i
 		return nil, err
 	}
 	info = CopyBlock(latestblock)
+	return
+}
+func (this *Server) GetShareChan(ctx context.Context, req *bcgrpc.ShareChanName) (body *bcgrpc.ShareChanBody, err error) {
+	body = &bcgrpc.ShareChanBody{}
+	cn, ok := BC.LocalWallets.ShareChanMap[req.Name]
+	if !ok {
+		return nil, errors.New("not found")
+	}
+	body.Key = cn.Key
+	body.Users = cn.ShareUser
 	return
 }
 func (this *Server) JoinGroup(ctx context.Context, req *bcgrpc.NodeInfo) (info *bcgrpc.Nodes, err error) {
@@ -144,14 +155,14 @@ func (this *Server) Request(ctx context.Context, req *bcgrpc.RequestBody) (info 
 	}
 
 	tx := &BC.Transaction{
-		Key:          req.Tx.Key,
-		Value:        req.Tx.Value,
-		DataType:     req.Tx.DataType,
-		Timestamp:    req.Tx.Timestamp,
-		DelMark:      req.Tx.DelMark,
-		PublicKey:    uw.PubKey,
-		ShareAddress: req.Tx.Shareuseraddress,
-		Share:        req.Tx.Share,
+		Key:       req.Tx.Key,
+		Value:     req.Tx.Value,
+		DataType:  req.Tx.DataType,
+		Timestamp: req.Tx.Timestamp,
+		DelMark:   req.Tx.DelMark,
+		PublicKey: uw.PubKey,
+		ShareChan: req.Tx.ShareChan,
+		Share:     req.Tx.Share,
 	}
 
 	info.Status = true
@@ -180,7 +191,8 @@ func (this *Server) Request(ctx context.Context, req *bcgrpc.RequestBody) (info 
 
 						// fmt.Println(tx.Share, tx.ShareAddress, base64.RawStdEncoding.EncodeToString(newblock.Hash))
 						if tx.Share {
-							BC.LocalWallets.ShareTailBlockHashMap[BC.GenerateUserShareKey(tx.ShareAddress)] = newblock.Hash
+							schn := BC.LocalWallets.ShareChanMap[tx.ShareChan]
+							schn.TailBlockHash = newblock.Hash
 
 						} else {
 							BC.LocalWallets.TailBlockHashMap[BC.GenerateAddressFromPubkey(tx.PublicKey)] = newblock.Hash

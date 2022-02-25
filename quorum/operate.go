@@ -48,7 +48,36 @@ func Broadcast(lbc *BC.BlockChain) {
 	}
 
 }
+func GetShareChan(name string) {
+	for _, node := range localNode.Quorum {
+		if node.LocalIp == localNode.LocalIp && node.LocalPort == localNode.LocalPort {
+			continue
+		}
+		conn, err := grpc.Dial(fmt.Sprintf("%s:%d", node.LocalIp, node.LocalPort), grpc.WithInsecure())
+		if err != nil {
+			// fmt.Printf("%s:%d 网络异常", node.LocalIp, node.LocalPort)
+		}
 
+		//获得grpc句柄
+		c := bcgrpc.NewBlockChainServiceClient(conn)
+
+		//通过句柄调用函数
+		re, err := c.GetShareChan(context.Background(), &bcgrpc.ShareChanName{
+			Name: name,
+		})
+		if err != nil {
+			// fmt.Println("JoinGroup 服务调用失败")
+		} else {
+			BC.LocalWallets.ShareChanMap[name] = &BC.ShareChan{
+				Key:       re.Key,
+				ShareUser: re.Users,
+			}
+		}
+		//网络延迟关闭
+		conn.Close()
+	}
+
+}
 func Request(useraddress string, strict bool, tx *BC.Transaction) error {
 	for _, rnode := range localNode.Quorum {
 		if rnode.LocalIp == localNode.LocalIp && rnode.LocalPort == localNode.LocalPort {
@@ -69,13 +98,13 @@ func Request(useraddress string, strict bool, tx *BC.Transaction) error {
 			UserAddress: useraddress,
 			Strict:      strict,
 			Tx: &bcgrpc.Transaction{
-				Key:              tx.Key,
-				Value:            tx.Value, // []byte
-				DataType:         tx.DataType,
-				Timestamp:        tx.Timestamp, // 时间错
-				DelMark:          tx.DelMark,   // 是否删除
-				Shareuseraddress: tx.ShareAddress,
-				Share:            tx.Share,
+				Key:       tx.Key,
+				Value:     tx.Value, // []byte
+				DataType:  tx.DataType,
+				Timestamp: tx.Timestamp, // 时间错
+				DelMark:   tx.DelMark,   // 是否删除
+				ShareChan: tx.ShareChan,
+				Share:     tx.Share,
 			},
 		})
 		if err != nil {
@@ -189,22 +218,15 @@ func DistributeBlock(block *BC.Block, node *BlockChainNode, handle func(*bcgrpc.
 		fmt.Println("key-value:", tx.Key, string(tx.Value))
 		fmt.Println("sharemode:", tx.Share)
 		fmt.Println("delmark:", tx.DelMark)
-		fmt.Println("shareuser:")
-		addrs := []string{}
-		for _, uaddr := range tx.ShareAddress {
-			// w, e = BC.LocalWallets.GetUserWallet(uaddr)
-			// if e == nil {
-			addrs = append(addrs, uaddr)
-			// }
-		}
+		fmt.Println("sharechan:", tx.ShareChan)
 
 		infos = append(infos, map[string]interface{}{
-			"Index":            i,
-			"UserAddress":      BC.GenerateAddressFromPubkey(tx.PublicKey),
-			"Hash":             base64.RawStdEncoding.EncodeToString(tx.Hash),
-			"Timestamp":        tx.Timestamp,
-			"ShareUserAddress": addrs,
-			"PrevBlockHash":    base64.RawStdEncoding.EncodeToString(tx.PreBlockHash),
+			"Index":         i,
+			"UserAddress":   BC.GenerateAddressFromPubkey(tx.PublicKey),
+			"Hash":          base64.RawStdEncoding.EncodeToString(tx.Hash),
+			"Timestamp":     tx.Timestamp,
+			"Sharechan":     tx.ShareChan,
+			"PrevBlockHash": base64.RawStdEncoding.EncodeToString(tx.PreBlockHash),
 		})
 	}
 	datastr, _ := json.Marshal(map[string]interface{}{
@@ -239,17 +261,17 @@ func CopyBlock(block *BC.Block) *bcgrpc.Block {
 	new_grpc_block.TxInfos = []*bcgrpc.Transaction{}
 	for _, tx := range block.TxInfos {
 		new_grpc_block.TxInfos = append(new_grpc_block.TxInfos, &bcgrpc.Transaction{
-			Key:              tx.Key,
-			Value:            tx.Value,
-			DataType:         tx.DataType,
-			Timestamp:        tx.Timestamp,
-			DelMark:          tx.DelMark,
-			PublicKey:        tx.PublicKey,
-			Hash:             tx.Hash,
-			Share:            tx.Share,
-			Shareuseraddress: tx.ShareAddress,
-			PreBlockHash:     tx.PreBlockHash,
-			Signature:        tx.Signature,
+			Key:          tx.Key,
+			Value:        tx.Value,
+			DataType:     tx.DataType,
+			Timestamp:    tx.Timestamp,
+			DelMark:      tx.DelMark,
+			PublicKey:    tx.PublicKey,
+			Hash:         tx.Hash,
+			Share:        tx.Share,
+			ShareChan:    tx.ShareChan,
+			PreBlockHash: tx.PreBlockHash,
+			Signature:    tx.Signature,
 		})
 	}
 	return new_grpc_block
@@ -273,15 +295,15 @@ func CopyBlock2(block *bcgrpc.Block) *BC.Block {
 	new_grpc_block.TxInfos = []*BC.Transaction{}
 	for _, tx := range block.TxInfos {
 		new_grpc_block.TxInfos = append(new_grpc_block.TxInfos, &BC.Transaction{
-			Key:          tx.Key,
-			Value:        tx.Value,
-			DataType:     tx.DataType,
-			Timestamp:    tx.Timestamp,
-			DelMark:      tx.DelMark,
-			PublicKey:    tx.PublicKey,
-			Hash:         tx.Hash,
-			Share:        tx.Share,
-			ShareAddress: tx.Shareuseraddress,
+			Key:       tx.Key,
+			Value:     tx.Value,
+			DataType:  tx.DataType,
+			Timestamp: tx.Timestamp,
+			DelMark:   tx.DelMark,
+			PublicKey: tx.PublicKey,
+			Hash:      tx.Hash,
+			Share:     tx.Share,
+			ShareChan: tx.ShareChan,
 			// 当交易打包时在填上
 			PreBlockHash: tx.PreBlockHash,
 			Signature:    tx.Signature,

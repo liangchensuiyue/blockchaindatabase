@@ -44,7 +44,7 @@ func _startHeartbeat() {
 			}
 			conn, err := grpc.Dial(fmt.Sprintf("%s:%d", node.LocalIp, node.LocalPort), grpc.WithInsecure())
 			if err != nil {
-				fmt.Println("网络异常", err)
+				// fmt.Println("网络异常", err)
 			}
 
 			//获得grpc句柄
@@ -139,10 +139,10 @@ func _starDistributeBlock() {
 		el, _ := BC.BlockQueue.Front()
 		// BC.BlockQueue.SaveToDisk()
 		block := el.TargetBlock
-		if len(block.TxInfos) > 0 {
-			fmt.Println("打包", block.TxInfos[0].Key)
+		// if len(block.TxInfos) > 0 {
+		// 	fmt.Println("打包", block.TxInfos[0].Key)
 
-		}
+		// }
 
 		total := 0
 		fail := 0
@@ -154,7 +154,7 @@ func _starDistributeBlock() {
 			localBlockChain.SignBlock(rw.Private, false, block)
 
 		}
-		fmt.Printf("区块 %d 分发\n", block.BlockId)
+		// fmt.Printf("区块 %d 分发\n", block.BlockId)
 		for _, blockBlockChainNode := range localNode.Quorum {
 			if blockBlockChainNode.LocalIp == localNode.LocalIp {
 				continue
@@ -162,7 +162,7 @@ func _starDistributeBlock() {
 			total++
 			DistributeBlock(block, blockBlockChainNode, func(res *bcgrpc.VerifyInfo, err error) {
 				if err != nil {
-					fmt.Println(err)
+					// fmt.Println(err)
 					fail++
 					fmt.Printf("节点 %s:%d 接受失败\n", blockBlockChainNode.LocalIp, blockBlockChainNode.LocalPort)
 					return
@@ -172,7 +172,7 @@ func _starDistributeBlock() {
 					fmt.Printf("节点 %s:%d 校验失败\n", blockBlockChainNode.LocalIp, blockBlockChainNode.LocalPort)
 					return
 				}
-				fmt.Printf("节点 %s:%d 接受成功\n", blockBlockChainNode.LocalIp, blockBlockChainNode.LocalPort)
+				// fmt.Printf("节点 %s:%d 接受成功\n", blockBlockChainNode.LocalIp, blockBlockChainNode.LocalPort)
 			})
 		}
 		el.Handle(total, fail)

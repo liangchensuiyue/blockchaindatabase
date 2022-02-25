@@ -57,21 +57,14 @@ func ws_handle(conn *websocket.Conn) {
 						// fmt.Println(block.BlockId)
 						infos := []map[string]interface{}{}
 						for i, tx := range block.TxInfos {
-							addrs := []string{}
-							for _, uaddr := range tx.ShareAddress {
-								// w, e = BC.LocalWallets.GetUserWallet(uaddr)
-								// if e == nil {
-								addrs = append(addrs, uaddr)
-								// }
-							}
 
 							infos = append(infos, map[string]interface{}{
-								"Index":            i,
-								"UserAddress":      BC.GenerateAddressFromPubkey(tx.PublicKey),
-								"Hash":             base64.RawStdEncoding.EncodeToString(tx.Hash),
-								"Timestamp":        tx.Timestamp,
-								"ShareUserAddress": addrs,
-								"PrevBlockHash":    base64.RawStdEncoding.EncodeToString(tx.PreBlockHash),
+								"Index":         i,
+								"UserAddress":   BC.GenerateAddressFromPubkey(tx.PublicKey),
+								"Hash":          base64.RawStdEncoding.EncodeToString(tx.Hash),
+								"Timestamp":     tx.Timestamp,
+								"ShareChan":     tx.ShareChan,
+								"PrevBlockHash": base64.RawStdEncoding.EncodeToString(tx.PreBlockHash),
 							})
 						}
 						datastr, _ := json.Marshal(map[string]interface{}{

@@ -17,7 +17,7 @@ func Test3() {
 	for i := 0; i < nums; i++ {
 		// time.Sleep(time.Second)
 
-		_, n := db.Get(fmt.Sprintf("key_%d", i), "1KqpoNxAdGkzeEuWeAvntM2k38tNVA7TVK", false, []string{})
+		_, n := db.Get(fmt.Sprintf("key_%d", i), "pass", "1KqpoNxAdGkzeEuWeAvntM2k38tNVA7TVK", false, "")
 		if n == -1 {
 			fmt.Println("失败", fmt.Sprintf("key_%d", i))
 		} else {
@@ -31,14 +31,14 @@ func Test1() {
 	nums := 200
 	pre := time.Now().UnixNano()
 	for i := nums; i < nums+100; i++ {
-		db.PutTest(fmt.Sprintf("key_%d", i), []byte(fmt.Sprintf("%d", i)), "int", "15vX49wB6xy8w9LUKhTu8KKHpn53DAD2t2", false, []string{}, true, func() {
+		db.PutTest(fmt.Sprintf("key_%d", i), []byte(fmt.Sprintf("%d", i)), "int", "15vX49wB6xy8w9LUKhTu8KKHpn53DAD2t2", false, "", true, func() {
 			nums--
 			if nums <= 0 {
 				cur := time.Now().UnixNano()
 				fmt.Printf("%d 笔交易 耗时 %d ms\n", 200, (cur-pre)/1000000)
 			}
 		})
-		_, n := db.Get(fmt.Sprintf("key_%d", i), "15vX49wB6xy8w9LUKhTu8KKHpn53DAD2t2", false, []string{})
+		_, n := db.Get(fmt.Sprintf("key_%d", i), "pass", "15vX49wB6xy8w9LUKhTu8KKHpn53DAD2t2", false, "")
 		if n == -1 {
 			fmt.Println("失败", fmt.Sprintf("key_%d", i))
 		} else {
@@ -50,14 +50,14 @@ func main1() {
 	nums := 200
 	pre := time.Now().UnixNano()
 	for i := nums; i < nums+100; i++ {
-		db.PutTest(fmt.Sprintf("key_%d", i), []byte(fmt.Sprintf("%d", i)), "int", "15vX49wB6xy8w9LUKhTu8KKHpn53DAD2t2", false, []string{}, true, func() {
+		db.PutTest(fmt.Sprintf("key_%d", i), []byte(fmt.Sprintf("%d", i)), "int", "15vX49wB6xy8w9LUKhTu8KKHpn53DAD2t2", false, "", true, func() {
 			nums--
 			if nums <= 0 {
 				cur := time.Now().UnixNano()
 				fmt.Printf("%d 笔交易 耗时 %d ms\n", 200, (cur-pre)/1000000)
 			}
 		})
-		_, n := db.Get(fmt.Sprintf("key_%d", i), "15vX49wB6xy8w9LUKhTu8KKHpn53DAD2t2", false, []string{})
+		_, n := db.Get(fmt.Sprintf("key_%d", i), "pass", "15vX49wB6xy8w9LUKhTu8KKHpn53DAD2t2", false, "")
 		if n == -1 {
 			fmt.Println("失败", fmt.Sprintf("key_%d", i))
 		} else {

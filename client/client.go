@@ -5,6 +5,7 @@ import (
 	"fmt"
 	db "go_code/基于区块链的非关系型数据库/database"
 	ucgrpc "go_code/基于区块链的非关系型数据库/proto/userclient"
+	"go_code/基于区块链的非关系型数据库/util"
 	"net"
 
 	"google.golang.org/grpc"
@@ -15,18 +16,31 @@ type Server struct{}
 func (this *Server) Get(ctx context.Context, req *ucgrpc.GetBody) (info *ucgrpc.ResQuery, err error) {
 	info = &ucgrpc.ResQuery{}
 	info.Status = false
-	b, i := db.Get(req.Key, req.UserAddress, req.Sharemode, req.Shareuser)
-	if i == -1 {
+	if !req.Sharemode {
+		req.ShareChan = ""
+	}
+	block, index := db.Get(req.Key, req.Username, req.UserAddress, req.Sharemode, req.ShareChan)
+	if index == -1 {
 		return
 	} else {
+
 		info.Status = true
-		info.Data = b.TxInfos[i].Value
+		info.Data = block.TxInfos[index].Value
 	}
 	return
 }
 func (this *Server) Put(ctx context.Context, req *ucgrpc.PutBody) (info *ucgrpc.VerifyInfo, err error) {
 	info = &ucgrpc.VerifyInfo{}
-	db.Put(req.Key, req.Value, req.Datatype, req.UserAddress, req.Share, req.Shareuser, req.Strict)
+	v := req.Value
+	if !req.Share {
+		key := util.Yield16ByteKey([]byte(req.Passworld))
+		v = util.AesEncrypt(v, key)
+		db.Put(req.Key, req.Value, req.Datatype, req.UserAddress, req.Share, "", req.Strict)
+
+	} else {
+		db.Put(req.Key, req.Value, req.Datatype, req.UserAddress, req.Share, req.ShareChan, req.Strict)
+
+	}
 	return
 }
 func Run() {

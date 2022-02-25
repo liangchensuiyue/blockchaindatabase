@@ -40,6 +40,8 @@ service BlockChainService{
     rpc QuorumHeartbeat(NodeInfo)returns(Heartbeat){}
 
     rpc GetAccountant(Heartbeat)returns(VerifyInfo){}
+
+    rpc GetShareChan(ShareChanName)returns(ShareChanBody){}
     // // 客户端向 follower 发送数据
     // rpc ClientYieldMsgDataRequest(stream MessageData)returns (Response){}
 
@@ -49,7 +51,13 @@ service BlockChainService{
     // // 客户端关闭管道
     // rpc ClientCloseChannel(ClientRegistToFollower)returns(Response){}
 }
-
+message ShareChanName{
+    string name = 1;
+}
+message ShareChanBody{
+    repeated string users = 1;
+    bytes Key = 2;
+}
 message Heartbeat{
     bool is_accountant = 1;
     int32 block_nums = 2;
@@ -84,7 +92,7 @@ message Transaction{
     bytes hash = 7; // 交易 hash
     bytes pre_block_hash = 8;// 在链中，用户相同交易所在前一个区块hahs(可以有多个，如果该数据类型是共享的话)
     bytes signature = 9; // 用户对交易的签名
-    repeated string shareuseraddress = 10;
+    string ShareChan = 10;
     bool share = 11;
 }
 message Block{

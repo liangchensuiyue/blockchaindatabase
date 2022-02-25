@@ -8,6 +8,7 @@ import (
 	"encoding/gob"
 	"fmt"
 	quorum "go_code/基于区块链的非关系型数据库/quorum"
+	util "go_code/基于区块链的非关系型数据库/util"
 	"io/ioutil"
 	"log"
 	"os"
@@ -50,7 +51,7 @@ func main1() {
 		fmt.Println("密钥生成失败")
 		panic(err)
 	}
-	err = ioutil.WriteFile("genesis", quorum.AesEncrypt(buffer.Bytes(), []byte("1234567812345678")), 0644)
+	err = ioutil.WriteFile("genesis", util.AesEncrypt(buffer.Bytes(), []byte("1234567812345678")), 0644)
 	if err != nil {
 		panic(err)
 	}
@@ -69,7 +70,7 @@ func load() {
 		panic(err)
 	}
 
-	decoder := gob.NewDecoder(bytes.NewReader(quorum.AesDecrypt(content, []byte("1234567812345678"))))
+	decoder := gob.NewDecoder(bytes.NewReader(util.AesDecrypt(content, []byte("1234567812345678"))))
 	err = decoder.Decode(&info)
 	if err != nil {
 		log.Panic(err)
