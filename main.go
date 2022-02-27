@@ -103,6 +103,7 @@ func runLocalTestCli() {
 		address := ""
 		pass := ""
 		for {
+			fmt.Printf(">>> ")
 			flag := false
 
 			_clistr, _, _ := reader.ReadLine()
@@ -113,6 +114,9 @@ func runLocalTestCli() {
 				if v != "" {
 					cmds = append(cmds, v)
 				}
+			}
+			if len(cmds) == 0 {
+				continue
 			}
 			switch cmds[0] {
 			case "help":
@@ -175,7 +179,7 @@ func runLocalTestCli() {
 
 		}
 		for {
-			fmt.Printf(">>> ")
+			fmt.Printf("(%s)>>> ", username)
 			_clistr, _, _ := reader.ReadLine()
 			clistr := string(_clistr)
 			_cmds := strings.Split(clistr, " ")
@@ -186,8 +190,22 @@ func runLocalTestCli() {
 					cmds = append(cmds, v)
 				}
 			}
-
+			if len(cmds) == 0 {
+				continue
+			}
 			switch cmds[0] {
+			case "help":
+				fmt.Println("newchan  -- 创建分享管道")
+				fmt.Println("listchan --列出用户相关的分享管道")
+				fmt.Println("put -- 录入数据")
+				fmt.Println("get -- 获取数据")
+				fmt.Println("del -- 删除数据")
+				fmt.Println("isaccountant --是否有记账权力")
+				fmt.Println("print_quorum --打印集群信息")
+				fmt.Println("detail -- 查看区块信息")
+				fmt.Println("print_global_wallet -- 查看全部用户地址")
+				fmt.Println("print_local_wallet -- 查看本地用户地址")
+				fmt.Println("exit -- 退出当前登录")
 			case "newchan":
 				if len(cmds) < 3 {
 					fmt.Println("格式错误 newchan [channanme] [user1] [user2] ...")
@@ -270,6 +288,10 @@ func runLocalTestCli() {
 					block, index = db.Get(cmds[1], username, address, util.GetBoolFromStr(cmds[2]), "")
 
 				} else {
+					if len(cmds) < 4 {
+						fmt.Println("格式错误  get [key] [sharemode] [sharechan]")
+						break
+					}
 					block, index = db.Get(cmds[1], username, address, util.GetBoolFromStr(cmds[2]), cmds[3])
 
 				}
@@ -300,6 +322,7 @@ func runLocalTestCli() {
 				}
 			case "detail":
 				if len(cmds) < 2 {
+					fmt.Println("格式错误  detail BlockId")
 					break
 				}
 				localBlockChain.Traverse(func(block *BC.Block, err error) {
