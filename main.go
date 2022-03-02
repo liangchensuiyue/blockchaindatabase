@@ -246,7 +246,10 @@ func runLocalTestCli() {
 
 			case "listchan":
 				for k, v := range BC.LocalWallets.ShareChanMap {
-					fmt.Println(k, v.ShareUser)
+					if v.HasUser(username) {
+						fmt.Println(k, v.ShareUser)
+
+					}
 				}
 			case "put":
 				// put age 15 int
