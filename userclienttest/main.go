@@ -1,15 +1,18 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"encoding/binary"
 	"fmt"
+	BC "go_code/基于区块链的非关系型数据库/blockchain"
 	ucgrpc "go_code/基于区块链的非关系型数据库/proto/userclient"
 	"time"
 
 	"google.golang.org/grpc"
 )
 
-func put(key string, value []byte, datatype string, pass string, user_address string, share bool, sharechan string, strict bool) {
+func put(key string, value []byte, datatype int32, pass string, user_address string, share bool, sharechan string, strict bool) {
 	conn, err := grpc.Dial(fmt.Sprintf("%s:%d", "10.0.0.1", 3600), grpc.WithInsecure())
 	if err != nil {
 		fmt.Println("网络异常")
@@ -59,12 +62,29 @@ func get(key string, username string, user_address string, share bool, sharechan
 	}
 	return re.Status
 }
-func main() {
 
+func Int16Tobytes(n int) []byte {
+	data := int16(n)
+	bytebuffer := bytes.NewBuffer([]byte{})
+	binary.Write(bytebuffer, binary.BigEndian, data)
+	return bytebuffer.Bytes()
+}
+func BytesToInt16(bts []byte) int {
+	bytebuffer := bytes.NewBuffer(bts)
+	var data int16
+	binary.Read(bytebuffer, binary.BigEndian, &data)
+
+	return int(data)
+}
+func test2() {
+	a := Int16Tobytes(-100)
+	fmt.Println(BytesToInt16(a) + 1)
+}
+func test1() {
 	nums := 1
 	pre := time.Now().UnixNano()
 	for i := nums; i < 500; i++ {
-		put(fmt.Sprintf("key_%d", i), []byte(fmt.Sprintf("%d", i)), "int", "123", "1BZsJu1amTo2f5F3DZRYihk6Xjq3k7u4AD", false, "", true)
+		put(fmt.Sprintf("key_%d", i), []byte(fmt.Sprintf("%d", i)), BC.INT32, "123", "1BZsJu1amTo2f5F3DZRYihk6Xjq3k7u4AD", false, "", true)
 		flag := get(fmt.Sprintf("key_%d", i), "gds", "1BZsJu1amTo2f5F3DZRYihk6Xjq3k7u4AD", false, "")
 		if !flag {
 			fmt.Println("失败", fmt.Sprintf("key_%d", i))
@@ -74,4 +94,7 @@ func main() {
 	}
 	cur := time.Now().UnixNano()
 	fmt.Println("耗时", (cur-pre)/1000000, "(ms)")
+}
+func main() {
+	test2()
 }

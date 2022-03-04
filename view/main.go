@@ -51,7 +51,7 @@ func ws_handle(conn *websocket.Conn) {
 				return
 			} else {
 
-				LBC.Traverse(func(block *BC.Block, err error) {
+				LBC.Traverse(func(block *BC.Block, err error) bool {
 
 					if block != nil && int64(block.BlockId) > blockid {
 						// fmt.Println(block.BlockId)
@@ -80,7 +80,7 @@ func ws_handle(conn *websocket.Conn) {
 						}
 
 					}
-
+					return true
 				})
 			}
 		}

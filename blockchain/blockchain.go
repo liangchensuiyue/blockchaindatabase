@@ -7,7 +7,6 @@ import (
 	"encoding/base64"
 
 	"crypto/rand"
-	"crypto/sha256"
 	"errors"
 	"fmt"
 	lru "go_code/基于区块链的非关系型数据库/LRU"
@@ -119,18 +118,21 @@ func (bc *BlockChain) GetTailUserBlock() (*Block, error) {
 }
 
 // 遍历区块链
-func (bc *BlockChain) Traverse(handle func(*Block, error)) {
+func (bc *BlockChain) Traverse(handle func(*Block, error) bool) {
 	cur_block, err := bc.GetTailBlock()
 	if err != nil {
 		handle(cur_block, nil)
 		return
 	}
 	var e error = nil
-	handle(cur_block, nil)
+	flag := handle(cur_block, nil)
+	if !flag {
+		return
+	}
 	for {
 		cur_block, e = bc.GetBlockByHash(cur_block.PreBlockHash)
-		handle(cur_block, e)
-		if e != nil || cur_block.IsGenesisBlock() {
+		flag = handle(cur_block, e)
+		if e != nil || cur_block.IsGenesisBlock() || !flag {
 			break
 		}
 	}
@@ -145,8 +147,9 @@ func (bc *BlockChain) SignBlock(groupPriKey *ecdsa.PrivateKey, IsGenesisBlock bo
 		newblock.BlockId = 1
 		newblock.PreBlockHash = []byte{}
 		newblock.MerkelRoot = []byte{}
-		hash := sha256.Sum256(newblock.Serialize())
-		newblock.Hash = hash[:]
+		// hash := sha256.Sum256(newblock.Serialize())
+		// newblock.Hash = hash[:]
+		newblock.SetHash()
 	} else {
 		for _, tx := range newblock.TxInfos {
 			tx.Sign()
@@ -186,9 +189,9 @@ func (bc *BlockChain) VerifyBlock(groupPubKey []byte, newblock *Block) bool {
 		_hash := newblock.Hash
 		newblock.Signature = []byte{}
 		newblock.Hash = []byte{}
-		hash := sha256.Sum256(newblock.Serialize())
-
-		if !ecdsa.Verify(&pubKeyOrigin, hash[:], &r, &s) {
+		// hash := sha256.Sum256(newblock.Serialize())
+		newblock.SetHash()
+		if !ecdsa.Verify(&pubKeyOrigin, newblock.Hash[:], &r, &s) {
 			return false
 		}
 		newblock.Signature = _sig

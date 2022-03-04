@@ -36,7 +36,7 @@ func CreateUser(username string, passworld string) error {
 	}
 
 	wa := BC.NewWallet(username, passworld)
-	tx, e := BC.NewTransaction("create_user", username, []byte(base64.RawStdEncoding.EncodeToString([]byte(passworld))+" "+wa.NewAddress()), "string", user_address, false, "")
+	tx, e := BC.NewTransaction("create_user", username, []byte(base64.RawStdEncoding.EncodeToString([]byte(passworld))+" "+wa.NewAddress()), BC.NEW_USER, user_address, false, "")
 	if e != nil {
 		return errors.New("创建用户失败")
 	}
@@ -99,17 +99,16 @@ func VeriftUser(username string, passworld string) error {
 	}
 	return errors.New("未知的用户")
 }
-func PutTest(key string, value []byte, datatype string, user_address string, share bool, shareChan string, strict bool, TestHandler func()) error {
+func PutTest(key string, value []byte, datatype int32, user_address string, share bool, shareChan string, strict bool, TestHandler func()) error {
 	if !(share && BC.LocalWallets.HasShareChan(shareChan)) {
 		return errors.New("指定的 sharechan 不存在")
 	}
-	tx, e := BC.NewTransaction("put", key, util.AesEncrypt(value, BC.LocalWallets.ShareChanMap[shareChan].Key), datatype, user_address, share, shareChan)
+	tx, e := BC.NewTransaction(key, util.AesEncrypt(value, BC.LocalWallets.ShareChanMap[shareChan].Key), datatype, user_address, share, shareChan)
 	if e != nil {
 		TestHandler()
 		quorum.Request(user_address, true, &BC.Transaction{
 			Key:       key,
 			Value:     value,
-			DelMark:   false,
 			Share:     share,
 			DataType:  datatype,
 			Timestamp: uint64(time.Now().Unix()),
@@ -161,7 +160,8 @@ func PutTest(key string, value []byte, datatype string, user_address string, sha
 
 	return nil
 }
-func Put(key string, value []byte, datatype string, user_address string, share bool, shareChan string, strict bool) error {
+
+func Put(key string, value []byte, datatype int32, user_address string, share bool, shareChan string, strict bool) error {
 	if share {
 		if !BC.LocalWallets.HasShareChan(shareChan) {
 			return errors.New("指定的 sharechan 不存在")
@@ -170,12 +170,11 @@ func Put(key string, value []byte, datatype string, user_address string, share b
 	} else {
 		shareChan = ""
 	}
-	tx, e := BC.NewTransaction("put", key, value, datatype, user_address, share, shareChan)
+	tx, e := BC.NewTransaction(key, value, datatype, user_address, share, shareChan)
 	if e != nil {
 		quorum.Request(user_address, true, &BC.Transaction{
 			Key:       key,
 			Value:     value,
-			DelMark:   false,
 			Share:     share,
 			DataType:  datatype,
 			Timestamp: uint64(time.Now().Unix()),
@@ -312,11 +311,10 @@ func Del(key string, user_address string, share bool, sharechan string, strict b
 	} else {
 		sharechan = ""
 	}
-	tx, e := BC.NewTransaction("del", key, []byte{}, "", user_address, share, sharechan)
+	tx, e := BC.NewTransaction(key, []byte{}, BC.DEL_KEY, user_address, share, sharechan)
 	if e != nil {
 		go quorum.Request(user_address, true, &BC.Transaction{
 			Key:       key,
-			DelMark:   true,
 			Share:     share,
 			Timestamp: uint64(time.Now().Unix()),
 			ShareChan: sharechan,
@@ -391,7 +389,7 @@ func Get(key string, username string, user_address string, sharemode bool, share
 			if sharemode {
 				if b.TxInfos[i].Share && b.TxInfos[i].ShareChan == sharechan {
 					if b.TxInfos[i].Key == key {
-						if !b.TxInfos[i].DelMark {
+						if b.TxInfos[i].DataType != BC.DEL_KEY {
 							_index = i
 							return false
 						} else {
@@ -404,7 +402,7 @@ func Get(key string, username string, user_address string, sharemode bool, share
 			} else {
 				if BC.GenerateAddressFromPubkey(b.TxInfos[i].PublicKey) == user_address {
 					if b.TxInfos[i].Key == key {
-						if !b.TxInfos[i].DelMark {
+						if b.TxInfos[i].DataType != BC.DEL_KEY {
 							_index = i
 							return false
 						} else {
@@ -431,7 +429,7 @@ func Get(key string, username string, user_address string, sharemode bool, share
 			if sharemode {
 				if b.TxInfos[i].Share && b.TxInfos[i].ShareChan == sharechan {
 					if b.TxInfos[i].Key == key {
-						if !b.TxInfos[i].DelMark {
+						if b.TxInfos[i].DataType != BC.DEL_KEY {
 							return b, i
 						} else {
 							return nil, -1
@@ -443,7 +441,7 @@ func Get(key string, username string, user_address string, sharemode bool, share
 			} else {
 				if BC.GenerateAddressFromPubkey(b.TxInfos[i].PublicKey) == user_address {
 					if b.TxInfos[i].Key == key {
-						if !b.TxInfos[i].DelMark {
+						if b.TxInfos[i].DataType != BC.DEL_KEY {
 							return b, i
 						} else {
 							return nil, -1

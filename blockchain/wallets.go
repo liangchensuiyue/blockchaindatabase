@@ -53,6 +53,7 @@ func (sch *ShareChan) HasUser(user string) bool {
 func (sch *ShareChan) YieldKey() {
 	rand.Seed(time.Now().Unix())
 	key := util.Uint64Tobyte(uint64(time.Now().Unix() + rand.Int63n(1000)))
+	// base64.RawStdEncoding.Encn
 	key = util.Yield16ByteKey(key)
 	sch.Key = key
 }

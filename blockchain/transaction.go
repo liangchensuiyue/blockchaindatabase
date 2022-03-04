@@ -9,8 +9,8 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/gob"
-	"errors"
 	"fmt"
+	"go_code/基于区块链的非关系型数据库/util"
 	"log"
 	"math/big"
 	"time"
@@ -18,15 +18,16 @@ import (
 	// "go_code/区块链/demo1/block"
 )
 
-const reword = 12.5
+// const reword = 12.5
+
+//
 
 //1. 定义交易结构
 type Transaction struct {
 	Key       string
 	Value     []byte
-	DataType  string
+	DataType  int32 // newchan join_chan del_chan exit_chan
 	Timestamp uint64
-	DelMark   bool
 	PublicKey []byte
 	Hash      []byte
 	Share     bool
@@ -54,13 +55,12 @@ func (tx *Transaction) SetHash() {
 	data := []byte{}
 	data = append(data, []byte(tx.Key)...)
 	data = append(data, tx.Value...)
-	data = append(data, []byte(tx.DataType)...)
+	data = append(data, util.Int32ToBytes(tx.DataType)...)
 	data = append(data, []byte(tx.ShareChan)...)
 	data = append(data, []byte(fmt.Sprintf("%d", tx.Timestamp))...)
 	data = append(data, tx.PublicKey...)
 	data = append(data, tx.PreBlockHash...)
 	data = append(data, []byte(fmt.Sprintf("%d", tx.Share))...)
-	data = append(data, []byte(fmt.Sprintf("%d", tx.DelMark))...)
 	// for _, addr := range tx.ShareAddress {
 	// 	data = append(data, []byte(addr)...)
 	// }
@@ -69,7 +69,7 @@ func (tx *Transaction) SetHash() {
 }
 
 // 创建普通的转账交易
-func NewTransaction(method, key string, value []byte, datatype string, user_address string, share bool, ShareChanName string) (*Transaction, error) {
+func NewTransaction(key string, value []byte, datatype int32, user_address string, share bool, ShareChanName string) (*Transaction, error) {
 
 	var Tx *Transaction
 
@@ -79,52 +79,15 @@ func NewTransaction(method, key string, value []byte, datatype string, user_addr
 	if wallet == nil || e != nil {
 		return nil, e
 	}
-
-	// pubKey := wallet.PubKey
-	// pubKeyHash := HashPubKey(pubKey)
-	// privateKey := wallet.Private
-	switch method {
-	case "put":
-		Tx = &Transaction{
-			Key:       key,
-			Value:     value,
-			Share:     share,
-			DataType:  datatype,
-			Timestamp: uint64(time.Now().Unix()),
-			DelMark:   false,
-			PublicKey: wallet.PubKey,
-			ShareChan: ShareChanName,
-		}
-	case "del":
-		Tx = &Transaction{
-			Key:       key,
-			Value:     value,
-			Share:     share,
-			DataType:  datatype,
-			Timestamp: uint64(time.Now().Unix()),
-			DelMark:   true,
-			PublicKey: wallet.PubKey,
-			ShareChan: ShareChanName,
-		}
-	case "create_user":
-		Tx = &Transaction{
-			Key:       key,
-			Value:     value,
-			Share:     share,
-			DataType:  datatype,
-			Timestamp: uint64(time.Now().Unix()),
-			DelMark:   false,
-			PublicKey: wallet.PubKey,
-			ShareChan: ShareChanName,
-		}
-	default:
-		return nil, errors.New(" 未知的操作")
+	Tx = &Transaction{
+		Key:       key,
+		Value:     value,
+		Share:     share,
+		DataType:  datatype,
+		Timestamp: uint64(time.Now().Unix()),
+		PublicKey: wallet.PubKey,
+		ShareChan: ShareChanName,
 	}
-
-	// hash 在区块打包时建立
-	// tx.SetHash()
-
-	// bc.SignTransaction(&tx, privateKey)
 	return Tx, nil
 }
 
@@ -162,7 +125,6 @@ func Printx(hash []byte) {
 	fmt.Println(otx.Key)
 	fmt.Println(otx.Value)
 	fmt.Println(otx.DataType)
-	fmt.Println(otx.DelMark)
 	fmt.Println("hash", base64.RawStdEncoding.EncodeToString(otx.Hash))
 	fmt.Println("pubkey", base64.RawStdEncoding.EncodeToString(otx.PublicKey))
 	fmt.Println(otx.Share)

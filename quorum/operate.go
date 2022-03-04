@@ -102,7 +102,6 @@ func Request(useraddress string, strict bool, tx *BC.Transaction) error {
 				Value:     tx.Value, // []byte
 				DataType:  tx.DataType,
 				Timestamp: tx.Timestamp, // 时间错
-				DelMark:   tx.DelMark,   // 是否删除
 				ShareChan: tx.ShareChan,
 				Share:     tx.Share,
 			},
@@ -213,12 +212,12 @@ func DistributeBlock(block *BC.Block, node *BlockChainNode, handle func(*bcgrpc.
 	infos := []map[string]interface{}{}
 	for i, tx := range block.TxInfos {
 
-		fmt.Println("交易索引:", i)
-		fmt.Println("user_address:", BC.GenerateAddressFromPubkey(tx.PublicKey))
-		fmt.Println("key-value:", tx.Key, string(tx.Value))
-		fmt.Println("sharemode:", tx.Share)
-		fmt.Println("delmark:", tx.DelMark)
-		fmt.Println("sharechan:", tx.ShareChan)
+		// fmt.Println("交易索引:", i)
+		// fmt.Println("user_address:", BC.GenerateAddressFromPubkey(tx.PublicKey))
+		// fmt.Println("key-value:", tx.Key, string(tx.Value))
+		// fmt.Println("sharemode:", tx.Share)
+		// fmt.Println("delmark:", tx.DelMark)
+		// fmt.Println("sharechan:", tx.ShareChan)
 
 		infos = append(infos, map[string]interface{}{
 			"Index":         i,
@@ -265,7 +264,6 @@ func CopyBlock(block *BC.Block) *bcgrpc.Block {
 			Value:        tx.Value,
 			DataType:     tx.DataType,
 			Timestamp:    tx.Timestamp,
-			DelMark:      tx.DelMark,
 			PublicKey:    tx.PublicKey,
 			Hash:         tx.Hash,
 			Share:        tx.Share,
@@ -299,7 +297,6 @@ func CopyBlock2(block *bcgrpc.Block) *BC.Block {
 			Value:     tx.Value,
 			DataType:  tx.DataType,
 			Timestamp: tx.Timestamp,
-			DelMark:   tx.DelMark,
 			PublicKey: tx.PublicKey,
 			Hash:      tx.Hash,
 			Share:     tx.Share,

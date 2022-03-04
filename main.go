@@ -211,6 +211,7 @@ func runLocalTestCli() {
 					fmt.Println("格式错误 newchan [channanme] [user1] [user2] ...")
 					break
 				}
+				quorum.GetShareChan(cmds[1])
 				if BC.LocalWallets.HasShareChan(cmds[1]) {
 					fmt.Println("该 sharechan 已存在")
 					break
@@ -328,7 +329,7 @@ func runLocalTestCli() {
 					fmt.Println("格式错误  detail BlockId")
 					break
 				}
-				localBlockChain.Traverse(func(block *BC.Block, err error) {
+				localBlockChain.Traverse(func(block *BC.Block, err error) bool {
 					if fmt.Sprintf("%d", block.BlockId) == cmds[1] {
 						for i, tx := range block.TxInfos {
 							fmt.Println("交易索引:", i)
@@ -339,11 +340,12 @@ func runLocalTestCli() {
 							fmt.Println("sharechan:", tx.ShareChan)
 						}
 					}
+					return true
 				})
 			case "isaccountant":
 				fmt.Println(quorum.LocalNodeIsAccount())
 			case "print":
-				localBlockChain.Traverse(func(block *BC.Block, err error) {
+				localBlockChain.Traverse(func(block *BC.Block, err error) bool {
 					if block != nil {
 						fmt.Println("---------------------------")
 						fmt.Println("blockid:", block.BlockId)
@@ -361,6 +363,7 @@ func runLocalTestCli() {
 						}
 
 					}
+					return true
 
 				})
 				fmt.Printf("---------------------------\n\n")

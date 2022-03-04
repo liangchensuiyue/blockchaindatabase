@@ -14,6 +14,20 @@ func Uint64Tobyte(src uint64) []byte {
 	binary.Write(buffer, binary.BigEndian, src)
 	return buffer.Bytes()
 }
+
+func BytesToInt32(bts []byte) int32 {
+	bytebuffer := bytes.NewBuffer(bts)
+	var data int32
+	binary.Read(bytebuffer, binary.BigEndian, &data)
+
+	return data
+}
+func Int32ToBytes(src int32) []byte {
+	buffer := bytes.NewBuffer([]byte{})
+	binary.Write(buffer, binary.BigEndian, src)
+	return buffer.Bytes()
+}
+
 func GetBoolFromStr(str string) bool {
 	if str == "true" || str == "True" || str == "1" {
 		return true

@@ -85,15 +85,14 @@ message VerifyInfo{
 message Transaction{
     string key = 1; 
     bytes value = 2;  // []byte
-    string data_type = 3;
+    int32 data_type = 3;
     uint64 timestamp = 4;  // 时间错
-    bool del_mark = 5; // 是否删除
-    bytes public_key = 6; // 用户公钥， 可以有多个(用户共享数据)
-    bytes hash = 7; // 交易 hash
-    bytes pre_block_hash = 8;// 在链中，用户相同交易所在前一个区块hahs(可以有多个，如果该数据类型是共享的话)
-    bytes signature = 9; // 用户对交易的签名
-    string ShareChan = 10;
-    bool share = 11;
+    bytes public_key = 5; // 用户公钥， 可以有多个(用户共享数据)
+    bytes hash = 6; // 交易 hash
+    bytes pre_block_hash = 7;// 在链中，用户相同交易所在前一个区块hahs(可以有多个，如果该数据类型是共享的话)
+    bytes signature = 8; // 用户对交易的签名
+    string ShareChan = 9;
+    bool share = 10;
 }
 message Block{
     bytes hash = 1; // 块 hash

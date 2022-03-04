@@ -16,7 +16,7 @@ message GetBody{
 message PutBody{
     string key = 1;
     bytes value = 2;
-    string datatype = 3;
+    int32 datatype = 3;
     string user_address =4;
     bool share = 5;
      string ShareChan = 6;

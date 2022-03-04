@@ -159,7 +159,6 @@ func (this *Server) Request(ctx context.Context, req *bcgrpc.RequestBody) (info 
 		Value:     req.Tx.Value,
 		DataType:  req.Tx.DataType,
 		Timestamp: req.Tx.Timestamp,
-		DelMark:   req.Tx.DelMark,
 		PublicKey: uw.PubKey,
 		ShareChan: req.Tx.ShareChan,
 		Share:     req.Tx.Share,
