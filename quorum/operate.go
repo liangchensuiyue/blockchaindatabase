@@ -69,9 +69,13 @@ func GetShareChan(name string) {
 			// fmt.Println("JoinGroup 服务调用失败")
 		} else {
 			BC.LocalWallets.ShareChanMap[name] = &BC.ShareChan{
-				Key:       re.Key,
-				ShareUser: re.Users,
+				Key:            re.Key,
+				Channame:       re.Channame,
+				JoinKey:        re.JoinKey,
+				Creator:        re.Creator,
+				CreatorAddress: re.CreatorAddress,
 			}
+			BC.LocalWallets.SaveToFile()
 		}
 		//网络延迟关闭
 		conn.Close()

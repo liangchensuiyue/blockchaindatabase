@@ -36,7 +36,7 @@ func CreateUser(username string, passworld string) error {
 	}
 
 	wa := BC.NewWallet(username, passworld)
-	tx, e := BC.NewTransaction("create_user", username, []byte(base64.RawStdEncoding.EncodeToString([]byte(passworld))+" "+wa.NewAddress()), BC.NEW_USER, user_address, false, "")
+	tx, e := BC.NewTransaction(username, []byte(base64.RawStdEncoding.EncodeToString([]byte(passworld))+" "+wa.NewAddress()), BC.NEW_USER, user_address, false, "")
 	if e != nil {
 		return errors.New("创建用户失败")
 	}

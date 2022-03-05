@@ -89,7 +89,10 @@ func (this *Server) GetShareChan(ctx context.Context, req *bcgrpc.ShareChanName)
 		return nil, errors.New("not found")
 	}
 	body.Key = cn.Key
-	body.Users = cn.ShareUser
+	body.JoinKey = cn.JoinKey
+	body.Creator = cn.Creator
+	body.CreatorAddress = cn.CreatorAddress
+	body.Channame = cn.Channame
 	return
 }
 func (this *Server) JoinGroup(ctx context.Context, req *bcgrpc.NodeInfo) (info *bcgrpc.Nodes, err error) {

@@ -57,6 +57,10 @@ message ShareChanName{
 message ShareChanBody{
     repeated string users = 1;
     bytes Key = 2;
+    bytes JoinKey = 3;
+    string Creator        =4;
+	string CreatorAddress =5;
+	string Channame =6;
 }
 message Heartbeat{
     bool is_accountant = 1;

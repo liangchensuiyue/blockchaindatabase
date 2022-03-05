@@ -26,9 +26,12 @@ var LocalWallets *Wallets = &Wallets{}
 var _lock *sync.Mutex = &sync.Mutex{}
 
 type ShareChan struct {
-	TailBlockHash []byte
-	ShareUser     []string
-	Key           []byte
+	TailBlockHash  []byte
+	Channame       string
+	Key            []byte
+	JoinKey        []byte
+	Creator        string
+	CreatorAddress string
 }
 
 // 定义一个 Wallets 结构，它保存所有的wallet以及它的地址
@@ -43,12 +46,37 @@ func LoadLocalWallets() {
 	LocalWallets.loadFile()
 }
 func (sch *ShareChan) HasUser(user string) bool {
-	for _, v := range sch.ShareUser {
-		if v == user {
-			return true
-		}
+	flag := true
+	addr, err := GetAddressFromUsername(user)
+	if err != nil {
+		return false
 	}
-	return false
+	_localblockchain.Traverse(func(block *Block, err error) bool {
+		for _, tx := range block.TxInfos {
+
+			//
+			if tx.Key == sch.Channame {
+				if tx.DataType == EXIT_CHAN && GenerateAddressFromPubkey(tx.PublicKey) == addr {
+					flag = false
+					return false
+				}
+				if tx.DataType == JOIN_CHAN {
+					return false
+				}
+				if tx.DataType == NEW_CHAN {
+					flag = false
+					return false
+				}
+
+			}
+
+		}
+		return true
+	})
+	if !flag {
+		return false
+	}
+	return true
 }
 func (sch *ShareChan) YieldKey() {
 	rand.Seed(time.Now().Unix())

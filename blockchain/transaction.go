@@ -9,10 +9,12 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/gob"
+	"errors"
 	"fmt"
 	"go_code/基于区块链的非关系型数据库/util"
 	"log"
 	"math/big"
+	"strings"
 	"time"
 	// "log"
 	// "go_code/区块链/demo1/block"
@@ -133,17 +135,208 @@ func Printx(hash []byte) {
 	fmt.Println(otx.Timestamp)
 	fmt.Println(base64.RawStdEncoding.EncodeToString(otx.PreBlockHash))
 }
+func GetAddressFromUsername(username string) (string, error) {
+	user_address := LocalWallets.GetBlockChainRootWallet().NewAddress()
+
+	// 判断用户是否创建
+	_hash, _ := LocalWallets.GetUserTailBlockHash(user_address)
+
+	b, e := _localblockchain.GetBlockByHash(_hash)
+	if e != nil {
+		return "", e
+	}
+	for {
+		if b.IsGenesisBlock() {
+			break
+		}
+		for _, tx := range b.TxInfos {
+			// fmt.Println("t.Key", tx.Key, username)
+			_hash = tx.PreBlockHash
+			if tx.Key == username {
+				addr := strings.Split(string(tx.Value), " ")[1]
+				return addr, nil
+			}
+		}
+		b, _ = _localblockchain.GetBlockByHash(_hash)
+	}
+	return "", errors.New("未知的用户")
+}
+func VerifyKeyChan(key []byte, channame, creator_addr string) bool {
+	flag := true
+	var okey []byte
+	_localblockchain.Traverse(func(block *Block, err error) bool {
+		for _, tx := range block.TxInfos {
+
+			//
+			if tx.Key == channame {
+				if tx.DataType == NEW_CHAN && creator_addr == GenerateAddressFromPubkey(tx.PublicKey) {
+					flag = false
+					okey = tx.Value
+					return false
+				} else if tx.DataType == DEL_CHAN && creator_addr == GenerateAddressFromPubkey(tx.PublicKey) {
+					return false
+				}
+			}
+
+		}
+		return true
+	})
+	if !flag && bytes.Equal(key, okey) {
+		// 找到
+		return true
+	}
+	return false
+}
+func UserIsInChan(addr, creator, channame string) bool {
+	retrue := false
+	refalse := false
+	creatoraddr, err := GetAddressFromUsername(creator)
+	if err != nil {
+		return false
+	}
+	_localblockchain.Traverse(func(block *Block, err error) bool {
+		for _, tx := range block.TxInfos {
+
+			//
+			if tx.Key == channame {
+				arr := strings.Split(string(tx.Value), " ")
+				if tx.DataType == DEL_CHAN && GenerateAddressFromPubkey(tx.PublicKey) == creatoraddr {
+					refalse = true
+					return false
+				}
+				if tx.DataType == EXIT_CHAN && GenerateAddressFromPubkey(tx.PublicKey) == addr && arr[0] == creator {
+					refalse = true
+					return false
+				}
+				if tx.DataType == JOIN_CHAN && GenerateAddressFromPubkey(tx.PublicKey) == addr && arr[0] == creator {
+					retrue = true
+					return false
+				}
+				if tx.DataType == NEW_CHAN && GenerateAddressFromPubkey(tx.PublicKey) == creatoraddr {
+					refalse = true
+					return false
+				}
+
+			}
+
+		}
+		return true
+	})
+	if refalse {
+		return false
+	}
+	if retrue {
+		return true
+	}
+	return false
+}
+func UserIsChanCreator(channame, useraddress string) bool {
+	flag := true
+	_localblockchain.Traverse(func(block *Block, err error) bool {
+		for _, tx := range block.TxInfos {
+
+			//
+			if tx.Key == channame {
+				if useraddress == GenerateAddressFromPubkey(tx.PublicKey) {
+					if tx.DataType == DEL_CHAN {
+						return false
+					}
+					if tx.DataType == NEW_CHAN {
+						flag = false
+						return false
+					}
+				}
+
+			}
+
+		}
+		return true
+	})
+	if !flag {
+		return true
+	}
+	return false
+}
+func IsExsistChan(name string, address string) bool {
+	flag := true
+	_localblockchain.Traverse(func(block *Block, err error) bool {
+		for _, tx := range block.TxInfos {
+
+			//
+			if tx.Key == name && GenerateAddressFromPubkey(tx.PublicKey) == address {
+				if tx.DataType == NEW_CHAN {
+					flag = false
+					return false
+				} else if tx.DataType == DEL_CHAN {
+					return false
+				}
+			}
+
+		}
+		return true
+	})
+	if !flag {
+		// 找到
+		return true
+	}
+	return false
+}
 func (tx *Transaction) Verify() bool {
 	signature := tx.Signature
 	tx.Signature = []byte{}
 	user_address := GenerateAddressFromPubkey(tx.PublicKey)
 	pre := base64.RawStdEncoding.EncodeToString(tx.PreBlockHash)
+
+	switch tx.DataType {
+	case NEW_CHAN:
+		if IsExsistChan(tx.Key, GenerateAddressFromPubkey(tx.PublicKey)) {
+
+		}
+	case DEL_CHAN:
+
+		if !UserIsChanCreator(tx.Key, GenerateAddressFromPubkey(tx.PublicKey)) {
+			return false
+		}
+	case JOIN_CHAN:
+		arr := strings.Split(string(tx.Value), " ")
+		if len(arr) <= 1 {
+			fmt.Println("del_chan verify error")
+			return false
+		}
+		addr, err := GetAddressFromUsername(arr[0])
+		if err != nil {
+			return false
+		}
+		ok := VerifyKeyChan(tx.Value, tx.Key, addr)
+		if !ok {
+			return false
+		}
+	case NEW_USER:
+		_, err := GetAddressFromUsername(tx.Key)
+		if err == nil {
+			fmt.Println("new_user error")
+			return false
+		}
+
+	}
 	// fmt.Println(user_address)
 	if tx.Share {
+		//tx.ShareChan   creatorusername.channame
+		arr := strings.Split(tx.ShareChan, ".")
+		if len(arr) < 2 {
+			return false
+		}
+
+		if !UserIsInChan(GenerateAddressFromPubkey(tx.PublicKey), arr[0], arr[1]) {
+			return false
+		}
 		if !LocalWallets.HasShareChan(tx.ShareChan) {
 			_GetShareChan(tx.ShareChan)
 		}
-		schn := LocalWallets.ShareChanMap[tx.ShareChan]
+		schn, ok := LocalWallets.ShareChanMap[tx.ShareChan]
+		if !ok {
+			return false
+		}
 		tx.PreBlockHash = schn.TailBlockHash
 	} else {
 		tx.PreBlockHash, _ = LocalWallets.GetUserTailBlockHash(user_address)

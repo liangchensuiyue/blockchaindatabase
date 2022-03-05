@@ -38,6 +38,8 @@ var LRU *lru.Cache = lru.NewCache(400)
 var BlockQueue *Queue = NewQueue()
 var _GetShareChan func(name string)
 
+var _localblockchain *BlockChain
+
 func NewBlockChain(blockTailHashKey, blockChainDBFileName string, h func(name string)) *BlockChain {
 	_GetShareChan = h
 	// 创建一个创世块，并作为第一个区块添加到区块链中
@@ -59,13 +61,14 @@ func NewBlockChain(blockTailHashKey, blockChainDBFileName string, h func(name st
 		}
 		return nil
 	})
-	return &BlockChain{
+	_localblockchain = &BlockChain{
 		Db:                   db,
 		BlockBucket:          blockBucket,
 		BlockChainDBFileName: blockChainDBFileName,
 		TailUserBlockHashkey: "user",
 		BlockTailHashKey:     blockTailHashKey,
 	}
+	return _localblockchain
 }
 
 // 创世块
