@@ -255,6 +255,7 @@ func runLocalTestCli() {
 				}
 			case "listchan":
 				for _, v := range BC.LocalWallets.ShareChanMap {
+					// fmt.Println(v.Channame, v.Creator, v.CreatorAddress, login_useraddress)
 					if BC.UserIsInChan(login_useraddress, v.Creator, v.Channame) {
 						fmt.Printf("%s(%s): ", v.Channame, v.Creator)
 						for _, u := range db.GetChanUsers(v.Channame, v.CreatorAddress) {
@@ -268,12 +269,12 @@ func runLocalTestCli() {
 					fmt.Println("格式错误 look_join_key [channanme] [username] ")
 					break
 				}
-				addr, err := db.GetAddressFromUsername(cmds[2])
+				_, err := db.GetAddressFromUsername(cmds[2])
 				if err != nil {
 					fmt.Println(err)
 					break
 				}
-				v, ok := BC.LocalWallets.ShareChanMap[cmds[1]+" "+addr]
+				v, ok := BC.LocalWallets.ShareChanMap[cmds[2]+"."+cmds[1]]
 				if !ok {
 					fmt.Printf("%s 没有chan: %s\n", cmds[2], cmds[1])
 				}
@@ -292,10 +293,10 @@ func runLocalTestCli() {
 				if !util.GetBoolFromStr(cmds[5]) {
 					key := util.Yield16ByteKey([]byte(pass))
 					v := util.AesEncrypt([]byte(cmds[2]), key)
-					err = db.Put(cmds[1], v, cmds[3], login_useraddress, util.GetBoolFromStr(cmds[5]), "", util.GetBoolFromStr(cmds[4]))
+					err = db.Put(cmds[1], v, BC.STRING, login_useraddress, util.GetBoolFromStr(cmds[5]), "", util.GetBoolFromStr(cmds[4]))
 
 				} else {
-					err = db.Put(cmds[1], []byte(cmds[2]), cmds[3], login_useraddress, util.GetBoolFromStr(cmds[5]), cmds[6], util.GetBoolFromStr(cmds[4]))
+					err = db.Put(cmds[1], []byte(cmds[2]), BC.STRING, login_useraddress, util.GetBoolFromStr(cmds[5]), cmds[6], util.GetBoolFromStr(cmds[4]))
 
 				}
 				if err != nil {

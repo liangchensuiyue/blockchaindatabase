@@ -213,7 +213,7 @@ func UserIsInChan(addr, creator, channame string) bool {
 					return false
 				}
 				if tx.DataType == NEW_CHAN && GenerateAddressFromPubkey(tx.PublicKey) == creatoraddr {
-					refalse = true
+					retrue = true
 					return false
 				}
 
