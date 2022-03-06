@@ -1,4 +1,4 @@
-package blockchain
+package Type
 
 const (
 	// 数据类型

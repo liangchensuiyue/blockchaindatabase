@@ -5,6 +5,7 @@ import (
 	"crypto/elliptic"
 	"encoding/gob"
 	"errors"
+	Type "go_code/基于区块链的非关系型数据库/type"
 	"go_code/基于区块链的非关系型数据库/util"
 	"math/rand"
 	"time"
@@ -56,14 +57,14 @@ func (sch *ShareChan) HasUser(user string) bool {
 
 			//
 			if tx.Key == sch.Channame {
-				if tx.DataType == EXIT_CHAN && GenerateAddressFromPubkey(tx.PublicKey) == addr {
+				if tx.DataType == Type.EXIT_CHAN && GenerateAddressFromPubkey(tx.PublicKey) == addr {
 					flag = false
 					return false
 				}
-				if tx.DataType == JOIN_CHAN {
+				if tx.DataType == Type.JOIN_CHAN {
 					return false
 				}
-				if tx.DataType == NEW_CHAN {
+				if tx.DataType == Type.NEW_CHAN {
 					flag = false
 					return false
 				}

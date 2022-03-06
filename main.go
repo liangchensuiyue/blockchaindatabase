@@ -15,6 +15,7 @@ import (
 	db "go_code/基于区块链的非关系型数据库/database"
 	quorum "go_code/基于区块链的非关系型数据库/quorum"
 	Test "go_code/基于区块链的非关系型数据库/test"
+	Type "go_code/基于区块链的非关系型数据库/type"
 	"go_code/基于区块链的非关系型数据库/util"
 	view "go_code/基于区块链的非关系型数据库/view"
 )
@@ -229,7 +230,7 @@ func runLocalTestCli() {
 				}
 			case "joinchan":
 				if len(cmds) < 3 {
-					fmt.Println("格式错误 look_join_key [channanme] [key] ")
+					fmt.Println("格式错误 joinchan [channanme] [key] ")
 					break
 				}
 				arr := strings.Split(cmds[2], ".")
@@ -254,11 +255,37 @@ func runLocalTestCli() {
 					fmt.Println(err)
 				}
 			case "listchan":
-				for _, v := range BC.LocalWallets.ShareChanMap {
+				_map := make(map[string]bool)
+				arrage := []string{}
+				localBlockChain.Traverse(func(block *BC.Block, err error) bool {
+					if block != nil {
+						for _, tx := range block.TxInfos {
+							if tx.DataType == Type.NEW_CHAN {
+								uname, _ := BC.GetUsernameFromAddress(BC.GenerateAddressFromPubkey(tx.PublicKey))
+								_, ok := _map[uname+"."+tx.Key]
+								if !ok {
+									arrage = append(arrage, uname+"."+tx.Key)
+									_map[uname+"."+tx.Key] = true
+								}
+
+							}
+							if tx.DataType == Type.DEL_CHAN {
+								_map[string(tx.Value)+"."+tx.Key] = false
+							}
+						}
+
+					}
+					return true
+
+				})
+				for _, v := range arrage {
 					// fmt.Println(v.Channame, v.Creator, v.CreatorAddress, login_useraddress)
-					if BC.UserIsInChan(login_useraddress, v.Creator, v.Channame) {
-						fmt.Printf("%s(%s): ", v.Channame, v.Creator)
-						for _, u := range db.GetChanUsers(v.Channame, v.CreatorAddress) {
+					arr := strings.Split(v, ".")
+					fmt.Println(login_useraddress, arr[0], arr[1])
+					if BC.UserIsInChan(login_useraddress, arr[0], arr[1]) {
+						fmt.Printf("%s.%s: ", arr[0], arr[1])
+						addr, _ := database.GetAddressFromUsername(arr[0])
+						for _, u := range db.GetChanUsers(arr[1], addr) {
 							fmt.Printf("%s ", u)
 						}
 						fmt.Println("")
@@ -266,23 +293,24 @@ func runLocalTestCli() {
 				}
 			case "look_join_key":
 				if len(cmds) < 3 {
-					fmt.Println("格式错误 look_join_key [channanme] [username] ")
+					fmt.Println("格式错误 look_join_key [username] [channanme] ")
 					break
 				}
-				_, err := db.GetAddressFromUsername(cmds[2])
+				_, err := db.GetAddressFromUsername(cmds[1])
 				if err != nil {
 					fmt.Println(err)
 					break
 				}
-				v, ok := BC.LocalWallets.ShareChanMap[cmds[2]+"."+cmds[1]]
+				v, ok := BC.LocalWallets.ShareChanMap[cmds[1]+"."+cmds[2]]
 				if !ok {
 					fmt.Printf("%s 没有chan: %s\n", cmds[2], cmds[1])
+					break
 				}
 				if v.Creator != login_username {
 					fmt.Println("没有权限查看")
 				}
 
-				fmt.Printf("%s.%s.%s", v.Creator, base64.RawStdEncoding.EncodeToString(util.AesDecrypt(v.JoinKey, v.Key)), base64.RawStdEncoding.EncodeToString(v.Key))
+				fmt.Printf("%s.%s.%s\n", v.Creator, base64.RawStdEncoding.EncodeToString(util.AesDecrypt(v.JoinKey, v.Key)), base64.RawStdEncoding.EncodeToString(v.Key))
 			case "put":
 				// put age 15 int
 				if len(cmds) < 6 {
@@ -293,10 +321,10 @@ func runLocalTestCli() {
 				if !util.GetBoolFromStr(cmds[5]) {
 					key := util.Yield16ByteKey([]byte(pass))
 					v := util.AesEncrypt([]byte(cmds[2]), key)
-					err = db.Put(cmds[1], v, BC.STRING, login_useraddress, util.GetBoolFromStr(cmds[5]), "", util.GetBoolFromStr(cmds[4]))
+					err = db.Put(cmds[1], v, Type.STRING, login_useraddress, util.GetBoolFromStr(cmds[5]), "", util.GetBoolFromStr(cmds[4]))
 
 				} else {
-					err = db.Put(cmds[1], []byte(cmds[2]), BC.STRING, login_useraddress, util.GetBoolFromStr(cmds[5]), cmds[6], util.GetBoolFromStr(cmds[4]))
+					err = db.Put(cmds[1], []byte(cmds[2]), Type.STRING, login_useraddress, util.GetBoolFromStr(cmds[5]), cmds[6], util.GetBoolFromStr(cmds[4]))
 
 				}
 				if err != nil {

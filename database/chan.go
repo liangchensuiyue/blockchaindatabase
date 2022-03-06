@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	BC "go_code/基于区块链的非关系型数据库/blockchain"
+	Type "go_code/基于区块链的非关系型数据库/type"
+
 	"go_code/基于区块链的非关系型数据库/quorum"
 	"go_code/基于区块链的非关系型数据库/util"
 	"strings"
@@ -30,13 +32,13 @@ func JoinChan(channame, username, user_address string, creator, joinkey string, 
 	}
 	value := []byte(creator + " ")
 	value = append(value, util.AesEncrypt(_joinkey, _key)...)
-	tx, e := BC.NewTransaction(channame, value, BC.JOIN_CHAN, user_address, false, "")
+	tx, e := BC.NewTransaction(channame, value, Type.JOIN_CHAN, user_address, false, "")
 	if e != nil {
 		quorum.Request(user_address, true, &BC.Transaction{
 			Key:       channame,
 			Share:     false,
 			Value:     value,
-			DataType:  BC.JOIN_CHAN,
+			DataType:  Type.JOIN_CHAN,
 			Timestamp: uint64(time.Now().Unix()),
 			ShareChan: "",
 		})
@@ -79,13 +81,13 @@ func JoinChan(channame, username, user_address string, creator, joinkey string, 
 	return nil
 }
 func ExitChan(creator, channame, username, user_address string) {
-	tx, e := BC.NewTransaction(channame, []byte(creator), BC.EXIT_CHAN, user_address, false, "")
+	tx, e := BC.NewTransaction(channame, []byte(creator), Type.EXIT_CHAN, user_address, false, "")
 	if e != nil {
 		quorum.Request(user_address, true, &BC.Transaction{
 			Key:       channame,
 			Share:     false,
 			Value:     []byte(creator),
-			DataType:  BC.EXIT_CHAN,
+			DataType:  Type.EXIT_CHAN,
 			Timestamp: uint64(time.Now().Unix()),
 			ShareChan: "",
 		})
@@ -127,13 +129,13 @@ func ExitChan(creator, channame, username, user_address string) {
 	})
 }
 func DelChan(creator, channame, username, user_address string) {
-	tx, e := BC.NewTransaction(channame, []byte(creator), BC.DEL_CHAN, user_address, false, "")
+	tx, e := BC.NewTransaction(channame, []byte(creator), Type.DEL_CHAN, user_address, false, "")
 	if e != nil {
 		quorum.Request(user_address, true, &BC.Transaction{
 			Key:       channame,
 			Share:     false,
 			Value:     []byte(creator),
-			DataType:  BC.DEL_CHAN,
+			DataType:  Type.DEL_CHAN,
 			Timestamp: uint64(time.Now().Unix()),
 			ShareChan: "",
 		})
@@ -175,13 +177,13 @@ func DelChan(creator, channame, username, user_address string) {
 	})
 }
 func NewChan(newchan *BC.ShareChan, username string, user_address string) error {
-	tx, e := BC.NewTransaction(newchan.Channame, newchan.JoinKey, BC.NEW_CHAN, user_address, false, "")
+	tx, e := BC.NewTransaction(newchan.Channame, newchan.JoinKey, Type.NEW_CHAN, user_address, false, "")
 	if e != nil {
 		quorum.Request(user_address, true, &BC.Transaction{
 			Key:       newchan.Channame,
 			Value:     newchan.JoinKey,
 			Share:     false,
-			DataType:  BC.NEW_CHAN,
+			DataType:  Type.NEW_CHAN,
 			Timestamp: uint64(time.Now().Unix()),
 			ShareChan: "",
 		})
@@ -201,7 +203,8 @@ func NewChan(newchan *BC.ShareChan, username string, user_address string) error 
 					fmt.Println(e)
 					return
 				}
-				BC.LocalWallets.ShareChanMap[newchan.Channame+"."+username] = newchan
+				fmt.Println("==============", username+"."+newchan.Channame)
+				BC.LocalWallets.ShareChanMap[username+"."+newchan.Channame] = newchan
 				BC.LocalWallets.SaveToFile()
 				for _, tx := range newblock.TxInfos {
 
@@ -236,14 +239,14 @@ func UserIsInChan(username, channame string) bool {
 
 			//
 			if tx.Key == channame {
-				if tx.DataType == BC.EXIT_CHAN && BC.GenerateAddressFromPubkey(tx.PublicKey) == addr {
+				if tx.DataType == Type.EXIT_CHAN && BC.GenerateAddressFromPubkey(tx.PublicKey) == addr {
 					flag = false
 					return false
 				}
-				if tx.DataType == BC.JOIN_CHAN {
+				if tx.DataType == Type.JOIN_CHAN {
 					return false
 				}
-				if tx.DataType == BC.NEW_CHAN {
+				if tx.DataType == Type.NEW_CHAN {
 					flag = false
 					return false
 				}
@@ -265,10 +268,10 @@ func IsExsistChan(name string, address string) bool {
 
 			//
 			if tx.Key == name && BC.GenerateAddressFromPubkey(tx.PublicKey) == address {
-				if tx.DataType == BC.NEW_CHAN {
+				if tx.DataType == Type.NEW_CHAN {
 					flag = false
 					return false
-				} else if tx.DataType == BC.DEL_CHAN {
+				} else if tx.DataType == Type.DEL_CHAN {
 					return false
 				}
 			}
@@ -292,11 +295,11 @@ func GetChanUsers(channame string, address string) []string {
 
 			//
 			if tx.Key == channame && BC.GenerateAddressFromPubkey(tx.PublicKey) == address {
-				if tx.DataType == BC.NEW_CHAN {
+				if tx.DataType == Type.NEW_CHAN {
 					return false
-				} else if tx.DataType == BC.DEL_CHAN {
+				} else if tx.DataType == Type.DEL_CHAN {
 					return false
-				} else if tx.DataType == BC.JOIN_CHAN {
+				} else if tx.DataType == Type.JOIN_CHAN {
 					arr := strings.Split(string(tx.Value), " ")
 					if len(arr) < 2 {
 						return false

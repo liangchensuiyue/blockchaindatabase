@@ -9,7 +9,10 @@ import (
 	"fmt"
 	BC "go_code/基于区块链的非关系型数据库/blockchain"
 	bcgrpc "go_code/基于区块链的非关系型数据库/proto/blockchain"
+	Type "go_code/基于区块链的非关系型数据库/type"
+	util "go_code/基于区块链的非关系型数据库/util"
 	view "go_code/基于区块链的非关系型数据库/view"
+	"time"
 )
 
 type Server struct{}
@@ -157,19 +160,33 @@ func (this *Server) Request(ctx context.Context, req *bcgrpc.RequestBody) (info 
 		return
 	}
 
+	info.Status = true
+	info.Info = "请求成功"
+	user_name, err := BC.GetUsernameFromAddress(BC.GenerateAddressFromPubkey(uw.PubKey))
+	if err != nil {
+		return
+	}
+	newchan := &BC.ShareChan{
+		Channame: req.Tx.Key,
+	}
+	newchan.YieldKey()
+	newchan.Creator = user_name
+	newchan.CreatorAddress = BC.GenerateAddressFromPubkey(uw.PubKey)
+	ok := BC.UserIsChanCreator(newchan.Channame, BC.GenerateAddressFromPubkey(uw.PubKey))
+	if ok {
+		fmt.Println("改chan已存在")
+		return
+	}
+	newchan.JoinKey = util.AesEncrypt([]byte(base64.RawStdEncoding.EncodeToString([]byte(fmt.Sprintf("%d%s", time.Now().UnixNano(), newchan.Channame)))), newchan.Key)
 	tx := &BC.Transaction{
 		Key:       req.Tx.Key,
-		Value:     req.Tx.Value,
+		Value:     newchan.JoinKey,
 		DataType:  req.Tx.DataType,
 		Timestamp: req.Tx.Timestamp,
 		PublicKey: uw.PubKey,
 		ShareChan: req.Tx.ShareChan,
 		Share:     req.Tx.Share,
 	}
-
-	info.Status = true
-	info.Info = "请求成功"
-
 	if req.Strict {
 		lcdraft := BC.GetLocalDraft()
 		newblock, _ := lcdraft.PackBlock(tx)
@@ -185,7 +202,11 @@ func (this *Server) Request(ctx context.Context, req *bcgrpc.RequestBody) (info 
 						fmt.Println(e)
 						return
 					}
+					if tx.DataType == Type.NEW_CHAN {
 
+						BC.LocalWallets.ShareChanMap[newchan.Creator+"."+newchan.Channame] = newchan
+						BC.LocalWallets.SaveToFile()
+					}
 					// BC.LocalWallets.TailBlockHashMap[req.UserAddress] = newblock.Hash
 
 					// if req.Tx.Share {

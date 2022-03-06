@@ -2,8 +2,8 @@ package test
 
 import (
 	"fmt"
-	BC "go_code/基于区块链的非关系型数据库/blockchain"
 	db "go_code/基于区块链的非关系型数据库/database"
+	Type "go_code/基于区块链的非关系型数据库/type"
 	"time"
 )
 
@@ -32,7 +32,7 @@ func Test1() {
 	nums := 200
 	pre := time.Now().UnixNano()
 	for i := nums; i < nums+100; i++ {
-		db.PutTest(fmt.Sprintf("key_%d", i), []byte(fmt.Sprintf("%d", i)), BC.INT32, "15vX49wB6xy8w9LUKhTu8KKHpn53DAD2t2", false, "", true, func() {
+		db.PutTest(fmt.Sprintf("key_%d", i), []byte(fmt.Sprintf("%d", i)), Type.INT32, "15vX49wB6xy8w9LUKhTu8KKHpn53DAD2t2", false, "", true, func() {
 			nums--
 			if nums <= 0 {
 				cur := time.Now().UnixNano()
@@ -51,7 +51,7 @@ func main1() {
 	nums := 200
 	pre := time.Now().UnixNano()
 	for i := nums; i < nums+100; i++ {
-		db.PutTest(fmt.Sprintf("key_%d", i), []byte(fmt.Sprintf("%d", i)), BC.INT32, "15vX49wB6xy8w9LUKhTu8KKHpn53DAD2t2", false, "", true, func() {
+		db.PutTest(fmt.Sprintf("key_%d", i), []byte(fmt.Sprintf("%d", i)), Type.INT32, "15vX49wB6xy8w9LUKhTu8KKHpn53DAD2t2", false, "", true, func() {
 			nums--
 			if nums <= 0 {
 				cur := time.Now().UnixNano()

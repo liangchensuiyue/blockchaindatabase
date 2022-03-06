@@ -5,8 +5,8 @@ import (
 	"context"
 	"encoding/binary"
 	"fmt"
-	BC "go_code/基于区块链的非关系型数据库/blockchain"
 	ucgrpc "go_code/基于区块链的非关系型数据库/proto/userclient"
+	Type "go_code/基于区块链的非关系型数据库/type"
 	"time"
 
 	"google.golang.org/grpc"
@@ -84,7 +84,7 @@ func test1() {
 	nums := 1
 	pre := time.Now().UnixNano()
 	for i := nums; i < 500; i++ {
-		put(fmt.Sprintf("key_%d", i), []byte(fmt.Sprintf("%d", i)), BC.INT32, "123", "1BZsJu1amTo2f5F3DZRYihk6Xjq3k7u4AD", false, "", true)
+		put(fmt.Sprintf("key_%d", i), []byte(fmt.Sprintf("%d", i)), Type.INT32, "123", "1BZsJu1amTo2f5F3DZRYihk6Xjq3k7u4AD", false, "", true)
 		flag := get(fmt.Sprintf("key_%d", i), "gds", "1BZsJu1amTo2f5F3DZRYihk6Xjq3k7u4AD", false, "")
 		if !flag {
 			fmt.Println("失败", fmt.Sprintf("key_%d", i))

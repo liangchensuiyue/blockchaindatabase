@@ -11,6 +11,7 @@ import (
 	"encoding/gob"
 	"errors"
 	"fmt"
+	Type "go_code/基于区块链的非关系型数据库/type"
 	"go_code/基于区块链的非关系型数据库/util"
 	"log"
 	"math/big"
@@ -169,11 +170,11 @@ func VerifyKeyChan(key []byte, channame, creator_addr string) bool {
 
 			//
 			if tx.Key == channame {
-				if tx.DataType == NEW_CHAN && creator_addr == GenerateAddressFromPubkey(tx.PublicKey) {
+				if tx.DataType == Type.NEW_CHAN && creator_addr == GenerateAddressFromPubkey(tx.PublicKey) {
 					flag = false
 					okey = tx.Value
 					return false
-				} else if tx.DataType == DEL_CHAN && creator_addr == GenerateAddressFromPubkey(tx.PublicKey) {
+				} else if tx.DataType == Type.DEL_CHAN && creator_addr == GenerateAddressFromPubkey(tx.PublicKey) {
 					return false
 				}
 			}
@@ -194,26 +195,29 @@ func UserIsInChan(addr, creator, channame string) bool {
 	if err != nil {
 		return false
 	}
+	if creatoraddr == addr {
+		return true
+	}
 	_localblockchain.Traverse(func(block *Block, err error) bool {
 		for _, tx := range block.TxInfos {
 
 			//
 			if tx.Key == channame {
 				arr := strings.Split(string(tx.Value), " ")
-				if tx.DataType == DEL_CHAN && GenerateAddressFromPubkey(tx.PublicKey) == creatoraddr {
+				if tx.DataType == Type.DEL_CHAN && GenerateAddressFromPubkey(tx.PublicKey) == creatoraddr {
 					refalse = true
 					return false
 				}
-				if tx.DataType == EXIT_CHAN && GenerateAddressFromPubkey(tx.PublicKey) == addr && arr[0] == creator {
+				if tx.DataType == Type.EXIT_CHAN && GenerateAddressFromPubkey(tx.PublicKey) == addr && arr[0] == creator {
 					refalse = true
 					return false
 				}
-				if tx.DataType == JOIN_CHAN && GenerateAddressFromPubkey(tx.PublicKey) == addr && arr[0] == creator {
+				if tx.DataType == Type.JOIN_CHAN && GenerateAddressFromPubkey(tx.PublicKey) == addr && arr[0] == creator {
 					retrue = true
 					return false
 				}
-				if tx.DataType == NEW_CHAN && GenerateAddressFromPubkey(tx.PublicKey) == creatoraddr {
-					retrue = true
+				if tx.DataType == Type.NEW_CHAN && GenerateAddressFromPubkey(tx.PublicKey) == creatoraddr {
+					refalse = true
 					return false
 				}
 
@@ -238,10 +242,10 @@ func UserIsChanCreator(channame, useraddress string) bool {
 			//
 			if tx.Key == channame {
 				if useraddress == GenerateAddressFromPubkey(tx.PublicKey) {
-					if tx.DataType == DEL_CHAN {
+					if tx.DataType == Type.DEL_CHAN {
 						return false
 					}
-					if tx.DataType == NEW_CHAN {
+					if tx.DataType == Type.NEW_CHAN {
 						flag = false
 						return false
 					}
@@ -264,10 +268,10 @@ func IsExsistChan(name string, address string) bool {
 
 			//
 			if tx.Key == name && GenerateAddressFromPubkey(tx.PublicKey) == address {
-				if tx.DataType == NEW_CHAN {
+				if tx.DataType == Type.NEW_CHAN {
 					flag = false
 					return false
-				} else if tx.DataType == DEL_CHAN {
+				} else if tx.DataType == Type.DEL_CHAN {
 					return false
 				}
 			}
@@ -288,16 +292,16 @@ func (tx *Transaction) Verify() bool {
 	pre := base64.RawStdEncoding.EncodeToString(tx.PreBlockHash)
 
 	switch tx.DataType {
-	case NEW_CHAN:
+	case Type.NEW_CHAN:
 		if IsExsistChan(tx.Key, GenerateAddressFromPubkey(tx.PublicKey)) {
 
 		}
-	case DEL_CHAN:
+	case Type.DEL_CHAN:
 
 		if !UserIsChanCreator(tx.Key, GenerateAddressFromPubkey(tx.PublicKey)) {
 			return false
 		}
-	case JOIN_CHAN:
+	case Type.JOIN_CHAN:
 		arr := strings.Split(string(tx.Value), " ")
 		if len(arr) <= 1 {
 			fmt.Println("del_chan verify error")
@@ -305,13 +309,16 @@ func (tx *Transaction) Verify() bool {
 		}
 		addr, err := GetAddressFromUsername(arr[0])
 		if err != nil {
+			fmt.Println(err)
 			return false
 		}
-		ok := VerifyKeyChan(tx.Value, tx.Key, addr)
+		joinkey := strings.Split(string(tx.Value), " ")[1]
+		ok := VerifyKeyChan([]byte(joinkey), tx.Key, addr)
 		if !ok {
+			fmt.Println("!ok error")
 			return false
 		}
-	case NEW_USER:
+	case Type.NEW_USER:
 		_, err := GetAddressFromUsername(tx.Key)
 		if err == nil {
 			fmt.Println("new_user error")

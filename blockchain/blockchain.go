@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	lru "go_code/基于区块链的非关系型数据库/LRU"
+	Type "go_code/基于区块链的非关系型数据库/type"
 
 	"log"
 	"math/big"
@@ -329,6 +330,41 @@ func (bc *BlockChain) GetAddressFromUsername(username string) (string, error) {
 			}
 		}
 		b, _ = bc.GetBlockByHash(_hash)
+	}
+	return "", errors.New("未知的用户")
+}
+func GetUsernameFromAddress(address string) (string, error) {
+	user_address := LocalWallets.GetBlockChainRootWallet().NewAddress()
+
+	// 判断用户是否创建
+	_hash, _ := LocalWallets.GetUserTailBlockHash(user_address)
+
+	b, e := _localblockchain.GetBlockByHash(_hash)
+	if e != nil {
+		return "", e
+	}
+	for {
+		if b.IsGenesisBlock() {
+			break
+		}
+		for _, tx := range b.TxInfos {
+			// fmt.Println("t.Key", tx.Key, username)
+			_hash = tx.PreBlockHash
+			if tx.DataType == Type.NEW_USER {
+				addr := strings.Split(string(tx.Value), " ")[1]
+				if addr == address {
+					return tx.Key, nil
+				}
+			}
+			if tx.DataType == Type.DEL_USER {
+				addr := string(tx.Value)
+				if addr == address {
+					return "", errors.New("未知的用户")
+				}
+				break
+			}
+		}
+		b, _ = _localblockchain.GetBlockByHash(_hash)
 	}
 	return "", errors.New("未知的用户")
 }
