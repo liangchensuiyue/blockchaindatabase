@@ -180,12 +180,23 @@ func (this *Server) Request(ctx context.Context, req *bcgrpc.RequestBody) (info 
 	newchan.JoinKey = util.AesEncrypt([]byte(base64.RawStdEncoding.EncodeToString([]byte(fmt.Sprintf("%d%s", time.Now().UnixNano(), newchan.Channame)))), newchan.Key)
 	tx := &BC.Transaction{
 		Key:       req.Tx.Key,
-		Value:     newchan.JoinKey,
+		Value:     req.Tx.Value,
 		DataType:  req.Tx.DataType,
 		Timestamp: req.Tx.Timestamp,
 		PublicKey: uw.PubKey,
 		ShareChan: req.Tx.ShareChan,
 		Share:     req.Tx.Share,
+	}
+	if req.Tx.DataType == Type.NEW_CHAN {
+		tx = &BC.Transaction{
+			Key:       req.Tx.Key,
+			Value:     newchan.JoinKey,
+			DataType:  req.Tx.DataType,
+			Timestamp: req.Tx.Timestamp,
+			PublicKey: uw.PubKey,
+			ShareChan: req.Tx.ShareChan,
+			Share:     req.Tx.Share,
+		}
 	}
 	if req.Strict {
 		lcdraft := BC.GetLocalDraft()

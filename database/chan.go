@@ -6,10 +6,10 @@ import (
 	"fmt"
 	BC "go_code/基于区块链的非关系型数据库/blockchain"
 	Type "go_code/基于区块链的非关系型数据库/type"
+	"strings"
 
 	"go_code/基于区块链的非关系型数据库/quorum"
 	"go_code/基于区块链的非关系型数据库/util"
-	"strings"
 	"time"
 )
 
@@ -20,9 +20,9 @@ func JoinChan(channame, username, user_address string, creator, joinkey string, 
 	if e1 != nil || e2 != nil {
 		return errors.New("密钥错误")
 	}
-	_, _ok := BC.LocalWallets.ShareChanMap[channame]
+	_, _ok := BC.LocalWallets.ShareChanMap[creator+"."+channame]
 	if !_ok {
-		BC.LocalWallets.ShareChanMap[channame] = &BC.ShareChan{
+		BC.LocalWallets.ShareChanMap[creator+"."+channame] = &BC.ShareChan{
 			Channame: channame,
 			Key:      _key,
 			JoinKey:  util.AesEncrypt(_joinkey, _key),
@@ -203,7 +203,6 @@ func NewChan(newchan *BC.ShareChan, username string, user_address string) error 
 					fmt.Println(e)
 					return
 				}
-				fmt.Println("==============", username+"."+newchan.Channame)
 				BC.LocalWallets.ShareChanMap[username+"."+newchan.Channame] = newchan
 				BC.LocalWallets.SaveToFile()
 				for _, tx := range newblock.TxInfos {
@@ -285,17 +284,17 @@ func IsExsistChan(name string, address string) bool {
 	}
 	return false
 }
-func GetChanUsers(channame string, address string) []string {
+func GetChanUsers(channame string, username string, address string) []string {
 	if !IsExsistChan(channame, address) {
 		return []string{}
 	}
 	users := []string{}
 	localBlockChain.Traverse(func(block *BC.Block, err error) bool {
-		for _, tx := range block.TxInfos {
-
-			//
-			if tx.Key == channame && BC.GenerateAddressFromPubkey(tx.PublicKey) == address {
-				if tx.DataType == Type.NEW_CHAN {
+		for i := len(block.TxInfos) - 1; i >= 0; i-- {
+			tx := block.TxInfos[i]
+			if tx.Key == channame {
+				if tx.DataType == Type.NEW_CHAN && BC.GenerateAddressFromPubkey(tx.PublicKey) == address {
+					users = append(users, username)
 					return false
 				} else if tx.DataType == Type.DEL_CHAN {
 					return false
@@ -304,10 +303,16 @@ func GetChanUsers(channame string, address string) []string {
 					if len(arr) < 2 {
 						return false
 					}
-					users = append(users, arr[0])
+					if arr[0] == username {
+						un, e := BC.GetUsernameFromAddress(BC.GenerateAddressFromPubkey(tx.PublicKey))
+						if e != nil {
+							continue
+						}
+						users = append(users, un)
+
+					}
 				}
 			}
-
 		}
 		return true
 	})

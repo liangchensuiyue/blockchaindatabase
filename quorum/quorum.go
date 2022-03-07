@@ -164,7 +164,7 @@ func _starDistributeBlock() {
 				if err != nil {
 					// fmt.Println(err)
 					fail++
-					fmt.Printf("节点 %s:%d 接受失败\n", blockBlockChainNode.LocalIp, blockBlockChainNode.LocalPort)
+					// fmt.Printf("节点 %s:%d 接受失败\n", blockBlockChainNode.LocalIp, blockBlockChainNode.LocalPort)
 					return
 				}
 				if !res.Status {

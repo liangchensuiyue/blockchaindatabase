@@ -168,6 +168,8 @@ func runLocalTestCli() {
 				for _, node := range localNode.Quorum {
 					if node.LocalIp == localNode.LocalIp {
 						fmt.Println(node.LocalIp, "(本机)")
+					} else {
+						fmt.Println(node.LocalIp)
 					}
 				}
 			default:
@@ -281,11 +283,10 @@ func runLocalTestCli() {
 				for _, v := range arrage {
 					// fmt.Println(v.Channame, v.Creator, v.CreatorAddress, login_useraddress)
 					arr := strings.Split(v, ".")
-					fmt.Println(login_useraddress, arr[0], arr[1])
 					if BC.UserIsInChan(login_useraddress, arr[0], arr[1]) {
 						fmt.Printf("%s.%s: ", arr[0], arr[1])
 						addr, _ := database.GetAddressFromUsername(arr[0])
-						for _, u := range db.GetChanUsers(arr[1], addr) {
+						for _, u := range db.GetChanUsers(arr[1], arr[0], addr) {
 							fmt.Printf("%s ", u)
 						}
 						fmt.Println("")
