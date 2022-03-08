@@ -414,7 +414,7 @@ func runLocalTestCli() {
 					break
 				}
 				vstr := strings.TrimLeft(cmds[2], "[")
-				vstr = strings.TrimLeft(vstr, "]")
+				vstr = strings.TrimRight(vstr, "]")
 				varr := strings.Split(vstr, ",")
 				vbyte := []byte{}
 				var err error
@@ -446,7 +446,7 @@ func runLocalTestCli() {
 					break
 				}
 				vstr := strings.TrimLeft(cmds[2], "[")
-				vstr = strings.TrimLeft(vstr, "]")
+				vstr = strings.TrimRight(vstr, "]")
 				varr := strings.Split(vstr, ",")
 				vbyte := []byte{}
 				var err error
@@ -454,7 +454,7 @@ func runLocalTestCli() {
 				for i = 0; i < len(varr); i++ {
 					intv, e := strconv.ParseInt(strings.TrimSpace(varr[i]), 0, 32)
 					if e != nil {
-						fmt.Println(err)
+						fmt.Println(e)
 						break
 					}
 					vbyte = append(vbyte, util.Int32ToBytes(int32(intv))...)
@@ -482,7 +482,7 @@ func runLocalTestCli() {
 					break
 				}
 				vstr := strings.TrimLeft(cmds[2], "[")
-				vstr = strings.TrimLeft(vstr, "]")
+				vstr = strings.TrimRight(vstr, "]")
 				varr := strings.Split(vstr, ",")
 				vbyte := []byte{}
 				var err error
@@ -518,8 +518,17 @@ func runLocalTestCli() {
 					break
 				}
 				vstr := strings.TrimLeft(cmds[2], "[")
-				vstr = strings.TrimLeft(vstr, "]")
+				vstr = strings.TrimRight(vstr, "]")
 				varr := strings.Split(vstr, ",")
+
+				for i := 1; i < len(varr); i++ {
+					tempi := i
+					tempv := varr[i]
+					for ; strings.TrimSpace(varr[tempi]) < strings.TrimSpace(varr[tempi-1]) && tempi > 0; tempi-- {
+						varr[tempi] = varr[tempi-1]
+					}
+					varr[tempi] = tempv
+				}
 
 				restr := []string{}
 				for i := 0; i < len(varr); i++ {
@@ -563,9 +572,16 @@ func runLocalTestCli() {
 					break
 				}
 				vstr := strings.TrimLeft(cmds[2], "[")
-				vstr = strings.TrimLeft(vstr, "]")
+				vstr = strings.TrimRight(vstr, "]")
 				varr := strings.Split(vstr, ",")
-
+				for i := 1; i < len(varr); i++ {
+					tempi := i
+					tempv := varr[i]
+					for ; strings.TrimSpace(varr[tempi]) < strings.TrimSpace(varr[tempi-1]) && tempi > 0; tempi-- {
+						varr[tempi] = varr[tempi-1]
+					}
+					varr[tempi] = tempv
+				}
 				restr := []string{}
 				for i := 0; i < len(varr); i++ {
 					if i == len(varr)-1 {
@@ -582,14 +598,14 @@ func runLocalTestCli() {
 				var err error
 				i := 0
 				for i = 0; i < len(restr); i++ {
-					if i == len(restr)-1 {
-						vbyte = append(vbyte, []byte(restr[i])...)
+					intv, e := strconv.ParseInt(restr[i], 0, 32)
+					if e != nil {
+						fmt.Println(err)
 						break
 					}
-					vbyte = append(vbyte, []byte(restr[i])...)
-					vbyte = append(vbyte, byte(0))
+					vbyte = append(vbyte, util.Int32ToBytes(int32(intv))...)
 				}
-				if i < len(varr) {
+				if i < len(restr) {
 					break
 				}
 				if len(cmds) >= 4 {
@@ -612,9 +628,16 @@ func runLocalTestCli() {
 					break
 				}
 				vstr := strings.TrimLeft(cmds[2], "[")
-				vstr = strings.TrimLeft(vstr, "]")
+				vstr = strings.TrimRight(vstr, "]")
 				varr := strings.Split(vstr, ",")
-
+				for i := 1; i < len(varr); i++ {
+					tempi := i
+					tempv := varr[i]
+					for ; strings.TrimSpace(varr[tempi]) < strings.TrimSpace(varr[tempi-1]) && tempi > 0; tempi-- {
+						varr[tempi] = varr[tempi-1]
+					}
+					varr[tempi] = tempv
+				}
 				restr := []string{}
 				for i := 0; i < len(varr); i++ {
 					if i == len(varr)-1 {
@@ -631,14 +654,14 @@ func runLocalTestCli() {
 				var err error
 				i := 0
 				for i = 0; i < len(restr); i++ {
-					if i == len(restr)-1 {
-						vbyte = append(vbyte, []byte(restr[i])...)
+					intv, e := strconv.ParseInt(restr[i], 0, 32)
+					if e != nil {
+						fmt.Println(err)
 						break
 					}
-					vbyte = append(vbyte, []byte(restr[i])...)
-					vbyte = append(vbyte, byte(0))
+					vbyte = append(vbyte, util.Int64Tobyte(int64(intv))...)
 				}
-				if i < len(varr) {
+				if i < len(restr) {
 					break
 				}
 				if len(cmds) >= 4 {
