@@ -291,6 +291,7 @@ func IsExsistChan(name string, address string) bool {
 	return false
 }
 func GetChanUsers(channame string, username string, address string) []string {
+	status := map[string]bool{}
 	if !IsExsistChan(channame, address) {
 		return []string{}
 	}
@@ -309,13 +310,30 @@ func GetChanUsers(channame string, username string, address string) []string {
 					if len(arr) < 2 {
 						return false
 					}
-					if arr[0] == username {
-						un, e := BC.GetUsernameFromAddress(BC.GenerateAddressFromPubkey(tx.PublicKey))
-						if e != nil {
-							continue
+					// if arr[0] == username {
+					un, e := BC.GetUsernameFromAddress(BC.GenerateAddressFromPubkey(tx.PublicKey))
+					if e != nil {
+						continue
+					}
+					if un != username {
+						_, ok := status[un]
+						if !ok {
+							users = append(users, un)
+							status[un] = true
 						}
-						users = append(users, un)
 
+					}
+
+					// }
+				} else if tx.DataType == Type.EXIT_CHAN {
+					uname, e := BC.GetUsernameFromAddress(BC.GenerateAddressFromPubkey(tx.PublicKey))
+					if e != nil {
+						continue
+					} else {
+						_, ok := status[uname]
+						if !ok {
+							status[uname] = false
+						}
 					}
 				}
 			}

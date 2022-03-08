@@ -162,19 +162,19 @@ func GetAddressFromUsername(username string) (string, error) {
 	}
 	return "", errors.New("未知的用户")
 }
-func VerifyKeyChan(key []byte, channame, creator_addr string) bool {
+func VerifyKeyChan(key []byte, channame string) bool {
 	flag := true
 	var okey []byte
 	_localblockchain.Traverse(func(block *Block, err error) bool {
-		for _, tx := range block.TxInfos {
-
+		for i := len(block.TxInfos) - 1; i >= 0; i-- {
+			tx := block.TxInfos[i]
 			//
 			if tx.Key == channame {
-				if tx.DataType == Type.NEW_CHAN && creator_addr == GenerateAddressFromPubkey(tx.PublicKey) {
+				if tx.DataType == Type.NEW_CHAN {
 					flag = false
 					okey = tx.Value
 					return false
-				} else if tx.DataType == Type.DEL_CHAN && creator_addr == GenerateAddressFromPubkey(tx.PublicKey) {
+				} else if tx.DataType == Type.DEL_CHAN {
 					return false
 				}
 			}
@@ -184,8 +184,10 @@ func VerifyKeyChan(key []byte, channame, creator_addr string) bool {
 	})
 	if !flag && bytes.Equal(key, okey) {
 		// 找到
+
 		return true
 	}
+	fmt.Println(key, okey)
 	return false
 }
 func UserIsInChan(addr, creator, channame string) bool {
@@ -203,16 +205,16 @@ func UserIsInChan(addr, creator, channame string) bool {
 
 			//
 			if tx.Key == channame {
-				arr := strings.Split(string(tx.Value), " ")
+				// arr := strings.Split(string(tx.Value), " ")
 				if tx.DataType == Type.DEL_CHAN && GenerateAddressFromPubkey(tx.PublicKey) == creatoraddr {
 					refalse = true
 					return false
 				}
-				if tx.DataType == Type.EXIT_CHAN && GenerateAddressFromPubkey(tx.PublicKey) == addr && arr[0] == creator {
+				if tx.DataType == Type.EXIT_CHAN && GenerateAddressFromPubkey(tx.PublicKey) == addr {
 					refalse = true
 					return false
 				}
-				if tx.DataType == Type.JOIN_CHAN && GenerateAddressFromPubkey(tx.PublicKey) == addr && arr[0] == creator {
+				if tx.DataType == Type.JOIN_CHAN && GenerateAddressFromPubkey(tx.PublicKey) == addr {
 					retrue = true
 					return false
 				}
@@ -312,12 +314,12 @@ func (tx *Transaction) Verify() bool {
 		if len(arr) < 2 {
 			return false
 		}
-		caddr, err := GetAddressFromUsername(arr[0])
-		if err != nil {
-			fmt.Println(err)
-			return false
-		}
-		ok := VerifyKeyChan([]byte(joinkey), tx.Key, caddr)
+		// caddr, err := GetAddressFromUsername(arr[0])
+		// if err != nil {
+		// 	fmt.Println(err)
+		// 	return false
+		// }
+		ok := VerifyKeyChan([]byte(joinkey), tx.Key)
 		if !ok {
 			fmt.Println("!ok error")
 			return false

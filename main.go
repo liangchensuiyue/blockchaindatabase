@@ -201,6 +201,9 @@ func runLocalTestCli() {
 			switch cmds[0] {
 			case "help":
 				fmt.Println("newchan  -- 创建分享管道")
+				fmt.Println("delchan  -- 删除管道")
+				fmt.Println("joinchan  -- 加入管道")
+				fmt.Println("exitchan  -- 退出管道")
 				fmt.Println("listchan --列出用户相关的分享管道")
 				fmt.Println("putstr -- 录入字符串")
 				fmt.Println("putint32 -- 录入 int32")
@@ -225,7 +228,7 @@ func runLocalTestCli() {
 				fmt.Println("strictmode:", strictmode)
 			case "newchan":
 				if len(cmds) < 2 {
-					fmt.Println("格式错误 newchan [channanme] ")
+					fmt.Println("格式错误 newchan channanme ")
 					break
 				}
 				newchan := &BC.ShareChan{
@@ -245,8 +248,8 @@ func runLocalTestCli() {
 					fmt.Println(err)
 				}
 			case "joinchan":
-				if len(cmds) < 3 {
-					fmt.Println("格式错误 joinchan [channanme] [key] ")
+				if len(cmds) < 2 {
+					fmt.Println("格式错误 joinchan key ")
 					break
 				}
 				_str, e := base64.RawStdEncoding.DecodeString(cmds[1])
@@ -264,20 +267,23 @@ func runLocalTestCli() {
 				craddress, err := db.GetAddressFromUsername(creator)
 				if err != nil {
 					fmt.Println(err)
-				}
-				if !db.IsExsistChan(arr[1], craddress) {
-					fmt.Printf("不存在的chan:%s.%s\n", creator, arr[1])
-				}
-				if BC.UserIsInChan(login_useraddress, creator, arr[1]) {
 					break
 				}
-				err = db.JoinChan(cmds[1], login_username, login_useraddress, creator, arr[2], arr[3])
+				if !db.IsExsistChan(arr[0]+"."+arr[1], craddress) {
+					fmt.Printf("不存在的chan:%s.%s\n", creator, arr[1])
+					break
+				}
+				if BC.UserIsInChan(login_useraddress, creator, arr[0]+"."+arr[1]) {
+					break
+				}
+				err = db.JoinChan(arr[1], login_username, login_useraddress, creator, arr[2], arr[3])
 				if err != nil {
 					fmt.Println(err)
 				}
 			case "exitchan":
 				if len(cmds) < 3 {
 					fmt.Println("格式错误 exitchan creator channame")
+					break
 				}
 				db.ExitChan(cmds[1], cmds[2], login_username, login_useraddress)
 			case "listchan":
@@ -287,16 +293,15 @@ func runLocalTestCli() {
 					if block != nil {
 						for _, tx := range block.TxInfos {
 							if tx.DataType == Type.NEW_CHAN {
-								uname, _ := BC.GetUsernameFromAddress(BC.GenerateAddressFromPubkey(tx.PublicKey))
-								_, ok := _map[uname+"."+tx.Key]
+								_, ok := _map[tx.Key]
 								if !ok {
-									arrage = append(arrage, uname+"."+tx.Key)
-									_map[uname+"."+tx.Key] = true
+									arrage = append(arrage, tx.Key)
+									_map[tx.Key] = true
 								}
 
 							}
 							if tx.DataType == Type.DEL_CHAN {
-								_map[string(tx.Value)+"."+tx.Key] = false
+								_map[tx.Key] = false
 							}
 						}
 
@@ -307,10 +312,10 @@ func runLocalTestCli() {
 				for _, v := range arrage {
 					// fmt.Println(v.Channame, v.Creator, v.CreatorAddress, login_useraddress)
 					arr := strings.Split(v, ".")
-					if BC.UserIsInChan(login_useraddress, arr[0], arr[1]) {
+					if BC.UserIsInChan(login_useraddress, arr[0], arr[0]+"."+arr[1]) {
 						fmt.Printf("%s.%s: ", arr[0], arr[1])
 						addr, _ := database.GetAddressFromUsername(arr[0])
-						for _, u := range db.GetChanUsers(arr[1], arr[0], addr) {
+						for _, u := range db.GetChanUsers(arr[0]+"."+arr[1], arr[0], addr) {
 							fmt.Printf("%s ", u)
 						}
 						fmt.Println("")
@@ -318,7 +323,7 @@ func runLocalTestCli() {
 				}
 			case "look_join_key":
 				if len(cmds) < 3 {
-					fmt.Println("格式错误 look_join_key [username] [channanme] ")
+					fmt.Println("格式错误 look_join_key username channanme ")
 					break
 				}
 				_, err := db.GetAddressFromUsername(cmds[1])
