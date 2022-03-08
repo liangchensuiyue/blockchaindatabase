@@ -7,6 +7,7 @@ import (
 	"fmt"
 	ucgrpc "go_code/基于区块链的非关系型数据库/proto/userclient"
 	Type "go_code/基于区块链的非关系型数据库/type"
+	"go_code/基于区块链的非关系型数据库/util"
 	"time"
 
 	"google.golang.org/grpc"
@@ -77,8 +78,8 @@ func BytesToInt16(bts []byte) int {
 	return int(data)
 }
 func test2() {
-	a := Int16Tobytes(-100)
-	fmt.Println(BytesToInt16(a) + 1)
+	a := util.Int64Tobyte(100)
+	fmt.Println(a)
 }
 func test1() {
 	nums := 1

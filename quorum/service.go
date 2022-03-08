@@ -172,11 +172,7 @@ func (this *Server) Request(ctx context.Context, req *bcgrpc.RequestBody) (info 
 	newchan.YieldKey()
 	newchan.Creator = user_name
 	newchan.CreatorAddress = BC.GenerateAddressFromPubkey(uw.PubKey)
-	ok := BC.UserIsChanCreator(newchan.Channame, BC.GenerateAddressFromPubkey(uw.PubKey))
-	if ok {
-		fmt.Println("改chan已存在")
-		return
-	}
+
 	newchan.JoinKey = util.AesEncrypt([]byte(base64.RawStdEncoding.EncodeToString([]byte(fmt.Sprintf("%d%s", time.Now().UnixNano(), newchan.Channame)))), newchan.Key)
 	tx := &BC.Transaction{
 		Key:       req.Tx.Key,
@@ -188,6 +184,11 @@ func (this *Server) Request(ctx context.Context, req *bcgrpc.RequestBody) (info 
 		Share:     req.Tx.Share,
 	}
 	if req.Tx.DataType == Type.NEW_CHAN {
+		ok := BC.UserIsChanCreator(newchan.Channame, BC.GenerateAddressFromPubkey(uw.PubKey))
+		if ok {
+			fmt.Println("改chan已存在")
+			return
+		}
 		tx = &BC.Transaction{
 			Key:       req.Tx.Key,
 			Value:     newchan.JoinKey,

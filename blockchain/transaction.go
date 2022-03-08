@@ -294,7 +294,7 @@ func (tx *Transaction) Verify() bool {
 	switch tx.DataType {
 	case Type.NEW_CHAN:
 		if IsExsistChan(tx.Key, GenerateAddressFromPubkey(tx.PublicKey)) {
-
+			return false
 		}
 	case Type.DEL_CHAN:
 
@@ -307,15 +307,24 @@ func (tx *Transaction) Verify() bool {
 			fmt.Println("del_chan verify error")
 			return false
 		}
-		addr, err := GetAddressFromUsername(arr[0])
+		joinkey := arr[1]
+		arr = strings.Split(tx.Key, ".")
+		if len(arr) < 2 {
+			return false
+		}
+		caddr, err := GetAddressFromUsername(arr[0])
 		if err != nil {
 			fmt.Println(err)
 			return false
 		}
-		joinkey := strings.Split(string(tx.Value), " ")[1]
-		ok := VerifyKeyChan([]byte(joinkey), tx.Key, addr)
+		ok := VerifyKeyChan([]byte(joinkey), tx.Key, caddr)
 		if !ok {
 			fmt.Println("!ok error")
+			return false
+		}
+	case Type.EXIT_CHAN:
+		if UserIsChanCreator(tx.Key, user_address) {
+			fmt.Println("用户不能退出自己的chan")
 			return false
 		}
 	case Type.NEW_USER:

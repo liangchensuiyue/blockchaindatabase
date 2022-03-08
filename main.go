@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -103,6 +104,7 @@ func runLocalTestCli() {
 		login_username := ""
 		login_useraddress := ""
 		pass := ""
+		strictmode := true
 		for {
 			fmt.Printf(">>> ")
 			flag := false
@@ -200,15 +202,27 @@ func runLocalTestCli() {
 			case "help":
 				fmt.Println("newchan  -- 创建分享管道")
 				fmt.Println("listchan --列出用户相关的分享管道")
-				fmt.Println("put -- 录入数据")
+				fmt.Println("putstr -- 录入字符串")
+				fmt.Println("putint32 -- 录入 int32")
+				fmt.Println("putint64 -- 录入 int64")
+				fmt.Println("putstrarr -- 录入 字符串 数组")
+				fmt.Println("puti32arr -- 录入 int32 数组")
+				fmt.Println("puti64arr -- 录入 int64 数组")
+				fmt.Println("putstrset -- 录入 字符串 集合")
+				fmt.Println("puti32set -- 录入 int32 集合")
+				fmt.Println("puti64set -- 录入 int64 集合")
 				fmt.Println("get -- 获取数据")
 				fmt.Println("del -- 删除数据")
 				fmt.Println("isaccountant --是否有记账权力")
 				fmt.Println("print_quorum --打印集群信息")
 				fmt.Println("detail -- 查看区块信息")
+				fmt.Println("togglemode -- 切换strict")
 				fmt.Println("print_global_wallet -- 查看全部用户地址")
 				fmt.Println("print_local_wallet -- 查看本地用户地址")
 				fmt.Println("exit -- 退出当前登录")
+			case "togglemode":
+				strictmode = !strictmode
+				fmt.Println("strictmode:", strictmode)
 			case "newchan":
 				if len(cmds) < 2 {
 					fmt.Println("格式错误 newchan [channanme] ")
@@ -235,8 +249,13 @@ func runLocalTestCli() {
 					fmt.Println("格式错误 joinchan [channanme] [key] ")
 					break
 				}
-				arr := strings.Split(cmds[2], ".")
-				if len(arr) < 3 {
+				_str, e := base64.RawStdEncoding.DecodeString(cmds[1])
+				if e != nil {
+					fmt.Println("错误的密钥")
+					break
+				}
+				arr := strings.Split(string(_str), ".")
+				if len(arr) < 4 {
 					fmt.Println("格式错误 key: s.s.s ")
 					break
 				}
@@ -246,16 +265,21 @@ func runLocalTestCli() {
 				if err != nil {
 					fmt.Println(err)
 				}
-				if !db.IsExsistChan(cmds[1], craddress) {
-					fmt.Printf("不存在的chan:%s.%s\n", creator, cmds[1])
+				if !db.IsExsistChan(arr[1], craddress) {
+					fmt.Printf("不存在的chan:%s.%s\n", creator, arr[1])
 				}
-				if BC.UserIsInChan(login_useraddress, creator, cmds[1]) {
+				if BC.UserIsInChan(login_useraddress, creator, arr[1]) {
 					break
 				}
-				err = db.JoinChan(cmds[1], login_username, login_useraddress, creator, arr[1], arr[2])
+				err = db.JoinChan(cmds[1], login_username, login_useraddress, creator, arr[2], arr[3])
 				if err != nil {
 					fmt.Println(err)
 				}
+			case "exitchan":
+				if len(cmds) < 3 {
+					fmt.Println("格式错误 exitchan creator channame")
+				}
+				db.ExitChan(cmds[1], cmds[2], login_username, login_useraddress)
 			case "listchan":
 				_map := make(map[string]bool)
 				arrage := []string{}
@@ -311,21 +335,319 @@ func runLocalTestCli() {
 					fmt.Println("没有权限查看")
 				}
 
-				fmt.Printf("%s.%s.%s\n", v.Creator, base64.RawStdEncoding.EncodeToString(util.AesDecrypt(v.JoinKey, v.Key)), base64.RawStdEncoding.EncodeToString(v.Key))
-			case "put":
+				str := fmt.Sprintf("%s.%s.%s.%s\n", v.Creator, v.Channame, base64.RawStdEncoding.EncodeToString(util.AesDecrypt(v.JoinKey, v.Key)), base64.RawStdEncoding.EncodeToString(v.Key))
+				fmt.Println(base64.RawStdEncoding.EncodeToString([]byte(str)))
+			case "putstr":
 				// put age 15 int
-				if len(cmds) < 6 {
-					fmt.Println("格式错误  put [key] [value] [datatype] [strict] [sharemode] [sharechan]")
+				if len(cmds) < 3 {
+					fmt.Println("格式错误  put key value [sharechan]")
 					break
 				}
 				var err error
-				if !util.GetBoolFromStr(cmds[5]) {
-					key := util.Yield16ByteKey([]byte(pass))
-					v := util.AesEncrypt([]byte(cmds[2]), key)
-					err = db.Put(cmds[1], v, Type.STRING, login_useraddress, util.GetBoolFromStr(cmds[5]), "", util.GetBoolFromStr(cmds[4]))
+				if len(cmds) >= 4 {
+					err = db.Put(cmds[1], []byte(cmds[2]), Type.STRING, login_useraddress, true, cmds[3], strictmode)
 
 				} else {
-					err = db.Put(cmds[1], []byte(cmds[2]), Type.STRING, login_useraddress, util.GetBoolFromStr(cmds[5]), cmds[6], util.GetBoolFromStr(cmds[4]))
+					err = db.Put(cmds[1], []byte(cmds[2]), Type.STRING, login_useraddress, false, "", strictmode)
+
+				}
+				if err != nil {
+					fmt.Println("put", err)
+
+				}
+			case "puti32":
+				// put age 15 int
+				if len(cmds) < 3 {
+					fmt.Println("格式错误  put key value [sharechan]")
+					break
+				}
+				intv, err := strconv.ParseInt(cmds[2], 0, 32)
+				if err != nil {
+					fmt.Println(err)
+					break
+				}
+
+				if len(cmds) >= 4 {
+					v := util.Int32ToBytes(int32(intv))
+					err = db.Put(cmds[1], v, Type.INT32, login_useraddress, true, cmds[3], strictmode)
+
+				} else {
+					key := util.Yield16ByteKey([]byte(pass))
+					v := util.AesEncrypt(util.Int32ToBytes(int32(intv)), key)
+					err = db.Put(cmds[1], v, Type.INT32, login_useraddress, false, "", strictmode)
+
+				}
+				if err != nil {
+					fmt.Println("put", err)
+
+				}
+			case "puti64":
+				// put age 15 int
+				if len(cmds) < 3 {
+					fmt.Println("格式错误  puti64 key value [sharechan]")
+					break
+				}
+				intv, err := strconv.ParseInt(cmds[2], 0, 64)
+				if err != nil {
+					fmt.Println(err)
+					break
+				}
+
+				if len(cmds) >= 4 {
+					v := util.Int64Tobyte(int64(intv))
+					err = db.Put(cmds[1], v, Type.INT64, login_useraddress, true, cmds[3], strictmode)
+
+				} else {
+					key := util.Yield16ByteKey([]byte(pass))
+					v := util.AesEncrypt(util.Int32ToBytes(int32(intv)), key)
+					err = db.Put(cmds[1], v, Type.INT64, login_useraddress, false, "", strictmode)
+
+				}
+				if err != nil {
+					fmt.Println("put", err)
+
+				}
+			case "putstrarr":
+				// put age 15 int
+				if len(cmds) < 3 {
+					fmt.Println("格式错误  putstrarr key [v1,...,vn] [sharechan]")
+					break
+				}
+				vstr := strings.TrimLeft(cmds[2], "[")
+				vstr = strings.TrimLeft(vstr, "]")
+				varr := strings.Split(vstr, ",")
+				vbyte := []byte{}
+				var err error
+				for i := 0; i < len(varr); i++ {
+					if i == len(varr)-1 {
+						vbyte = append(vbyte, []byte(strings.TrimSpace(varr[i]))...)
+						break
+					}
+					vbyte = append(vbyte, []byte(strings.TrimSpace(varr[i]))...)
+					vbyte = append(vbyte, byte(0))
+				}
+				if len(cmds) >= 4 {
+					err = db.Put(cmds[1], vbyte, Type.STRING_ARRAY, login_useraddress, true, cmds[3], strictmode)
+
+				} else {
+					key := util.Yield16ByteKey([]byte(pass))
+					v := util.AesEncrypt((vbyte), key)
+					err = db.Put(cmds[1], v, Type.STRING_ARRAY, login_useraddress, false, "", strictmode)
+
+				}
+				if err != nil {
+					fmt.Println("put", err)
+
+				}
+			case "puti32arr":
+				// put age 15 int
+				if len(cmds) < 3 {
+					fmt.Println("格式错误  puti32arr key [v1,...,vn] [sharechan]")
+					break
+				}
+				vstr := strings.TrimLeft(cmds[2], "[")
+				vstr = strings.TrimLeft(vstr, "]")
+				varr := strings.Split(vstr, ",")
+				vbyte := []byte{}
+				var err error
+				i := 0
+				for i = 0; i < len(varr); i++ {
+					intv, e := strconv.ParseInt(strings.TrimSpace(varr[i]), 0, 32)
+					if e != nil {
+						fmt.Println(err)
+						break
+					}
+					vbyte = append(vbyte, util.Int32ToBytes(int32(intv))...)
+				}
+				if i < len(varr) {
+					break
+				}
+				if len(cmds) >= 4 {
+					err = db.Put(cmds[1], vbyte, Type.INT32_ARRAY, login_useraddress, true, cmds[3], strictmode)
+
+				} else {
+					key := util.Yield16ByteKey([]byte(pass))
+					v := util.AesEncrypt((vbyte), key)
+					err = db.Put(cmds[1], v, Type.INT32_ARRAY, login_useraddress, false, "", strictmode)
+
+				}
+				if err != nil {
+					fmt.Println("put", err)
+
+				}
+			case "puti64arr":
+				// put age 15 int
+				if len(cmds) < 3 {
+					fmt.Println("格式错误  puti64arr key [v1,...,vn] [sharechan]")
+					break
+				}
+				vstr := strings.TrimLeft(cmds[2], "[")
+				vstr = strings.TrimLeft(vstr, "]")
+				varr := strings.Split(vstr, ",")
+				vbyte := []byte{}
+				var err error
+				i := 0
+				for i = 0; i < len(varr); i++ {
+					intv, e := strconv.ParseInt(strings.TrimSpace(varr[i]), 0, 32)
+					if e != nil {
+						fmt.Println(err)
+						break
+					}
+					vbyte = append(vbyte, util.Int64Tobyte(int64(intv))...)
+				}
+				if i < len(varr) {
+					break
+				}
+				if len(cmds) >= 4 {
+					err = db.Put(cmds[1], vbyte, Type.INT64_ARRAY, login_useraddress, true, cmds[3], strictmode)
+
+				} else {
+					key := util.Yield16ByteKey([]byte(pass))
+					v := util.AesEncrypt((vbyte), key)
+					err = db.Put(cmds[1], v, Type.INT64_ARRAY, login_useraddress, false, "", strictmode)
+
+				}
+				if err != nil {
+					fmt.Println("put", err)
+
+				}
+			case "putstrset":
+				// put age 15 int
+				if len(cmds) < 3 {
+					fmt.Println("格式错误  putstrset key [v1,...,vn] [sharechan]")
+					break
+				}
+				vstr := strings.TrimLeft(cmds[2], "[")
+				vstr = strings.TrimLeft(vstr, "]")
+				varr := strings.Split(vstr, ",")
+
+				restr := []string{}
+				for i := 0; i < len(varr); i++ {
+					if i == len(varr)-1 {
+						restr = append(restr, strings.TrimSpace(varr[i]))
+						break
+					}
+					if strings.TrimSpace(varr[i]) == strings.TrimSpace(varr[i+1]) {
+						continue
+					}
+					restr = append(restr, strings.TrimSpace(varr[i]))
+				}
+
+				vbyte := []byte{}
+				var err error
+				for i := 0; i < len(restr); i++ {
+					if i == len(restr)-1 {
+						vbyte = append(vbyte, []byte(restr[i])...)
+						break
+					}
+					vbyte = append(vbyte, []byte(restr[i])...)
+					vbyte = append(vbyte, byte(0))
+				}
+				if len(cmds) >= 4 {
+					err = db.Put(cmds[1], vbyte, Type.STRING_SET, login_useraddress, true, cmds[3], strictmode)
+
+				} else {
+					key := util.Yield16ByteKey([]byte(pass))
+					v := util.AesEncrypt((vbyte), key)
+					err = db.Put(cmds[1], v, Type.STRING_ARRAY, login_useraddress, false, "", strictmode)
+
+				}
+				if err != nil {
+					fmt.Println("put", err)
+
+				}
+			case "puti32set":
+				// put age 15 int
+				if len(cmds) < 3 {
+					fmt.Println("格式错误  puti32set key [v1,...,vn] [sharechan]")
+					break
+				}
+				vstr := strings.TrimLeft(cmds[2], "[")
+				vstr = strings.TrimLeft(vstr, "]")
+				varr := strings.Split(vstr, ",")
+
+				restr := []string{}
+				for i := 0; i < len(varr); i++ {
+					if i == len(varr)-1 {
+						restr = append(restr, strings.TrimSpace(varr[i]))
+						break
+					}
+					if strings.TrimSpace(varr[i]) == strings.TrimSpace(varr[i+1]) {
+						continue
+					}
+					restr = append(restr, strings.TrimSpace(varr[i]))
+				}
+
+				vbyte := []byte{}
+				var err error
+				i := 0
+				for i = 0; i < len(restr); i++ {
+					if i == len(restr)-1 {
+						vbyte = append(vbyte, []byte(restr[i])...)
+						break
+					}
+					vbyte = append(vbyte, []byte(restr[i])...)
+					vbyte = append(vbyte, byte(0))
+				}
+				if i < len(varr) {
+					break
+				}
+				if len(cmds) >= 4 {
+					err = db.Put(cmds[1], vbyte, Type.INT32_SET, login_useraddress, true, cmds[3], strictmode)
+
+				} else {
+					key := util.Yield16ByteKey([]byte(pass))
+					v := util.AesEncrypt((vbyte), key)
+					err = db.Put(cmds[1], v, Type.INT32_SET, login_useraddress, false, "", strictmode)
+
+				}
+				if err != nil {
+					fmt.Println("put", err)
+
+				}
+			case "puti64set":
+				// put age 15 int
+				if len(cmds) < 3 {
+					fmt.Println("格式错误  puti64set key [v1,...,vn] [sharechan]")
+					break
+				}
+				vstr := strings.TrimLeft(cmds[2], "[")
+				vstr = strings.TrimLeft(vstr, "]")
+				varr := strings.Split(vstr, ",")
+
+				restr := []string{}
+				for i := 0; i < len(varr); i++ {
+					if i == len(varr)-1 {
+						restr = append(restr, strings.TrimSpace(varr[i]))
+						break
+					}
+					if strings.TrimSpace(varr[i]) == strings.TrimSpace(varr[i+1]) {
+						continue
+					}
+					restr = append(restr, strings.TrimSpace(varr[i]))
+				}
+
+				vbyte := []byte{}
+				var err error
+				i := 0
+				for i = 0; i < len(restr); i++ {
+					if i == len(restr)-1 {
+						vbyte = append(vbyte, []byte(restr[i])...)
+						break
+					}
+					vbyte = append(vbyte, []byte(restr[i])...)
+					vbyte = append(vbyte, byte(0))
+				}
+				if i < len(varr) {
+					break
+				}
+				if len(cmds) >= 4 {
+					err = db.Put(cmds[1], vbyte, Type.INT64_ARRAY, login_useraddress, true, cmds[3], strictmode)
+
+				} else {
+					key := util.Yield16ByteKey([]byte(pass))
+					v := util.AesEncrypt((vbyte), key)
+					err = db.Put(cmds[1], v, Type.INT64_ARRAY, login_useraddress, false, "", strictmode)
 
 				}
 				if err != nil {
@@ -333,30 +655,30 @@ func runLocalTestCli() {
 
 				}
 			case "del":
-				if len(cmds) < 4 {
-					fmt.Println("格式错误  del [key] [strict] [sharemode] [sharechan]")
+				if len(cmds) < 2 {
+					fmt.Println("格式错误  del [key] [sharechan]")
 					break
 				}
 				// del age
-				db.Del(cmds[1], login_useraddress, util.GetBoolFromStr(cmds[3]), cmds[4], util.GetBoolFromStr(cmds[2]))
+				if len(cmds) >= 3 {
+					db.Del(cmds[1], login_useraddress, true, cmds[2], strictmode)
+				} else {
+					db.Del(cmds[1], login_useraddress, false, "", strictmode)
+				}
 			case "get":
-				if len(cmds) < 3 {
-					fmt.Println("格式错误  get [key] [sharemode] [sharechan]")
+				if len(cmds) < 2 {
+					fmt.Println("格式错误  get key  [sharechan]")
 					break
 				}
 				// get age
 				var block *BC.Block
 				var index int
 				pre := time.Now().UnixNano()
-				if !util.GetBoolFromStr(cmds[2]) {
-					block, index = db.Get(cmds[1], login_username, login_useraddress, util.GetBoolFromStr(cmds[2]), "")
+				if len(cmds) >= 3 {
+					block, index = db.Get(cmds[1], login_username, login_useraddress, true, cmds[2])
 
 				} else {
-					if len(cmds) < 4 {
-						fmt.Println("格式错误  get [key] [sharemode] [sharechan]")
-						break
-					}
-					block, index = db.Get(cmds[1], login_username, login_useraddress, util.GetBoolFromStr(cmds[2]), cmds[3])
+					block, index = db.Get(cmds[1], login_username, login_useraddress, false, "")
 
 				}
 				if block != nil {
@@ -364,13 +686,33 @@ func runLocalTestCli() {
 					// fmt.Println("block_hash", block.Hash)
 					// fmt.Println("pre_block_hash:", base64.RawStdEncoding.EncodeToString(block.PreBlockHash))
 					// fmt.Println("block_hash:", base64.RawStdEncoding.EncodeToString(block.Hash))
-					if !block.TxInfos[index].Share {
+					tx := block.TxInfos[index]
+					var v []byte
+					if !tx.Share {
 						key := util.Yield16ByteKey([]byte(pass))
-						v := util.AesDecrypt(block.TxInfos[index].Value, key)
-						fmt.Println("key-value:", block.TxInfos[index].Key, string(v))
+						v = util.AesDecrypt(tx.Value, key)
 					} else {
-						v := util.AesDecrypt(block.TxInfos[index].Value, BC.LocalWallets.ShareChanMap[block.TxInfos[index].ShareChan].Key)
-						fmt.Println("key-value:", block.TxInfos[index].Key, string(v))
+						v = util.AesDecrypt(tx.Value, BC.LocalWallets.ShareChanMap[tx.ShareChan].Key)
+					}
+					switch tx.DataType {
+					case Type.STRING:
+						fmt.Println("key-value", tx.Key, string(v))
+					case Type.INT32:
+						fmt.Println("key-value", util.BytesToInt32(v))
+					case Type.INT64:
+						fmt.Println("key-value", tx.Key, util.BytesToInt64(v))
+					case Type.STRING_ARRAY:
+						fmt.Println("key-value", tx.Key, Type.ConvertToSTRING_ARRAY(v))
+					case Type.INT32_ARRAY:
+						fmt.Println("key-value", tx.Key, Type.ConvertToINT32_ARRAY(v))
+					case Type.INT64_ARRAY:
+						fmt.Println("key-value", tx.Key, Type.ConvertToINT64_ARRAY(v))
+					case Type.STRING_SET:
+						fmt.Println("key-value", tx.Key, Type.ConvertToSTRING_SET(v))
+					case Type.INT32_SET:
+						fmt.Println("key-value", tx.Key, Type.ConvertToINT32_SET(v))
+					case Type.INT64_SET:
+						fmt.Println("key-value", tx.Key, Type.ConvertToINT64_SET(v))
 					}
 
 					cur := time.Now().UnixNano()

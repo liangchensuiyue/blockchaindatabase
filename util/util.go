@@ -14,7 +14,18 @@ func Uint64Tobyte(src uint64) []byte {
 	binary.Write(buffer, binary.BigEndian, src)
 	return buffer.Bytes()
 }
+func Int64Tobyte(src int64) []byte {
+	buffer := bytes.NewBuffer([]byte{})
+	binary.Write(buffer, binary.BigEndian, src)
+	return buffer.Bytes()
+}
+func BytesToInt64(bts []byte) int64 {
+	bytebuffer := bytes.NewBuffer(bts)
+	var data int64
+	binary.Read(bytebuffer, binary.BigEndian, &data)
 
+	return data
+}
 func BytesToInt32(bts []byte) int32 {
 	bytebuffer := bytes.NewBuffer(bts)
 	var data int32

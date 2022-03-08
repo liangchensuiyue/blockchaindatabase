@@ -30,12 +30,12 @@ func JoinChan(channame, username, user_address string, creator, joinkey string, 
 		}
 		BC.LocalWallets.SaveToFile()
 	}
-	value := []byte(creator + " ")
+	value := []byte(username + " ")
 	value = append(value, util.AesEncrypt(_joinkey, _key)...)
-	tx, e := BC.NewTransaction(channame, value, Type.JOIN_CHAN, user_address, false, "")
+	tx, e := BC.NewTransaction(creator+"."+channame, value, Type.JOIN_CHAN, user_address, false, "")
 	if e != nil {
 		quorum.Request(user_address, true, &BC.Transaction{
-			Key:       channame,
+			Key:       creator + "." + channame,
 			Share:     false,
 			Value:     value,
 			DataType:  Type.JOIN_CHAN,
@@ -81,12 +81,15 @@ func JoinChan(channame, username, user_address string, creator, joinkey string, 
 	return nil
 }
 func ExitChan(creator, channame, username, user_address string) {
-	tx, e := BC.NewTransaction(channame, []byte(creator), Type.EXIT_CHAN, user_address, false, "")
+	if BC.UserIsChanCreator(channame, user_address) {
+		return
+	}
+	tx, e := BC.NewTransaction(creator+"."+channame, []byte(username), Type.EXIT_CHAN, user_address, false, "")
 	if e != nil {
 		quorum.Request(user_address, true, &BC.Transaction{
-			Key:       channame,
+			Key:       creator + "." + channame,
 			Share:     false,
-			Value:     []byte(creator),
+			Value:     []byte(username),
 			DataType:  Type.EXIT_CHAN,
 			Timestamp: uint64(time.Now().Unix()),
 			ShareChan: "",
@@ -129,12 +132,12 @@ func ExitChan(creator, channame, username, user_address string) {
 	})
 }
 func DelChan(creator, channame, username, user_address string) {
-	tx, e := BC.NewTransaction(channame, []byte(creator), Type.DEL_CHAN, user_address, false, "")
+	tx, e := BC.NewTransaction(creator+"."+channame, []byte(username), Type.DEL_CHAN, user_address, false, "")
 	if e != nil {
 		quorum.Request(user_address, true, &BC.Transaction{
-			Key:       channame,
+			Key:       creator + "." + channame,
 			Share:     false,
-			Value:     []byte(creator),
+			Value:     []byte(username),
 			DataType:  Type.DEL_CHAN,
 			Timestamp: uint64(time.Now().Unix()),
 			ShareChan: "",
@@ -177,10 +180,13 @@ func DelChan(creator, channame, username, user_address string) {
 	})
 }
 func NewChan(newchan *BC.ShareChan, username string, user_address string) error {
-	tx, e := BC.NewTransaction(newchan.Channame, newchan.JoinKey, Type.NEW_CHAN, user_address, false, "")
+	if BC.IsExsistChan(newchan.Channame, user_address) {
+		return errors.New("已经存在的chan")
+	}
+	tx, e := BC.NewTransaction(username+"."+newchan.Channame, newchan.JoinKey, Type.NEW_CHAN, user_address, false, "")
 	if e != nil {
 		quorum.Request(user_address, true, &BC.Transaction{
-			Key:       newchan.Channame,
+			Key:       username + "." + newchan.Channame,
 			Value:     newchan.JoinKey,
 			Share:     false,
 			DataType:  Type.NEW_CHAN,
