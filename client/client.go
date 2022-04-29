@@ -90,18 +90,9 @@ func (this *Server) Put(in ucgrpc.UserClientService_PutServer) (err error) {
 		in.SendAndClose(info)
 	})
 	N := 1
-	pre := time.Now().UnixNano()
-	cur := pre
-	go func() {
-		for {
-			time.Sleep(time.Second * 2)
-			fmt.Println("耗时", (cur-pre)/1000000, "(ms)")
-		}
-	}()
 	db.Put(req.Key, req.Value, req.Datatype, useraddress, req.Share, "", req.Strict)
 	for req, _ = in.Recv(); req != nil; req, _ = in.Recv() {
 		N++
-		cur = time.Now().UnixNano()
 		v := req.Value
 		if !req.Share {
 			key := util.Yield16ByteKey([]byte(req.Passworld))

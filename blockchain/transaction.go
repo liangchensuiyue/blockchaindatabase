@@ -287,12 +287,9 @@ func IsExsistChan(name string, address string) bool {
 	}
 	return false
 }
-func (tx *Transaction) Verify() bool {
-	signature := tx.Signature
-	tx.Signature = []byte{}
+func (tx *Transaction) VerifySimple() bool {
 	user_address := GenerateAddressFromPubkey(tx.PublicKey)
-	pre := base64.RawStdEncoding.EncodeToString(tx.PreBlockHash)
-
+	rw := LocalWallets.GetBlockChainRootWallet()
 	switch tx.DataType {
 	case Type.NEW_CHAN:
 		if IsExsistChan(tx.Key, GenerateAddressFromPubkey(tx.PublicKey)) {
@@ -335,8 +332,69 @@ func (tx *Transaction) Verify() bool {
 			fmt.Println("new_user error")
 			return false
 		}
+		if !bytes.Equal(rw.PubKey, tx.PublicKey) {
+			return false
+		}
 
 	}
+	return true
+}
+func (tx *Transaction) Verify() bool {
+	signature := tx.Signature
+	tx.Signature = []byte{}
+	user_address := GenerateAddressFromPubkey(tx.PublicKey)
+	pre := base64.RawStdEncoding.EncodeToString(tx.PreBlockHash)
+	// rw := LocalWallets.GetBlockChainRootWallet()
+	if !tx.VerifySimple() {
+		return false
+	}
+	// switch tx.DataType {
+	// case Type.NEW_CHAN:
+	// 	if IsExsistChan(tx.Key, GenerateAddressFromPubkey(tx.PublicKey)) {
+	// 		return false
+	// 	}
+	// case Type.DEL_CHAN:
+
+	// 	if !UserIsChanCreator(tx.Key, GenerateAddressFromPubkey(tx.PublicKey)) {
+	// 		return false
+	// 	}
+	// case Type.JOIN_CHAN:
+	// 	arr := strings.Split(string(tx.Value), " ")
+	// 	if len(arr) <= 1 {
+	// 		fmt.Println("del_chan verify error")
+	// 		return false
+	// 	}
+	// 	joinkey := arr[1]
+	// 	arr = strings.Split(tx.Key, ".")
+	// 	if len(arr) < 2 {
+	// 		return false
+	// 	}
+	// 	// caddr, err := GetAddressFromUsername(arr[0])
+	// 	// if err != nil {
+	// 	// 	fmt.Println(err)
+	// 	// 	return false
+	// 	// }
+	// 	ok := VerifyKeyChan([]byte(joinkey), tx.Key)
+	// 	if !ok {
+	// 		fmt.Println("!ok error")
+	// 		return false
+	// 	}
+	// case Type.EXIT_CHAN:
+	// 	if UserIsChanCreator(tx.Key, user_address) {
+	// 		fmt.Println("用户不能退出自己的chan")
+	// 		return false
+	// 	}
+	// case Type.NEW_USER:
+	// 	_, err := GetAddressFromUsername(tx.Key)
+	// 	if err == nil {
+	// 		fmt.Println("new_user error")
+	// 		return false
+	// 	}
+	// 	if !bytes.Equal(rw.PubKey, tx.PublicKey) {
+	// 		return false
+	// 	}
+
+	// }
 	// fmt.Println(user_address)
 	if tx.Share {
 		//tx.ShareChan   creatorusername.channame

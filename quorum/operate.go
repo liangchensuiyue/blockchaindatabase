@@ -3,12 +3,10 @@ package quorum
 import (
 	"context"
 	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"fmt"
 	BC "go_code/基于区块链的非关系型数据库/blockchain"
 	bcgrpc "go_code/基于区块链的非关系型数据库/proto/blockchain"
-	view "go_code/基于区块链的非关系型数据库/view"
 
 	"google.golang.org/grpc"
 )
@@ -232,17 +230,17 @@ func DistributeBlock(block *BC.Block, node *BlockChainNode, handle func(*bcgrpc.
 			"PrevBlockHash": base64.RawStdEncoding.EncodeToString(tx.PreBlockHash),
 		})
 	}
-	datastr, _ := json.Marshal(map[string]interface{}{
-		"BlockId":       block.BlockId,
-		"PrevBlockHash": base64.RawStdEncoding.EncodeToString(block.PreBlockHash),
-		"Hash":          base64.RawStdEncoding.EncodeToString(block.Hash),
-		"Timestamp":     block.Timestamp,
-		"TxInfos":       infos,
-	})
-	view.MsgQueue <- view.Message{
-		Type:       "DistributeBlock",
-		MsgJsonStr: string(datastr),
-	}
+	// datastr, _ := json.Marshal(map[string]interface{}{
+	// 	"BlockId":       block.BlockId,
+	// 	"PrevBlockHash": base64.RawStdEncoding.EncodeToString(block.PreBlockHash),
+	// 	"Hash":          base64.RawStdEncoding.EncodeToString(block.Hash),
+	// 	"Timestamp":     block.Timestamp,
+	// 	"TxInfos":       infos,
+	// })
+	// view.MsgQueue <- view.Message{
+	// 	Type:       "DistributeBlock",
+	// 	MsgJsonStr: string(datastr),
+	// }
 	handle(re, err)
 }
 func CopyBlock(block *BC.Block) *bcgrpc.Block {

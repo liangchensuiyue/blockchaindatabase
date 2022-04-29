@@ -11,4 +11,11 @@ var localNode *quorum.BlockChainNode
 func Run(lbc *BC.BlockChain, node *quorum.BlockChainNode) {
 	localBlockChain = lbc
 	localNode = node
+	// go func() {
+	// 	for {
+	// 		time.Sleep(time.Second * 2)
+	// 		fmt.Println(NUM, "笔交易耗时", Total/1000000, "(ms)")
+	// 		fmt.Println("队列数量", BC.BlockQueue.Len())
+	// 	}
+	// }()
 }

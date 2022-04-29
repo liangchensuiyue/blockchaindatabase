@@ -117,6 +117,11 @@ func getAccountant() bool {
 	}
 	return false
 }
+
+var NUM = 0
+var Total int64 = 0
+var pre int64
+
 func _starDistributeBlock() {
 	for {
 		if BC.BlockQueue.Len() > 0 && !isAccountant {
@@ -143,6 +148,8 @@ func _starDistributeBlock() {
 		// 	fmt.Println("打包", block.TxInfos[0].Key)
 
 		// }
+		pre = time.Now().UnixNano()
+		NUM++
 
 		total := 0
 		fail := 0
@@ -159,7 +166,6 @@ func _starDistributeBlock() {
 			if blockBlockChainNode.LocalIp == localNode.LocalIp {
 				continue
 			}
-			fmt.Println("........................")
 			total++
 			DistributeBlock(block, blockBlockChainNode, func(res *bcgrpc.VerifyInfo, err error) {
 				if err != nil {
@@ -176,6 +182,7 @@ func _starDistributeBlock() {
 				// fmt.Printf("节点 %s:%d 接受成功\n", blockBlockChainNode.LocalIp, blockBlockChainNode.LocalPort)
 			})
 		}
+		Total += time.Now().UnixNano() - pre
 		fmt.Println("block:", block.BlockId, "同步完成")
 		el.Handle(total, fail)
 		BC.BlockQueue.Delete()

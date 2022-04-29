@@ -9,6 +9,7 @@ import (
 	"fmt"
 	BC "go_code/基于区块链的非关系型数据库/blockchain"
 	util "go_code/基于区块链的非关系型数据库/util"
+	"time"
 
 	"io/ioutil"
 	"os"
@@ -39,6 +40,12 @@ func StartGrpcWork() {
 
 	go _starDistributeBlock()
 	go _startHeartbeat()
+	go func() {
+		for {
+			time.Sleep(time.Second * 2)
+			fmt.Println(NUM, "笔交易耗时", Total/1000000, "(ms)")
+		}
+	}()
 }
 
 func (node *BlockChainNode) DistribuBlock(newblock *BC.Block, handle func(int, int)) {

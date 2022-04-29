@@ -200,7 +200,13 @@ func PutTest(key string, value []byte, datatype int32, user_address string, shar
 	return nil
 }
 
+// var NUM = 0
+// var Total int64 = 0
+// var pre int64
+
 func Put(key string, value []byte, datatype int32, user_address string, share bool, shareChan string, strict bool) error {
+	// NUM++
+	// pre = time.Now().UnixNano()
 	if share {
 		if !BC.LocalWallets.HasShareChan(shareChan) {
 			quorum.GetShareChan(shareChan)
@@ -213,6 +219,10 @@ func Put(key string, value []byte, datatype int32, user_address string, share bo
 		shareChan = ""
 	}
 	tx, e := BC.NewTransaction(key, value, datatype, user_address, share, shareChan)
+	if e == nil && !tx.VerifySimple() {
+		return errors.New("操作有误")
+		// 交易校验失败
+	}
 	if e != nil {
 		quorum.Request(user_address, true, &BC.Transaction{
 			Key:       key,
@@ -260,6 +270,7 @@ func Put(key string, value []byte, datatype int32, user_address string, share bo
 				fmt.Println("block:", newblock.BlockId, "校验失败")
 			},
 		})
+		// Total += (time.Now().UnixNano() - pre)
 
 	} else {
 		draft := BC.GetLocalDraft()

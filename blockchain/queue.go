@@ -46,7 +46,7 @@ func (Q *Queue) Insert(v QueueObject) {
 	node.Pre = Q.rear
 	Q.rear = node
 	Q.num++
-	Q.SaveToDisk()
+	// Q.SaveToDisk()
 
 }
 func (Q *Queue) Delete() {
