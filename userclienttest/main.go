@@ -3,10 +3,13 @@ package main
 import (
 	"bytes"
 	"context"
+	"crypto/md5"
 	"encoding/binary"
+	"encoding/hex"
 	"fmt"
 	ucgrpc "go_code/基于区块链的非关系型数据库/proto/userclient"
 	Type "go_code/基于区块链的非关系型数据库/type"
+	"strconv"
 	"time"
 
 	"google.golang.org/grpc"
@@ -25,6 +28,12 @@ func BytesToInt16(bts []byte) int {
 
 	return int(data)
 }
+func getMd5(str string) string {
+	m := md5.New()
+	m.Write([]byte(str))
+	c := m.Sum(nil)
+	return hex.EncodeToString(c)
+}
 func testput(uname, pass string) {
 	conn, err := grpc.Dial(fmt.Sprintf("%s:%d", "10.0.0.1", 3600), grpc.WithInsecure())
 	if err != nil {
@@ -42,9 +51,9 @@ func testput(uname, pass string) {
 		fmt.Println("put", err.Error())
 	}
 
-	nums := 1
+	nums := 0
 	// pre := time.Now().UnixNano()
-	for i := nums; i < 100; i++ {
+	for i := nums; i < 100000; i++ {
 		err := client.Send(&ucgrpc.PutBody{
 			Passworld: pass,
 			Value:     []byte(fmt.Sprintf("%d", i)),
@@ -63,7 +72,7 @@ func testput(uname, pass string) {
 	// cur := time.Now().UnixNano()
 	// fmt.Println("耗时", (cur-pre)/1000000, "(ms)")
 }
-func testget() {
+func testget(name, pass string) {
 	conn, err := grpc.Dial(fmt.Sprintf("%s:%d", "10.0.0.1", 3600), grpc.WithInsecure())
 	if err != nil {
 		fmt.Println("网络异常")
@@ -79,33 +88,51 @@ func testget() {
 	if err != nil {
 		panic(err)
 	}
-	nums := 1
+	nums := 0
+	fail := 0
 	pre := time.Now().UnixNano()
-	for i := nums; i < 500; i++ {
-		client.Send(&ucgrpc.GetBody{
+	for i := nums; i < 100000; i++ {
+		__e := client.Send(&ucgrpc.GetBody{
 			Key:       fmt.Sprintf("key_%d", i),
-			Passworld: "123",
+			Passworld: pass,
 			Sharemode: false,
-			Username:  "gds",
+			Username:  name,
 			ShareChan: "",
 		})
+		if __e != nil {
+			panic(__e)
+		}
 		re, e := client.Recv()
-		if !re.Status || e != nil {
-			fmt.Println("失败", fmt.Sprintf("key_%d", i))
+		if e != nil || !re.Status {
+			fail++
+			fmt.Println("失败", fmt.Sprintf("key_%d", i), e)
 		} else {
 			// fmt.Println("成功", fmt.Sprintf("key_%d", i))
 		}
 	}
 	cur := time.Now().UnixNano()
 	fmt.Println("耗时", (cur-pre)/1000000, "(ms)")
+	fmt.Println("失败数量", fail)
 }
 func main() {
 	go testput("gds", "123")
+	time.Sleep(time.Second * 5)
+	go testget("gds", "123")
 	// go testput("lc", "123")
 	// go testput("zs", "123")
 	// go testput("ls", "123")
 	// go testput("ww", "123")
 	time.Sleep(time.Second * 100)
+}
+func main1() {
+	md5Str := getMd5("key") //取得md5
+	tempsubstr := md5Str[:16]
+	hexVal, err := strconv.ParseInt(tempsubstr, 16, 64) //生成
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(tempsubstr)
+	fmt.Println(hexVal)
 }
 
 // newuser gds 123

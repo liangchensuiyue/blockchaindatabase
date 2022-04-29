@@ -19,10 +19,12 @@ func (this *Server) Get(in ucgrpc.UserClientService_GetServer) (err error) {
 	req, _ := in.Recv()
 	err = db.VeriftUser(req.Username, req.Passworld)
 	if err != nil {
+		fmt.Println("verifey", err)
 		return err
 	}
 	useraddress, _e := db.GetAddressFromUsername(req.Username)
 	if _e != nil {
+		fmt.Println("GetAddressFromUsername", _e)
 		return _e
 	}
 	linkpool.Global_Link_pool.AddNode("", func() {
@@ -34,7 +36,9 @@ func (this *Server) Get(in ucgrpc.UserClientService_GetServer) (err error) {
 	}
 	block, index := db.Get(req.Key, req.Username, useraddress, req.Sharemode, req.ShareChan)
 	if index == -1 {
-		return
+		in.Send(&ucgrpc.ResQuery{
+			Status: false,
+		})
 	} else {
 		in.Send(&ucgrpc.ResQuery{
 			Status: true,
@@ -53,7 +57,10 @@ func (this *Server) Get(in ucgrpc.UserClientService_GetServer) (err error) {
 			}
 			block, index := db.Get(req.Key, req.Username, useraddress, req.Sharemode, req.ShareChan)
 			if index == -1 {
-				return
+				in.Send(&ucgrpc.ResQuery{
+					Status: false,
+					// Data:   block.TxInfos[index].Value,
+				})
 			} else {
 				in.Send(&ucgrpc.ResQuery{
 					Status: true,

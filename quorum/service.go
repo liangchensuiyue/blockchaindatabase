@@ -183,6 +183,9 @@ func (this *Server) Request(ctx context.Context, req *bcgrpc.RequestBody) (info 
 		ShareChan: req.Tx.ShareChan,
 		Share:     req.Tx.Share,
 	}
+	if !tx.VerifySimple() {
+		return
+	}
 	if req.Tx.DataType == Type.NEW_CHAN {
 		ok := BC.UserIsChanCreator(newchan.Channame, BC.GenerateAddressFromPubkey(uw.PubKey))
 		if ok {

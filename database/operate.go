@@ -27,7 +27,7 @@ func DelUser(username string) {
 	newblock, _ := lcdraft.PackBlock(tx)
 	rw := BC.LocalWallets.GetBlockChainRootWallet()
 	// localBlockChain.SignBlock(rw.Private, false, newblock)
-
+	BC.Global_DICT.Put(tx.Key, tx)
 	BC.BlockQueue.Insert(BC.QueueObject{
 		TargetBlock: newblock,
 		Handle: func(total, fail int) {
@@ -84,7 +84,7 @@ func CreateUser(username string, passworld string) error {
 	newblock, _ := lcdraft.PackBlock(tx)
 	rw := BC.LocalWallets.GetBlockChainRootWallet()
 	// localBlockChain.SignBlock(rw.Private, false, newblock)
-
+	BC.Global_DICT.Put(tx.Key, tx)
 	BC.BlockQueue.Insert(BC.QueueObject{
 		TargetBlock: newblock,
 		Handle: func(total, fail int) {
@@ -160,6 +160,7 @@ func PutTest(key string, value []byte, datatype int32, user_address string, shar
 		newblock, _ := lcdraft.PackBlock(tx)
 		rw := BC.LocalWallets.GetBlockChainRootWallet()
 		// localBlockChain.SignBlock(rw.Private, false, newblock)
+		BC.Global_DICT.Put(tx.Key, tx)
 		BC.BlockQueue.Insert(BC.QueueObject{
 			TargetBlock: newblock,
 			Handle: func(total, fail int) {
@@ -200,13 +201,13 @@ func PutTest(key string, value []byte, datatype int32, user_address string, shar
 	return nil
 }
 
-// var NUM = 0
-// var Total int64 = 0
-// var pre int64
+var NUM = 0
+var Total int64 = 0
+var pre int64
 
 func Put(key string, value []byte, datatype int32, user_address string, share bool, shareChan string, strict bool) error {
-	// NUM++
-	// pre = time.Now().UnixNano()
+	NUM++
+	pre = time.Now().UnixNano()
 	if share {
 		if !BC.LocalWallets.HasShareChan(shareChan) {
 			quorum.GetShareChan(shareChan)
@@ -239,6 +240,7 @@ func Put(key string, value []byte, datatype int32, user_address string, share bo
 		newblock, _ := lcdraft.PackBlock(tx)
 		rw := BC.LocalWallets.GetBlockChainRootWallet()
 		// localBlockChain.SignBlock(rw.Private, false, newblock)
+		BC.Global_DICT.Put(tx.Key, tx)
 		BC.BlockQueue.Insert(BC.QueueObject{
 			TargetBlock: newblock,
 			Handle: func(total, fail int) {
@@ -270,7 +272,7 @@ func Put(key string, value []byte, datatype int32, user_address string, share bo
 				fmt.Println("block:", newblock.BlockId, "校验失败")
 			},
 		})
-		// Total += (time.Now().UnixNano() - pre)
+		Total += (time.Now().UnixNano() - pre)
 
 	} else {
 		draft := BC.GetLocalDraft()
@@ -384,6 +386,8 @@ func Del(key string, user_address string, share bool, sharechan string, strict b
 		rw := BC.LocalWallets.GetBlockChainRootWallet()
 
 		// localBlockChain.SignBlock(rw.Private, false, newblock)
+		BC.Global_DICT.Put(tx.Key, tx)
+
 		BC.BlockQueue.Insert(BC.QueueObject{
 			TargetBlock: newblock,
 			Handle: func(total, fail int) {
@@ -440,42 +444,72 @@ func Get(key string, username string, user_address string, sharemode bool, share
 	// for k, v := range BC.LocalWallets.ShareTailBlockHashMap {
 	// 	fmt.Println(k, base64.RawStdEncoding.EncodeToString(v))
 	// }
-	_index := -1
-	_b, e := BC.BlockQueue.Find(func(b *BC.Block) bool {
-		for i := len(b.TxInfos) - 1; i >= 0; i-- {
-			if sharemode {
-				if b.TxInfos[i].Share && b.TxInfos[i].ShareChan == sharechan {
-					if b.TxInfos[i].Key == key {
-						if b.TxInfos[i].DataType != Type.DEL_KEY {
-							_index = i
-							return false
-						} else {
-							_index = -1
-							return false
-						}
-					}
+	txs := BC.Global_DICT.Get(key)
+	if len(txs) == 0 {
+		return nil, -1
+	}
+	for _, TxInfo := range txs {
+		if sharemode {
+			if TxInfo.Share && TxInfo.ShareChan == sharechan {
+				if TxInfo.Key == key {
+					if TxInfo.DataType != Type.DEL_KEY {
+						return &BC.Block{TxInfos: []*BC.Transaction{TxInfo}}, 0
 
-				}
-			} else {
-				if BC.GenerateAddressFromPubkey(b.TxInfos[i].PublicKey) == user_address {
-					if b.TxInfos[i].Key == key {
-						if b.TxInfos[i].DataType != Type.DEL_KEY {
-							_index = i
-							return false
-						} else {
-							_index = -1
-							return false
-						}
+					} else {
+						return nil, -1
 					}
-
 				}
+
+			}
+		} else {
+			if BC.GenerateAddressFromPubkey(TxInfo.PublicKey) == user_address {
+				if TxInfo.Key == key {
+					if TxInfo.DataType != Type.DEL_KEY {
+						return &BC.Block{TxInfos: []*BC.Transaction{TxInfo}}, 0
+					} else {
+						return nil, -1
+					}
+				}
+
 			}
 		}
-		return true
-	})
-	if e == nil {
-		return _b, _index
 	}
+	// _index := -1
+	// _b, e := BC.BlockQueue.Find(func(b *BC.Block) bool {
+	// 	for i := len(b.TxInfos) - 1; i >= 0; i-- {
+	// 		if sharemode {
+	// 			if b.TxInfos[i].Share && b.TxInfos[i].ShareChan == sharechan {
+	// 				if b.TxInfos[i].Key == key {
+	// 					if b.TxInfos[i].DataType != Type.DEL_KEY {
+	// 						_index = i
+	// 						return false
+	// 					} else {
+	// 						_index = -1
+	// 						return false
+	// 					}
+	// 				}
+
+	// 			}
+	// 		} else {
+	// 			if BC.GenerateAddressFromPubkey(b.TxInfos[i].PublicKey) == user_address {
+	// 				if b.TxInfos[i].Key == key {
+	// 					if b.TxInfos[i].DataType != Type.DEL_KEY {
+	// 						_index = i
+	// 						return false
+	// 					} else {
+	// 						_index = -1
+	// 						return false
+	// 					}
+	// 				}
+
+	// 			}
+	// 		}
+	// 	}
+	// 	return true
+	// })
+	// if e == nil {
+	// 	return _b, _index
+	// }
 	for {
 		b, e := localBlockChain.GetBlockByHash(tailhash)
 		if e != nil || b.IsGenesisBlock() {

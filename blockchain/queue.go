@@ -5,7 +5,6 @@ import (
 	"encoding/gob"
 	"errors"
 
-	// BC "go_code/基于区块链的非关系型数据库/blockchain"
 	"io/ioutil"
 	"log"
 	"sync"
