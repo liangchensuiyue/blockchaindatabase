@@ -353,7 +353,9 @@ func runLocalTestCli() {
 					err = db.Put(cmds[1], []byte(cmds[2]), Type.STRING, login_useraddress, true, cmds[3], strictmode)
 
 				} else {
-					err = db.Put(cmds[1], []byte(cmds[2]), Type.STRING, login_useraddress, false, "", strictmode)
+					key := util.Yield16ByteKey([]byte(pass))
+					v := util.AesEncrypt([]byte(cmds[2]), key)
+					err = db.Put(cmds[1], v, Type.STRING, login_useraddress, false, "", strictmode)
 
 				}
 				if err != nil {

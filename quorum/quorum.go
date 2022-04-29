@@ -159,6 +159,7 @@ func _starDistributeBlock() {
 			if blockBlockChainNode.LocalIp == localNode.LocalIp {
 				continue
 			}
+			fmt.Println("........................")
 			total++
 			DistributeBlock(block, blockBlockChainNode, func(res *bcgrpc.VerifyInfo, err error) {
 				if err != nil {
@@ -175,6 +176,7 @@ func _starDistributeBlock() {
 				// fmt.Printf("节点 %s:%d 接受成功\n", blockBlockChainNode.LocalIp, blockBlockChainNode.LocalPort)
 			})
 		}
+		fmt.Println("block:", block.BlockId, "同步完成")
 		el.Handle(total, fail)
 		BC.BlockQueue.Delete()
 

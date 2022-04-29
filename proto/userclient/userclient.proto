@@ -2,22 +2,22 @@ syntax = "proto3";
 option java_multiple_files = true;//以非外部类模式生成
 package userclientgrpc;
 service UserClientService{
-    rpc Get(GetBody)returns(ResQuery){}
-    rpc Put(PutBody)returns(VerifyInfo){}
+    rpc Get(stream GetBody)returns(stream ResQuery){}
+    rpc Put(stream PutBody)returns( VerifyInfo){}
 }
 message GetBody{
     string key = 1;
-    string user_address =2;
+    string username =2;
 
     string ShareChan = 3;
     bool sharemode = 4;
-    string username = 5;
+    string passworld = 5;
 }
 message PutBody{
     string key = 1;
     bytes value = 2;
     int32 datatype = 3;
-    string user_address =4;
+    string username =4;
     bool share = 5;
      string ShareChan = 6;
     bool strict = 7;
