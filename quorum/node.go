@@ -94,14 +94,14 @@ func LoadGenesisFile(filename string) (*BlockChainNode, error) {
 		panic(err)
 	}
 	localNode = &info
-	// ip, e := util.GetLocalIp()
-	// if e != nil {
-	// 	return nil, e
-	// }
-	localNode.LocalIp = "10.0.0.1"
-	// localNode.LocalIp = ip.String()
-	// JointoGroup(localNode.BCInfo.PassWorld, ip.String(), int32(localNode.LocalPort))
-	JointoGroup(localNode.BCInfo.PassWorld, "10.0.0.1", int32(localNode.LocalPort))
+	ip, e := util.GetLocalIp()
+	if e != nil {
+		return nil, e
+	}
+	// localNode.LocalIp = "10.0.0.1"
+	localNode.LocalIp = ip.String()
+	JointoGroup(localNode.BCInfo.PassWorld, ip.String(), int32(localNode.LocalPort))
+	// JointoGroup(localNode.BCInfo.PassWorld, "10.0.0.1", int32(localNode.LocalPort))
 	return localNode, nil
 }
 func JointoGroup(passworld, local_ip string, local_port int32) error {

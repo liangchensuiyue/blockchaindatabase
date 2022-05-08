@@ -445,9 +445,12 @@ func Get(key string, username string, user_address string, sharemode bool, share
 	// 	fmt.Println(k, base64.RawStdEncoding.EncodeToString(v))
 	// }
 	txs := BC.Global_DICT.Get(key)
-	if len(txs) == 0 {
-		return nil, -1
-	}
+
+	// if len(txs) == 0 {
+	// 	return nil, -1
+	// }
+
+	// 从缓存里面去找
 	for _, TxInfo := range txs {
 		if sharemode {
 			if TxInfo.Share && TxInfo.ShareChan == sharechan {
@@ -474,42 +477,44 @@ func Get(key string, username string, user_address string, sharemode bool, share
 			}
 		}
 	}
-	// _index := -1
-	// _b, e := BC.BlockQueue.Find(func(b *BC.Block) bool {
-	// 	for i := len(b.TxInfos) - 1; i >= 0; i-- {
-	// 		if sharemode {
-	// 			if b.TxInfos[i].Share && b.TxInfos[i].ShareChan == sharechan {
-	// 				if b.TxInfos[i].Key == key {
-	// 					if b.TxInfos[i].DataType != Type.DEL_KEY {
-	// 						_index = i
-	// 						return false
-	// 					} else {
-	// 						_index = -1
-	// 						return false
-	// 					}
-	// 				}
 
-	// 			}
-	// 		} else {
-	// 			if BC.GenerateAddressFromPubkey(b.TxInfos[i].PublicKey) == user_address {
-	// 				if b.TxInfos[i].Key == key {
-	// 					if b.TxInfos[i].DataType != Type.DEL_KEY {
-	// 						_index = i
-	// 						return false
-	// 					} else {
-	// 						_index = -1
-	// 						return false
-	// 					}
-	// 				}
+	// 从区块队列上去找
+	_index := -1
+	_b, e := BC.BlockQueue.Find(func(b *BC.Block) bool {
+		for i := len(b.TxInfos) - 1; i >= 0; i-- {
+			if sharemode {
+				if b.TxInfos[i].Share && b.TxInfos[i].ShareChan == sharechan {
+					if b.TxInfos[i].Key == key {
+						if b.TxInfos[i].DataType != Type.DEL_KEY {
+							_index = i
+							return false
+						} else {
+							_index = -1
+							return false
+						}
+					}
 
-	// 			}
-	// 		}
-	// 	}
-	// 	return true
-	// })
-	// if e == nil {
-	// 	return _b, _index
-	// }
+				}
+			} else {
+				if BC.GenerateAddressFromPubkey(b.TxInfos[i].PublicKey) == user_address {
+					if b.TxInfos[i].Key == key {
+						if b.TxInfos[i].DataType != Type.DEL_KEY {
+							_index = i
+							return false
+						} else {
+							_index = -1
+							return false
+						}
+					}
+
+				}
+			}
+		}
+		return true
+	})
+	if e == nil {
+		return _b, _index
+	}
 	for {
 		b, e := localBlockChain.GetBlockByHash(tailhash)
 		if e != nil || b.IsGenesisBlock() {
