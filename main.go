@@ -273,7 +273,7 @@ func runLocalTestCli() {
 					fmt.Printf("不存在的chan:%s.%s\n", creator, arr[1])
 					break
 				}
-				if BC.UserIsInChan(login_useraddress, creator, arr[0]+"."+arr[1]) {
+				if BC.UserIsInChan(login_useraddress, creator, arr[1]) {
 					break
 				}
 				err = db.JoinChan(arr[1], login_username, login_useraddress, creator, arr[2], arr[3])
@@ -312,7 +312,7 @@ func runLocalTestCli() {
 				for _, v := range arrage {
 					// fmt.Println(v.Channame, v.Creator, v.CreatorAddress, login_useraddress)
 					arr := strings.Split(v, ".")
-					if BC.UserIsInChan(login_useraddress, arr[0], arr[0]+"."+arr[1]) {
+					if BC.UserIsInChan(login_useraddress, arr[0], arr[1]) {
 						fmt.Printf("%s.%s: ", arr[0], arr[1])
 						addr, _ := database.GetAddressFromUsername(arr[0])
 						for _, u := range db.GetChanUsers(arr[0]+"."+arr[1], arr[0], addr) {
@@ -345,7 +345,7 @@ func runLocalTestCli() {
 			case "putstr":
 				// put age 15 int
 				if len(cmds) < 3 {
-					fmt.Println("格式错误  put key value [sharechan]")
+					fmt.Println("格式错误  putstr key value [sharechan]")
 					break
 				}
 				var err error

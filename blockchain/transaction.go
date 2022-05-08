@@ -204,7 +204,7 @@ func UserIsInChan(addr, creator, channame string) bool {
 		for _, tx := range block.TxInfos {
 
 			//
-			if tx.Key == channame {
+			if tx.Key == creator+"."+channame {
 				// arr := strings.Split(string(tx.Value), " ")
 				if tx.DataType == Type.DEL_CHAN && GenerateAddressFromPubkey(tx.PublicKey) == creatoraddr {
 					refalse = true
@@ -400,6 +400,7 @@ func (tx *Transaction) Verify() bool {
 		//tx.ShareChan   creatorusername.channame
 		arr := strings.Split(tx.ShareChan, ".")
 		if len(arr) < 2 {
+
 			return false
 		}
 
