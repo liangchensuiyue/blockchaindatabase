@@ -116,8 +116,8 @@ func testget(name, pass string) {
 }
 func main() {
 	go testput("gds", "123")
-	time.Sleep(time.Second * 5)
-	go testget("gds", "123")
+	// time.Sleep(time.Second * 5)
+	// go testget("gds", "123")
 	// go testput("lc", "123")
 	// go testput("zs", "123")
 	// go testput("ls", "123")

@@ -15,7 +15,7 @@ import (
 	"go_code/基于区块链的非关系型数据库/database"
 	db "go_code/基于区块链的非关系型数据库/database"
 	quorum "go_code/基于区块链的非关系型数据库/quorum"
-	Test "go_code/基于区块链的非关系型数据库/test"
+	test "go_code/基于区块链的非关系型数据库/test"
 	Type "go_code/基于区块链的非关系型数据库/type"
 	"go_code/基于区块链的非关系型数据库/util"
 	view "go_code/基于区块链的非关系型数据库/view"
@@ -106,6 +106,7 @@ func runLocalTestCli() {
 		pass := ""
 		strictmode := true
 		for {
+			fmt.Printf("+-------------------------------------+\n\n")
 			fmt.Printf(">>> ")
 			flag := false
 
@@ -121,6 +122,7 @@ func runLocalTestCli() {
 			if len(cmds) == 0 {
 				continue
 			}
+			fmt.Printf("+-------------------------------------+\n")
 			switch cmds[0] {
 			case "help":
 				fmt.Println("newuser [username] [passworld] -- 创建用户")
@@ -128,6 +130,10 @@ func runLocalTestCli() {
 				fmt.Println("isaccountant --是否有记账权力")
 				fmt.Println("login [username] [passworld] --登录")
 				fmt.Println("print_quorum --打印集群信息")
+				fmt.Println("systxrate --系统交易处理速率")
+				fmt.Println("sysblockrate --系统区块同步速率")
+				fmt.Println("resetsystxi --重置系统交易处理速率")
+				fmt.Println("resetsysbki --重置系统区块同步速率")
 			case "newuser":
 				if len(cmds) < 3 {
 					fmt.Println("格式错误")
@@ -174,6 +180,18 @@ func runLocalTestCli() {
 						fmt.Println(node.LocalIp)
 					}
 				}
+			case "systxrate":
+				// fmt.Println("----------------------------------------")
+				test.SystemInfo.PrintTxInfo()
+				// fmt.Println("----------------------------------------")
+			case "resetsystxi":
+				test.SystemInfo.CleanTxInfo()
+			case "sysblockrate":
+				// fmt.Println("----------------------------------------")
+				test.SystemInfo.PrintBlockInfo()
+				// fmt.Println("----------------------------------------")
+			case "resetsysbki":
+				test.SystemInfo.CleanBlockInfo()
 			default:
 				fmt.Println("格式错误")
 
@@ -916,7 +934,6 @@ func main() {
 	db.Run(localBlockChain, localNode)
 	go uc.Run()
 	// fmt.Println("hello world")
-	Test.Test2()
 	// Test.Test1()
 	// Test.Test3()
 	runLocalTestCli()

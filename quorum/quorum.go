@@ -118,9 +118,9 @@ func getAccountant() bool {
 	return false
 }
 
-// var NUM = 0
-// var Total int64 = 0
-// var pre int64
+var NUM = 0
+var Total int64 = 0
+var pre int64
 
 func _starDistributeBlock() {
 	for {
@@ -148,8 +148,8 @@ func _starDistributeBlock() {
 		// 	fmt.Println("打包", block.TxInfos[0].Key)
 
 		// }
-		// pre = time.Now().UnixNano()
-		// NUM++
+		pre = time.Now().UnixNano()
+		NUM++
 
 		total := 0
 		fail := 0
@@ -182,9 +182,32 @@ func _starDistributeBlock() {
 				// fmt.Printf("节点 %s:%d 接受成功\n", blockBlockChainNode.LocalIp, blockBlockChainNode.LocalPort)
 			})
 		}
-		// Total += time.Now().UnixNano() - pre
-		fmt.Println("block:", block.BlockId, "同步完成")
-		el.Handle(total, fail)
+		Total += time.Now().UnixNano() - pre
+		if el.Handle == nil {
+			rw := BC.LocalWallets.GetBlockChainRootWallet()
+			flag := localBlockChain.VerifyBlock(rw.PubKey, block)
+			if flag {
+				e := localBlockChain.AddBlock(block)
+				if e != nil {
+					// fmt.Println(e)
+					return
+				}
+				for _, tx := range block.TxInfos {
+					// fmt.Println(tx.Share, tx.ShareAddress, base64.RawStdEncoding.EncodeToString(newblock.Hash))
+					if tx.Share {
+						schn := BC.LocalWallets.ShareChanMap[tx.ShareChan]
+						schn.TailBlockHash = block.Hash
+
+					} else {
+						BC.LocalWallets.TailBlockHashMap[BC.GenerateAddressFromPubkey(tx.PublicKey)] = block.Hash
+					}
+				}
+				BC.LocalWallets.SaveToFile()
+			}
+			// fmt.Println("block:", block.BlockId, "校验失败")
+		} else {
+			el.Handle(total, fail)
+		}
 		BC.BlockQueue.Delete()
 
 	}

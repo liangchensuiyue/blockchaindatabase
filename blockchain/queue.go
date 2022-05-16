@@ -31,6 +31,21 @@ type Queue struct {
 func NewQueue() *Queue {
 	return &Queue{nil, nil, 0, &sync.Mutex{}}
 }
+func (Q *Queue) InsertFront(v QueueObject) {
+	Q.lock.Lock()
+	defer Q.lock.Unlock()
+	node := &node{v, nil, nil}
+	if Q.num == 0 {
+		Q.front = node
+		Q.rear = node
+		Q.num = 1
+		return
+	}
+	Q.front.Pre = node
+	node.Next = Q.front
+	Q.front = node
+	Q.num++
+}
 func (Q *Queue) Insert(v QueueObject) {
 	Q.lock.Lock()
 	defer Q.lock.Unlock()
@@ -83,11 +98,11 @@ func (Q *Queue) Load() {
 	Q.front = nil
 	Q.rear = nil
 	Q.num = 0
-	Q.lock.Lock()
+	// Q.lock.Lock()
+	// defer Q.lock.Unlock()
 	for _, v := range blocks {
 		Q.Insert(v)
 	}
-	Q.lock.Unlock()
 }
 func (Q *Queue) SaveToDisk() {
 	blocks := []QueueObject{}

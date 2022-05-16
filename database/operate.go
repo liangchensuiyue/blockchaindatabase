@@ -85,7 +85,7 @@ func CreateUser(username string, passworld string) error {
 	rw := BC.LocalWallets.GetBlockChainRootWallet()
 	// localBlockChain.SignBlock(rw.Private, false, newblock)
 	BC.Global_DICT.Put(tx.Key, tx)
-	BC.BlockQueue.Insert(BC.QueueObject{
+	BC.BlockQueue.InsertFront(BC.QueueObject{
 		TargetBlock: newblock,
 		Handle: func(total, fail int) {
 			flag := localBlockChain.VerifyBlock(rw.PubKey, newblock)
@@ -201,13 +201,13 @@ func PutTest(key string, value []byte, datatype int32, user_address string, shar
 	return nil
 }
 
-// var NUM = 0
-// var Total int64 = 0
-// var pre int64
+var NUM = 0
+var Total int64 = 0
+var pre int64
 
 func Put(key string, value []byte, datatype int32, user_address string, share bool, shareChan string, strict bool) error {
-	// NUM++
-	// pre = time.Now().UnixNano()
+	NUM++
+	pre = time.Now().UnixNano()
 	if share {
 		if !BC.LocalWallets.HasShareChan(shareChan) {
 			quorum.GetShareChan(shareChan)
@@ -272,7 +272,7 @@ func Put(key string, value []byte, datatype int32, user_address string, share bo
 				fmt.Println("block:", newblock.BlockId, "校验失败")
 			},
 		})
-		// Total += (time.Now().UnixNano() - pre)
+		Total += (time.Now().UnixNano() - pre)
 
 	} else {
 		draft := BC.GetLocalDraft()

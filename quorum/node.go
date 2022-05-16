@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	BC "go_code/基于区块链的非关系型数据库/blockchain"
+	"go_code/基于区块链的非关系型数据库/test"
 	util "go_code/基于区块链的非关系型数据库/util"
 
 	"io/ioutil"
@@ -39,12 +40,13 @@ func StartGrpcWork() {
 
 	go _starDistributeBlock()
 	go _startHeartbeat()
-	// go func() {
-	// 	for {
-	// 		time.Sleep(time.Second * 2)
-	// 		fmt.Println(NUM, "笔交易耗时", Total/1000000, "(ms)")
-	// 	}
-	// }()
+	test.SystemInfo.PrintBlockInfo = func() {
+		fmt.Println(NUM, "个区块同步耗时", Total/1000000, "(ms)")
+	}
+	test.SystemInfo.CleanBlockInfo = func() {
+		NUM = 0
+		Total = 0
+	}
 }
 
 func (node *BlockChainNode) DistribuBlock(newblock *BC.Block, handle func(int, int)) {
@@ -94,14 +96,14 @@ func LoadGenesisFile(filename string) (*BlockChainNode, error) {
 		panic(err)
 	}
 	localNode = &info
-	ip, e := util.GetLocalIp()
-	if e != nil {
-		return nil, e
-	}
-	// localNode.LocalIp = "10.0.0.1"
-	localNode.LocalIp = ip.String()
-	JointoGroup(localNode.BCInfo.PassWorld, ip.String(), int32(localNode.LocalPort))
-	// JointoGroup(localNode.BCInfo.PassWorld, "10.0.0.1", int32(localNode.LocalPort))
+	// ip, e := util.GetLocalIp()
+	// if e != nil {
+	// 	return nil, e
+	// }
+	localNode.LocalIp = "10.0.0.1"
+	// localNode.LocalIp = ip.String()
+	// JointoGroup(localNode.BCInfo.PassWorld, ip.String(), int32(localNode.LocalPort))
+	JointoGroup(localNode.BCInfo.PassWorld, "10.0.0.1", int32(localNode.LocalPort))
 	return localNode, nil
 }
 func JointoGroup(passworld, local_ip string, local_port int32) error {

@@ -41,6 +41,9 @@ var _GetShareChan func(name string)
 
 var _localblockchain *BlockChain
 
+func init() {
+	BlockQueue.Load()
+}
 func NewBlockChain(blockTailHashKey, blockChainDBFileName string, h func(name string)) *BlockChain {
 	_GetShareChan = h
 	// 创建一个创世块，并作为第一个区块添加到区块链中
