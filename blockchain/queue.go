@@ -65,7 +65,6 @@ func (Q *Queue) Insert(v QueueObject) {
 }
 func (Q *Queue) Delete() {
 	Q.lock.Lock()
-	defer Q.lock.Unlock()
 	if Q.num == 0 {
 		return
 	}
@@ -73,11 +72,13 @@ func (Q *Queue) Delete() {
 		Q.front = nil
 		Q.rear = nil
 		Q.num = 0
+		Q.lock.Unlock()
 		return
 	}
 	Q.front = Q.front.Next
 	Q.front.Pre = nil
 	Q.num--
+	Q.lock.Unlock()
 	Q.SaveToDisk()
 }
 func (Q *Queue) Load() {

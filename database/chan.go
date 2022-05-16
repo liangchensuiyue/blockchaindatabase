@@ -67,7 +67,11 @@ func JoinChan(channame, username, user_address string, creator, joinkey string, 
 						// BC.LocalWallets.ShareTailBlockHashMap[BC.GenerateUserShareKey(tx.ShareAddress)] = newblock.Hash
 
 					} else {
-						BC.LocalWallets.TailBlockHashMap[BC.GenerateAddressFromPubkey(tx.PublicKey)] = newblock.Hash
+						// BC.WalletsLock.Lock()
+						// BC.LocalWallets.TailBlockHashMap[BC.GenerateAddressFromPubkey(tx.PublicKey)] = newblock.Hash
+						// BC.WalletsLock.Unlock()
+						BC.LocalWallets.SetTailBlockHash(BC.GenerateAddressFromPubkey(tx.PublicKey), newblock.Hash)
+
 					}
 
 				}
@@ -119,7 +123,11 @@ func ExitChan(creator, channame, username, user_address string) {
 						// BC.LocalWallets.ShareTailBlockHashMap[BC.GenerateUserShareKey(tx.ShareAddress)] = newblock.Hash
 
 					} else {
-						BC.LocalWallets.TailBlockHashMap[BC.GenerateAddressFromPubkey(tx.PublicKey)] = newblock.Hash
+						// BC.WalletsLock.Lock()
+						// BC.LocalWallets.TailBlockHashMap[BC.GenerateAddressFromPubkey(tx.PublicKey)] = newblock.Hash
+						// BC.WalletsLock.Unlock()
+						BC.LocalWallets.SetTailBlockHash(BC.GenerateAddressFromPubkey(tx.PublicKey), newblock.Hash)
+
 					}
 
 				}
@@ -167,7 +175,10 @@ func DelChan(creator, channame, username, user_address string) {
 						// BC.LocalWallets.ShareTailBlockHashMap[BC.GenerateUserShareKey(tx.ShareAddress)] = newblock.Hash
 
 					} else {
-						BC.LocalWallets.TailBlockHashMap[BC.GenerateAddressFromPubkey(tx.PublicKey)] = newblock.Hash
+						// BC.WalletsLock.Lock()
+						// BC.LocalWallets.TailBlockHashMap[BC.GenerateAddressFromPubkey(tx.PublicKey)] = newblock.Hash
+						// BC.WalletsLock.Unlock()
+						BC.LocalWallets.SetTailBlockHash(BC.GenerateAddressFromPubkey(tx.PublicKey), newblock.Hash)
 					}
 
 				}
@@ -220,7 +231,11 @@ func NewChan(newchan *BC.ShareChan, username string, user_address string) error 
 						// BC.LocalWallets.ShareTailBlockHashMap[BC.GenerateUserShareKey(tx.ShareAddress)] = newblock.Hash
 
 					} else {
-						BC.LocalWallets.TailBlockHashMap[BC.GenerateAddressFromPubkey(tx.PublicKey)] = newblock.Hash
+						// BC.WalletsLock.Lock()
+						// BC.LocalWallets.TailBlockHashMap[BC.GenerateAddressFromPubkey(tx.PublicKey)] = newblock.Hash
+						// BC.WalletsLock.Unlock()
+						BC.LocalWallets.SetTailBlockHash(BC.GenerateAddressFromPubkey(tx.PublicKey), newblock.Hash)
+
 					}
 
 				}

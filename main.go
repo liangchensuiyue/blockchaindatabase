@@ -57,7 +57,8 @@ func StartDraftWork() {
 							schn := BC.LocalWallets.ShareChanMap[tx.ShareChan]
 							schn.TailBlockHash = newblock.Hash
 						} else {
-							BC.LocalWallets.TailBlockHashMap[BC.GenerateAddressFromPubkey(tx.PublicKey)] = newblock.Hash
+							// BC.LocalWallets.TailBlockHashMap[BC.GenerateAddressFromPubkey(tx.PublicKey)] = newblock.Hash
+							BC.LocalWallets.SetTailBlockHash(BC.GenerateAddressFromPubkey(tx.PublicKey), newblock.Hash)
 						}
 
 					}
@@ -78,7 +79,9 @@ func addblocks(blocks []*BC.Block) {
 		if flag {
 			localBlockChain.AddBlock(newblock)
 			if newblock.IsGenesisBlock() {
-				BC.LocalWallets.TailBlockHashMap[rw.NewAddress()] = newblock.Hash
+				// BC.LocalWallets.TailBlockHashMap[rw.NewAddress()] = newblock.Hash
+				BC.LocalWallets.SetTailBlockHash(rw.NewAddress(), newblock.Hash)
+
 			}
 			for _, tx := range newblock.TxInfos {
 				// fmt.Println(tx.Share, tx.ShareAddress, base64.RawStdEncoding.EncodeToString(newblock.Hash))
@@ -87,7 +90,8 @@ func addblocks(blocks []*BC.Block) {
 					schn.TailBlockHash = newblock.Hash
 
 				} else {
-					BC.LocalWallets.TailBlockHashMap[BC.GenerateAddressFromPubkey(tx.PublicKey)] = newblock.Hash
+					// BC.LocalWallets.TailBlockHashMap[BC.GenerateAddressFromPubkey(tx.PublicKey)] = newblock.Hash
+					BC.LocalWallets.SetTailBlockHash(BC.GenerateAddressFromPubkey(tx.PublicKey), newblock.Hash)
 				}
 			}
 			BC.LocalWallets.SaveToFile()
@@ -98,6 +102,11 @@ func addblocks(blocks []*BC.Block) {
 	}
 }
 func runLocalTestCli() {
+	// db.CreateUser("user1", "123")
+	// db.CreateUser("user2", "123")
+	// db.CreateUser("user3", "123")
+	// db.CreateUser("user4", "123")
+	// db.CreateUser("user5", "123")
 	reader := bufio.NewReader(os.Stdin)
 	// fmt.Println("start cli:")
 	for {
@@ -139,6 +148,7 @@ func runLocalTestCli() {
 					fmt.Println("格式错误")
 					break
 				}
+				fmt.Println("正在创建用户...")
 				err := db.CreateUser(cmds[1], cmds[2])
 				if err != nil {
 					fmt.Println("创建失败:", err.Error())
@@ -940,7 +950,8 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-		BC.LocalWallets.TailBlockHashMap[rw.NewAddress()] = genesis_block.Hash
+		// BC.LocalWallets.TailBlockHashMap[rw.NewAddress()] = genesis_block.Hash
+		BC.LocalWallets.SetTailBlockHash(rw.NewAddress(), genesis_block.Hash)
 		BC.LocalWallets.SaveToFile()
 	}
 

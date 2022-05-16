@@ -5,6 +5,7 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"encoding/base64"
+	"sync"
 
 	"crypto/rand"
 	"errors"
@@ -277,6 +278,9 @@ func (bc *BlockChain) GetTailUserBlockHash() []byte {
 	})
 	return hashkey
 }
+
+var _lrulock *sync.Mutex = &sync.Mutex{}
+
 func (bc *BlockChain) GetBlockByHash(hash []byte) (*Block, error) {
 	block := Block{BlockId: 0}
 	if len(hash) == 0 {
@@ -302,7 +306,9 @@ func (bc *BlockChain) GetBlockByHash(hash []byte) (*Block, error) {
 			return errors.New(fmt.Sprintf(" not the key"))
 		}
 		block = BlockDeserialize(value)
+		_lrulock.Lock()
 		LRU.Add(base64.RawStdEncoding.EncodeToString(block.Hash), block)
+		_lrulock.Unlock()
 		return nil
 	})
 	return &block, err

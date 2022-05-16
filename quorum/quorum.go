@@ -199,7 +199,10 @@ func _starDistributeBlock() {
 						schn.TailBlockHash = block.Hash
 
 					} else {
-						BC.LocalWallets.TailBlockHashMap[BC.GenerateAddressFromPubkey(tx.PublicKey)] = block.Hash
+						// BC.WalletsLock.Lock()
+						// BC.LocalWallets.TailBlockHashMap[BC.GenerateAddressFromPubkey(tx.PublicKey)] = block.Hash
+						// BC.WalletsLock.Unlock()
+						BC.LocalWallets.SetTailBlockHash(BC.GenerateAddressFromPubkey(tx.PublicKey), block.Hash)
 					}
 				}
 				BC.LocalWallets.SaveToFile()

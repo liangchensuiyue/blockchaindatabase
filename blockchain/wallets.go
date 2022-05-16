@@ -24,7 +24,7 @@ import (
 const walletFile = "wallet.dat"
 
 var LocalWallets *Wallets = &Wallets{}
-var _lock *sync.Mutex = &sync.Mutex{}
+var WalletsLock *sync.RWMutex = &sync.RWMutex{}
 
 type ShareChan struct {
 	TailBlockHash  []byte
@@ -138,7 +138,9 @@ func (ws *Wallets) GetUserWallet(user_address string) (*Wallet, error) {
 // 	return errors.New("未知的用户")
 // }
 func (ws *Wallets) GetUserTailBlockHash(user_address string) ([]byte, error) {
+	WalletsLock.RLock()
 	hash, flag := ws.TailBlockHashMap[user_address]
+	WalletsLock.RUnlock()
 	if !flag {
 		return []byte{}, errors.New("未知的用户")
 	}
@@ -152,8 +154,10 @@ func (ws *Wallets) GetUserTailBlockHash(user_address string) ([]byte, error) {
 // 	}
 // 	return hash, nil
 // }
-func (ws *Wallets) PutTailBlockHash(user_address string, blockhash []byte) {
+func (ws *Wallets) SetTailBlockHash(user_address string, blockhash []byte) {
+	WalletsLock.Lock()
 	ws.TailBlockHashMap[user_address] = blockhash
+	WalletsLock.Unlock()
 }
 func (ws *Wallets) loadFile() {
 	_, err := os.Stat(walletFile)
@@ -194,7 +198,7 @@ func (ws *Wallets) GetAllAddresses() []string {
 }
 
 func (ws *Wallets) SaveToFile() {
-	defer _lock.Unlock()
+	defer WalletsLock.Unlock()
 	/*
 		如果 Encode/Decode 类型是interface或者struct中某些字段是interface{}的时候
 		需要在gob中注册interface可能的所有实现或者可能类型
@@ -209,7 +213,7 @@ func (ws *Wallets) SaveToFile() {
 	if err != nil {
 		log.Panic(err)
 	}
-	_lock.Lock()
+	WalletsLock.Lock()
 	err = ioutil.WriteFile(walletFile, content.Bytes(), 0644)
 	if err != nil {
 		log.Panic(err)

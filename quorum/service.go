@@ -58,8 +58,10 @@ func (this *Server) DistributeBlock(ctx context.Context, req *bcgrpc.Block) (inf
 		return
 	}
 	if newblock.IsGenesisBlock() {
-		BC.LocalWallets.TailBlockHashMap[rw.NewAddress()] = newblock.Hash
-
+		// BC.WalletsLock.Lock()
+		// BC.LocalWallets.TailBlockHashMap[rw.NewAddress()] = newblock.Hash
+		// BC.WalletsLock.Unlock()
+		BC.LocalWallets.SetTailBlockHash(rw.NewAddress(), newblock.Hash)
 	}
 	for _, tx := range newblock.TxInfos {
 
@@ -69,7 +71,9 @@ func (this *Server) DistributeBlock(ctx context.Context, req *bcgrpc.Block) (inf
 			schn.TailBlockHash = newblock.Hash
 
 		} else {
-			BC.LocalWallets.TailBlockHashMap[BC.GenerateAddressFromPubkey(tx.PublicKey)] = newblock.Hash
+			// BC.LocalWallets.TailBlockHashMap[BC.GenerateAddressFromPubkey(tx.PublicKey)] = newblock.Hash
+			BC.LocalWallets.SetTailBlockHash(BC.GenerateAddressFromPubkey(tx.PublicKey), newblock.Hash)
+
 		}
 
 	}
@@ -233,7 +237,9 @@ func (this *Server) Request(ctx context.Context, req *bcgrpc.RequestBody) (info 
 							schn.TailBlockHash = newblock.Hash
 
 						} else {
-							BC.LocalWallets.TailBlockHashMap[BC.GenerateAddressFromPubkey(tx.PublicKey)] = newblock.Hash
+							// BC.LocalWallets.TailBlockHashMap[BC.GenerateAddressFromPubkey(tx.PublicKey)] = newblock.Hash
+							BC.LocalWallets.SetTailBlockHash(BC.GenerateAddressFromPubkey(tx.PublicKey), newblock.Hash)
+
 						}
 
 					}

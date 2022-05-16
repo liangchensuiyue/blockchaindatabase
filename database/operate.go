@@ -9,6 +9,7 @@ import (
 	Type "go_code/基于区块链的非关系型数据库/type"
 	"go_code/基于区块链的非关系型数据库/util"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -38,9 +39,11 @@ func DelUser(username string) {
 					// fmt.Println(e)
 					return
 				}
+				// BC.WalletsLock.Lock()
+				// BC.LocalWallets.TailBlockHashMap[root_address] = newblock.Hash
+				// BC.WalletsLock.Unlock()
 
-				BC.LocalWallets.TailBlockHashMap[root_address] = newblock.Hash
-
+				BC.LocalWallets.SetTailBlockHash(root_address, newblock.Hash)
 				BC.LocalWallets.SaveToFile()
 				// fmt.Println("校验成功")
 				return
@@ -51,7 +54,6 @@ func DelUser(username string) {
 
 }
 func CreateUser(username string, passworld string) error {
-	fmt.Println("正在创建用户...")
 	user_address := BC.LocalWallets.GetBlockChainRootWallet().NewAddress()
 
 	// 判断用户是否创建
@@ -95,8 +97,10 @@ func CreateUser(username string, passworld string) error {
 					// fmt.Println(e)
 					return
 				}
-
-				BC.LocalWallets.TailBlockHashMap[user_address] = newblock.Hash
+				// BC.WalletsLock.Lock()
+				// BC.LocalWallets.TailBlockHashMap[user_address] = newblock.Hash
+				// BC.WalletsLock.Unlock()
+				BC.LocalWallets.SetTailBlockHash(user_address, newblock.Hash)
 				BC.LocalWallets.WalletsMap[wa.NewAddress()] = wa
 
 				BC.LocalWallets.SaveToFile()
@@ -181,7 +185,11 @@ func PutTest(key string, value []byte, datatype int32, user_address string, shar
 							// BC.LocalWallets.ShareTailBlockHashMap[BC.GenerateUserShareKey(tx.ShareAddress)] = newblock.Hash
 
 						} else {
-							BC.LocalWallets.TailBlockHashMap[BC.GenerateAddressFromPubkey(tx.PublicKey)] = newblock.Hash
+							// BC.WalletsLock.Lock()
+							// BC.LocalWallets.TailBlockHashMap[BC.GenerateAddressFromPubkey(tx.PublicKey)] = newblock.Hash
+							// BC.WalletsLock.Unlock()
+							BC.LocalWallets.SetTailBlockHash(BC.GenerateAddressFromPubkey(tx.PublicKey), newblock.Hash)
+
 						}
 
 					}
@@ -205,9 +213,13 @@ var NUM = 0
 var Total int64 = 0
 var pre int64
 
+var _lockPut *sync.Mutex = &sync.Mutex{}
+
 func Put(key string, value []byte, datatype int32, user_address string, share bool, shareChan string, strict bool) error {
-	NUM++
+
 	pre = time.Now().UnixNano()
+	// _lockPut.Unlock()
+	// pre = time.Now().UnixNano()
 	if share {
 		if !BC.LocalWallets.HasShareChan(shareChan) {
 			quorum.GetShareChan(shareChan)
@@ -220,10 +232,10 @@ func Put(key string, value []byte, datatype int32, user_address string, share bo
 		shareChan = ""
 	}
 	tx, e := BC.NewTransaction(key, value, datatype, user_address, share, shareChan)
-	if e == nil && !tx.VerifySimple() {
-		return errors.New("操作有误")
-		// 交易校验失败
-	}
+	// if e == nil && !tx.VerifySimple() {
+	// 	return errors.New("操作有误")
+	// 	// 交易校验失败
+	// }
 	if e != nil {
 		quorum.Request(user_address, true, &BC.Transaction{
 			Key:       key,
@@ -261,7 +273,10 @@ func Put(key string, value []byte, datatype int32, user_address string, share bo
 							// BC.LocalWallets.ShareTailBlockHashMap[BC.GenerateUserShareKey(tx.ShareAddress)] = newblock.Hash
 
 						} else {
-							BC.LocalWallets.TailBlockHashMap[BC.GenerateAddressFromPubkey(tx.PublicKey)] = newblock.Hash
+							// BC.WalletsLock.Lock()
+							// BC.LocalWallets.TailBlockHashMap[BC.GenerateAddressFromPubkey(tx.PublicKey)] = newblock.Hash
+							// BC.WalletsLock.Unlock()
+							BC.LocalWallets.SetTailBlockHash(BC.GenerateAddressFromPubkey(tx.PublicKey), newblock.Hash)
 						}
 
 					}
@@ -272,7 +287,10 @@ func Put(key string, value []byte, datatype int32, user_address string, share bo
 				fmt.Println("block:", newblock.BlockId, "校验失败")
 			},
 		})
+		_lockPut.Lock()
+		NUM++
 		Total += (time.Now().UnixNano() - pre)
+		_lockPut.Unlock()
 
 	} else {
 		draft := BC.GetLocalDraft()
@@ -403,7 +421,10 @@ func Del(key string, user_address string, share bool, sharechan string, strict b
 							scn.TailBlockHash = newblock.Hash
 
 						} else {
-							BC.LocalWallets.TailBlockHashMap[BC.GenerateAddressFromPubkey(tx.PublicKey)] = newblock.Hash
+							// BC.WalletsLock.Lock()
+							// BC.LocalWallets.TailBlockHashMap[BC.GenerateAddressFromPubkey(tx.PublicKey)] = newblock.Hash
+							// BC.WalletsLock.Unlock()
+							BC.LocalWallets.SetTailBlockHash(BC.GenerateAddressFromPubkey(tx.PublicKey), newblock.Hash)
 						}
 
 					}
@@ -438,7 +459,7 @@ func Get(key string, username string, user_address string, sharemode bool, share
 		}
 		tailhash = schn.TailBlockHash
 	} else {
-		tailhash, _ = BC.LocalWallets.TailBlockHashMap[user_address]
+		tailhash, _ = BC.LocalWallets.GetUserTailBlockHash(user_address)
 	}
 	// fmt.Println("tailhash", base64.RawStdEncoding.EncodeToString(tailhash))
 	// for k, v := range BC.LocalWallets.ShareTailBlockHashMap {

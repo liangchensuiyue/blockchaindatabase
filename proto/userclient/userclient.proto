@@ -4,6 +4,11 @@ package userclientgrpc;
 service UserClientService{
     rpc Get(stream GetBody)returns(stream ResQuery){}
     rpc Put(stream PutBody)returns( VerifyInfo){}
+    rpc Newuser(UserInfo)returns(VerifyInfo){}
+}
+message UserInfo{
+    string username = 1;
+    string passworld = 2;
 }
 message GetBody{
     string key = 1;

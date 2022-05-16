@@ -36,8 +36,8 @@ func (ht *HT) Init() {
 	ht.lock = &sync.Mutex{}
 }
 func (ht *HT) Put(k string, v *Transaction) {
-	head := ht.Table[k]
 	ht.lock.Lock()
+	head := ht.Table[k]
 	ht.Used++
 	if head == nil {
 		ht.Rowlen[k] = 0
