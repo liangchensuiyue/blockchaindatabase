@@ -770,7 +770,7 @@ func runLocalTestCli() {
 					cur := time.Now().UnixNano()
 					fmt.Println("耗时:", (cur-pre)/1000000, "(ms)")
 				} else {
-					fmt.Println("未查询到")
+					fmt.Println("<nil>")
 				}
 			case "print_quorum":
 				for _, node := range localNode.Quorum {
@@ -785,14 +785,19 @@ func runLocalTestCli() {
 				}
 				localBlockChain.Traverse(func(block *BC.Block, err error) bool {
 					if fmt.Sprintf("%d", block.BlockId) == cmds[1] {
-						for i, tx := range block.TxInfos {
-							fmt.Println("交易索引:", i)
-							fmt.Println("user_address:", BC.GenerateAddressFromPubkey(tx.PublicKey))
-							fmt.Println("key-value:", tx.Key, string(tx.Value))
-							fmt.Println("sharemode:", tx.Share)
-							fmt.Println("datatype:", tx.DataType)
-							fmt.Println("sharechan:", tx.ShareChan)
-						}
+						fmt.Println("blockid", block.BlockId)
+						fmt.Println("hash", block.Hash)
+						fmt.Println("prevhash", block.PreBlockHash)
+						fmt.Println("Timestamp", block.Timestamp)
+						fmt.Println("txnums", len(block.TxInfos))
+						// for i, tx := range block.TxInfos {
+						// 	fmt.Println("交易索引:", i)
+						// 	fmt.Println("user_address:", BC.GenerateAddressFromPubkey(tx.PublicKey))
+						// 	fmt.Println("key-value:", tx.Key, string(tx.Value))
+						// 	fmt.Println("sharemode:", tx.Share)
+						// 	fmt.Println("datatype:", tx.DataType)
+						// 	fmt.Println("sharechan:", tx.ShareChan)
+						// }
 					}
 					return true
 				})
