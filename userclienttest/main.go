@@ -57,7 +57,7 @@ func testput(uname, pass string) {
 		err := client.Send(&ucgrpc.PutBody{
 			Passworld: pass,
 			Value:     []byte(fmt.Sprintf("%d", i)),
-			Datatype:  Type.INT32,
+			Datatype:  Type.STRING,
 			Strict:    true,
 			Key:       fmt.Sprintf("key_%d", i),
 			Username:  uname,

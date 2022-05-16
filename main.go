@@ -240,6 +240,10 @@ func runLocalTestCli() {
 				fmt.Println("togglemode -- 切换strict")
 				fmt.Println("print_global_wallet -- 查看全部用户地址")
 				fmt.Println("print_local_wallet -- 查看本地用户地址")
+				fmt.Println("systxrate --系统交易处理速率")
+				fmt.Println("sysblockrate --系统区块同步速率")
+				fmt.Println("resetsystxi --重置系统交易处理速率")
+				fmt.Println("resetsysbki --重置系统区块同步速率")
 				fmt.Println("exit -- 退出当前登录")
 			case "togglemode":
 				strictmode = !strictmode
@@ -744,23 +748,23 @@ func runLocalTestCli() {
 					}
 					switch tx.DataType {
 					case Type.STRING:
-						fmt.Println("key-value", tx.Key, string(v))
+						fmt.Println(string(v))
 					case Type.INT32:
-						fmt.Println("key-value", util.BytesToInt32(v))
+						fmt.Println(util.BytesToInt32(v))
 					case Type.INT64:
-						fmt.Println("key-value", tx.Key, util.BytesToInt64(v))
+						fmt.Println(util.BytesToInt64(v))
 					case Type.STRING_ARRAY:
-						fmt.Println("key-value", tx.Key, Type.ConvertToSTRING_ARRAY(v))
+						fmt.Println(Type.ConvertToSTRING_ARRAY(v))
 					case Type.INT32_ARRAY:
-						fmt.Println("key-value", tx.Key, Type.ConvertToINT32_ARRAY(v))
+						fmt.Println(Type.ConvertToINT32_ARRAY(v))
 					case Type.INT64_ARRAY:
-						fmt.Println("key-value", tx.Key, Type.ConvertToINT64_ARRAY(v))
+						fmt.Println(Type.ConvertToINT64_ARRAY(v))
 					case Type.STRING_SET:
-						fmt.Println("key-value", tx.Key, Type.ConvertToSTRING_SET(v))
+						fmt.Println(Type.ConvertToSTRING_SET(v))
 					case Type.INT32_SET:
-						fmt.Println("key-value", tx.Key, Type.ConvertToINT32_SET(v))
+						fmt.Println(Type.ConvertToINT32_SET(v))
 					case Type.INT64_SET:
-						fmt.Println("key-value", tx.Key, Type.ConvertToINT64_SET(v))
+						fmt.Println(Type.ConvertToINT64_SET(v))
 					}
 
 					cur := time.Now().UnixNano()
@@ -852,6 +856,18 @@ func runLocalTestCli() {
 				for addr, w := range BC.LocalWallets.WalletsMap {
 					fmt.Println(w.Username, addr)
 				}
+			case "systxrate":
+				// fmt.Println("----------------------------------------")
+				test.SystemInfo.PrintTxInfo()
+				// fmt.Println("----------------------------------------")
+			case "resetsystxi":
+				test.SystemInfo.CleanTxInfo()
+			case "sysblockrate":
+				// fmt.Println("----------------------------------------")
+				test.SystemInfo.PrintBlockInfo()
+				// fmt.Println("----------------------------------------")
+			case "resetsysbki":
+				test.SystemInfo.CleanBlockInfo()
 			case "exit":
 				flag = true
 				break

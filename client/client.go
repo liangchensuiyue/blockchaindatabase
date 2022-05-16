@@ -104,7 +104,7 @@ func (this *Server) Put(in ucgrpc.UserClientService_PutServer) (err error) {
 		if !req.Share {
 			key := util.Yield16ByteKey([]byte(req.Passworld))
 			v = util.AesEncrypt(v, key)
-			db.Put(req.Key, req.Value, req.Datatype, useraddress, req.Share, "", req.Strict)
+			db.Put(req.Key, v, req.Datatype, useraddress, req.Share, "", req.Strict)
 
 		} else {
 			db.Put(req.Key, req.Value, req.Datatype, useraddress, req.Share, req.ShareChan, req.Strict)
