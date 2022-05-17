@@ -53,8 +53,8 @@ func (sch *ShareChan) HasUser(user string) bool {
 		return false
 	}
 	_localblockchain.Traverse(func(block *Block, err error) bool {
-		for _, tx := range block.TxInfos {
-
+		for i := len(block.TxInfos) - 1; i >= 0; i-- {
+			tx := block.TxInfos[i]
 			//
 			if tx.Key == sch.Channame {
 				if tx.DataType == Type.EXIT_CHAN && GenerateAddressFromPubkey(tx.PublicKey) == addr {

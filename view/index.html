@@ -4,212 +4,151 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>区块链数据库</title>
+    <link /><link>
     <style>
+        body{
+            background-color: #eee
+        }
         *{
-            padding:0px;
             margin:0px;
+            padding:0px;
         }
-        html,body{
-            height:100%;
+        .nav-bar{
             width:100%;
-        }
-        .current{
-            background-color: brown;
-            color:wheat
-        }
-        .col{
-            width:100%;
-            border-bottom: 1px solid black;
-            padding:15px;
-            padding-right: 0px;
-            padding-left: 0px;
-        }
-        .quorum div{
-            display: inline;
-            height:30px;
-            margin-left: 10px;
-            border:1px solid black;
-            line-height: 15px;
-            cursor: pointer;
-        }
-        .blockchain{
-            height:600px;
-            border-bottom: 0px;
-        }
-        .block{
-            border:1px solid black;
-            display: inline-block;
-            padding:10px;
-            margin:15px;
+            display: flex;
+            height:50px;
+            /* justify-content: space-between; */
 
+            border-bottom: 1px solid black;
         }
-        .block:hover{
-            background-color: gray;
-            /* transition: all 0.5s; */
-            color: wheat;
+        .nav-bar a{
+            padding:5px;
+            height:20px;
+            width: 150px;
+            line-height: 20px;
+            text-align: center;
+            border:1px solid gray;
+            border-radius: 50%;
+            transition: 0.5s;
             cursor: pointer;
+            text-decoration-line: none;
+            font-size: 20px;
+            font-weight: bold;
         }
-        .txinfo{
-            position: absolute;
-            width:500px;
-            height:500px;
-            top:0px;
-            bottom: 0px;
-            left:0px;
-            right:0px;
-            margin:auto;
+        .nav-bar a:hover{
             background-color: gray;
-            visibility: hidden;
+            color: white;
         }
-        .tx{
-            padding:15px;
-            color:white;
-            border:1px solid black;
+        .fra{
+            width:700px;
+            float: left;
+            height:500px;
+            border:1px solid red;
+    
+        }
+        .fra p{
+            padding:3px;
+            color:gray;
         }
     </style>
-    <script src="./jquery.1.12.4.js"></script>
-    <title>区块链数据库视图</title>
 </head>
 <body>
-    <div class="txinfo" onclick="" >
+    <div class="nav-bar">
+        <a href="http://10.0.0.1:3400" target="_blank">10.0.0.1</a>
+        <a href="http://10.0.0.1:3400" target="_blank">10.10.10.11</a>
     </div>
-    <div class="col quorum">
+    <div class="fra" id="f1">
+  
+    </div>
+    <div class="fra" id="f2">
+        <input style="width:100px" id="f2_input1" value="2" placeholder="查询区块信息"/><button id="f2_button1">提交</button>
+        <input style="width:100px" id="f2_input2" value="gds.kaoyan" placeholder="查询管道信息"/><button id="f2_button2">提交</button>
+        <input style="width:100px" id="f2_input3" value="gds" placeholder="查询用户信息"/><button id="f2_button3">提交</button>
+         <button id="f2_button4">查看所有区块</button>
+        <div id="fra2-text">
+
+        </div>
+    </div>
+    <div class="fra">
 
     </div>
-    <div class="col blockchain">
+    <div class="fra">
+
     </div>
+
     <script>
-                 Globalobject = {
-
-                }
-function TxView(blockId){
-    $('.txinfo').css("visibility","visible").html("")
-    $(`        <span class="cancel" style="float:right;border:1px;cursor:pointer; solid white;">取消</span>
-`).appendTo(".txinfo").click(function(){
-                $(".txinfo").css("visibility","hidden")
-            })
-    var blockdata = Globalobject[blockId]
-    for(i = 0;i < blockdata.TxInfos.length;i++){
-        $(` <div class="tx">
-            <p>交易 ${i + 1}</p>
-            <p>
-                useraddress: ${blockdata.TxInfos[i].UserAddress}
-            </p>
-            <p>
-                Hash: ${blockdata.TxInfos[i].Hash}
-            </p>
-            <p>
-                TimeStamp: ${blockdata.TxInfos[i].Timestamp}
-            </p>
-            <p>
-                shareuser: ${blockdata.TxInfos[i].ShareUserAddress}
-            </p>
-            <p>
-                PrevBlockHash ${blockdata.TxInfos[i].PrevBlockHash}
-            </p>
-        </div>`).appendTo('.txinfo')
-        console.log(i)
-    }
-
-
-}
         window.onload = function(){
-            $("<div></div>").attr("ip",location.hostname).html("<a class=\"current\">" + location.hostname+"</a>").appendTo(".quorum")
+            var f2_button1 = document.getElementById("f2_button1")
+            var f2_input1 = document.getElementById("f2_input1")
+            
+            var f2_button2 = document.getElementById("f2_button2")
+            var f2_input2 = document.getElementById("f2_input2")
 
-            var sock = new WebSocket("ws://" + location.hostname+":3500/msg");
+            var f2_button3 = document.getElementById("f2_button3")
+            var f2_input3 = document.getElementById("f2_input3")
 
-                sock.onmessage = function(e) {
-                    var data
-                    try {
-                     data = JSON.parse(e.data)
+            var f2_button4 = document.getElementById("f2_button4")
 
-                    } catch (error) {
-                        console.log(e.data)
-                        return
-                    }
-                    console.log('---',data)
-
-                    switch(data.type){
-                        case "DistributeBlock":
-                            console.log("distri")
-                            msg = JSON.parse(data.msg)
-                            
-                            Globalobject[msg.BlockId] = msg
-                            var dom = $(`   <div class="block"  onclick="TxView(` + msg.BlockId    + `)"    >
-                         <p>BlockId: ${msg.BlockId}</span>
-                            <p>Hash: ${msg.Hash}</span>
-                         <p>PrevHash: ${msg.PrevBlockHash}</span>
-                             <p>TimeStamp: ${msg.Timestamp}</span>
-
-                             </div>`).click(function(){
-
-                             })
-
-                                $(".blockchain").append(dom)
-                            break;
-                        case "Block":
-                        
-                            console.log("block")
-                            msg = JSON.parse(data.msg)
-                            
-                            Globalobject[msg.BlockId] = msg
-                            var dom = $(`   <div class="block"  onclick="TxView(` + msg.BlockId    + `)"    >
-                         <p>BlockId: ${msg.BlockId}</span>
-                            <p>Hash: ${msg.Hash}</span>
-                         <p>PrevHash: ${msg.PrevBlockHash}</span>
-                             <p>TimeStamp: ${msg.Timestamp}</span>
-
-                             </div>`).click(function(){
-
-                             })
-
-                                $(".blockchain").prepend(dom)
-                            
-
-                            break;
-
-                        case "quorum":
-                        msg = JSON.parse(data.msg)
-                        // console.log(msg)
-                        $(".quorum").html("")
-                        for(var i =0 ;i < msg.Nodes.length;i++){
-                            if(msg.Nodes[i] == location.hostname){
-                                $("<div></div>").attr("ip",location.hostname).html("<a class=\"current\">" + location.hostname+"</a>").appendTo(".quorum")
-
-                            }else{
-                                $("<div></div>").attr("ip",location.hostname).html("<a target=\"blank\" href=\"http://" + msg.Nodes[i]+":3400\">" + msg.Nodes[i]+"</a>").appendTo(".quorum")
-
-                            }
-                        }
-
-                        $(".quorum div").click(function(e){
-                // $(".quorum div").removeClass("current")
-                // $(this).addClass("current")
-
-                // sock.onload = function(){
-                //     sock.send("0")
-                // }
-                $(".blockchain").html("")
-
-                          console.log("send")
-                             sock.send("0")
-                        })
-                        break;
-
-                    }
-            // console.log("收到消息后触发 message received: " + e.data);
-                }
-                sock.onerror = function(){
-                    $(".blockchain").html("<p>" +e.target.getAttribute("ip")+ " 失去连接</p>")
-                    console.log("error")
-                }
-
-                // sock.send("0")
-
-            $(".block").click(function(){
-
-            })
+            f2_button1.onclick = function(){
+                GetBlockInfo(f2_input1.value)
+            }
+            f2_button2.onclick = function(){
+                window.open("/GetPipeInfo?pname="+f2_input2.value)
+            }
+            f2_button3.onclick = function(){
+                window.open("/GetUserInfo?uname="+f2_input3.value)
+            }
+            f2_button4.onclick = function(){
+                window.open("/GetAllBlock")
+            }
         }
-        </script>
+        function GetBlockInfo(id){
+            var xhr = new XMLHttpRequest()
+            xhr.open("get","/GetBlockInfo?id=" + id)
+            xhr.onload = function(){
+                var data = JSON.parse(this.response)
+                var fra = document.getElementById("fra2-text")
+                var pa = document.createDocumentFragment()
+                for (prop in data){
+                    var p = document.createElement("p")
+                    p.textContent = prop + ": " + data[prop]
+                    
+                    pa.appendChild(p)
+                }
+                fra.textContent = ""
+                fra.appendChild(pa)
+            }
+            xhr.send()
+        }
+        function GetNodeInfo(){
+            var xhr = new XMLHttpRequest()
+            xhr.open("get","/GetNodeInfo")
+            xhr.onload = function(){
+                var data = JSON.parse(this.response)
+                var fra = document.getElementById("f1")
+                var pa = document.createDocumentFragment()
+                for (prop in data){
+                    var p = document.createElement("p")
+                    if(prop == "LocalWalletAddress"){
+                        p.textContent = prop + ": "
+                        pa.appendChild(p)
+                        for(var i =0;i<data[prop].length;i++){
+                            var p = document.createElement("p")
+                            p.textContent = data[prop][i]
+                            pa.appendChild(p)
+                        }
+                    }else{
+                        p.textContent = prop + ": " + data[prop]
+                    }
+                    pa.appendChild(p)
+                }
+                fra.textContent = ""
+                fra.appendChild(pa)
+            }
+            xhr.send()
+        }
+        setInterval(GetNodeInfo,1300)
+    </script>
 </body>
 </html>

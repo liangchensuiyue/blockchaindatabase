@@ -18,11 +18,11 @@ import (
 	test "go_code/基于区块链的非关系型数据库/test"
 	Type "go_code/基于区块链的非关系型数据库/type"
 	"go_code/基于区块链的非关系型数据库/util"
-	view "go_code/基于区块链的非关系型数据库/view"
+	"go_code/基于区块链的非关系型数据库/view"
 )
 
-var localBlockChain *BC.BlockChain
-var localNode *quorum.BlockChainNode
+var LocalBlockChain *BC.BlockChain
+var LocalNode *quorum.BlockChainNode
 
 func StartDraftWork() {
 	draft := BC.GetLocalDraftFromDisk()
@@ -41,9 +41,9 @@ func StartDraftWork() {
 		BC.BlockQueue.Insert(BC.QueueObject{
 			TargetBlock: newblock,
 			Handle: func(total, fail int) {
-				flag := localBlockChain.VerifyBlock(rw.PubKey, newblock)
+				flag := LocalBlockChain.VerifyBlock(rw.PubKey, newblock)
 				if flag {
-					e := localBlockChain.AddBlock(newblock)
+					e := LocalBlockChain.AddBlock(newblock)
 					if e != nil {
 						fmt.Println(e)
 						return
@@ -75,9 +75,9 @@ func addblocks(blocks []*BC.Block) {
 	rw := BC.LocalWallets.GetBlockChainRootWallet()
 
 	for _, newblock := range blocks {
-		flag := localBlockChain.VerifyBlock(rw.PubKey, newblock)
+		flag := LocalBlockChain.VerifyBlock(rw.PubKey, newblock)
 		if flag {
-			localBlockChain.AddBlock(newblock)
+			LocalBlockChain.AddBlock(newblock)
 			if newblock.IsGenesisBlock() {
 				// BC.LocalWallets.TailBlockHashMap[rw.NewAddress()] = newblock.Hash
 				BC.LocalWallets.SetTailBlockHash(rw.NewAddress(), newblock.Hash)
@@ -115,7 +115,6 @@ func runLocalTestCli() {
 		pass := ""
 		strictmode := true
 		for {
-			fmt.Printf("+-------------------------------------+\n\n")
 			fmt.Printf(">>> ")
 			flag := false
 
@@ -131,7 +130,6 @@ func runLocalTestCli() {
 			if len(cmds) == 0 {
 				continue
 			}
-			fmt.Printf("+-------------------------------------+\n")
 			switch cmds[0] {
 			case "help":
 				fmt.Println("newuser [username] [passworld] -- 创建用户")
@@ -156,7 +154,7 @@ func runLocalTestCli() {
 					fmt.Println("创建成功")
 				}
 			case "latestblock":
-				b, _ := localBlockChain.GetTailBlock()
+				b, _ := LocalBlockChain.GetTailBlock()
 				fmt.Println("BlockId:", b.BlockId)
 				fmt.Println("PreBLockHash:", base64.RawStdEncoding.EncodeToString(b.PreBlockHash))
 				fmt.Println("Hash:", base64.RawStdEncoding.EncodeToString(b.Hash))
@@ -183,8 +181,8 @@ func runLocalTestCli() {
 					login_username = cmds[1]
 				}
 			case "print_quorum":
-				for _, node := range localNode.Quorum {
-					if node.LocalIp == localNode.LocalIp {
+				for _, node := range LocalNode.Quorum {
+					if node.LocalIp == LocalNode.LocalIp {
 						fmt.Println(node.LocalIp, "(本机)")
 					} else {
 						fmt.Println(node.LocalIp)
@@ -228,25 +226,25 @@ func runLocalTestCli() {
 			}
 			switch cmds[0] {
 			case "help":
-				fmt.Println("newchan  -- 创建分享管道")
-				fmt.Println("delchan  -- 删除管道")
-				fmt.Println("joinchan  -- 加入管道")
-				fmt.Println("exitchan  -- 退出管道")
-				fmt.Println("listchan --列出用户相关的分享管道")
-				fmt.Println("putstr -- 录入字符串")
-				fmt.Println("putint32 -- 录入 int32")
-				fmt.Println("putint64 -- 录入 int64")
-				fmt.Println("putstrarr -- 录入 字符串 数组")
-				fmt.Println("puti32arr -- 录入 int32 数组")
-				fmt.Println("puti64arr -- 录入 int64 数组")
-				fmt.Println("putstrset -- 录入 字符串 集合")
-				fmt.Println("puti32set -- 录入 int32 集合")
-				fmt.Println("puti64set -- 录入 int64 集合")
-				fmt.Println("get -- 获取数据")
-				fmt.Println("del -- 删除数据")
+				fmt.Println("newchan  channanme -- 创建分享管道")
+				fmt.Println("delchan  channanme -- 删除管道")
+				fmt.Println("joinchan  chankey -- 加入管道")
+				fmt.Println("exitchan  channame -- 退出管道")
+				fmt.Println("listchan --列出用户加入的分享管道")
+				fmt.Println("putstr value [channame] -- 录入字符串")
+				fmt.Println("putint32 value [channame] -- 录入 int32")
+				fmt.Println("putint64 value [channame] -- 录入 int64")
+				fmt.Println("putstrarr key [v1,...,vn] [sharechan] -- 录入 字符串 数组")
+				fmt.Println("puti32arr key [v1,...,vn] [sharechan] -- 录入 int32 数组")
+				fmt.Println("puti64arr key [v1,...,vn] [sharechan] -- 录入 int64 数组")
+				fmt.Println("putstrset key [v1,...,vn] [sharechan] -- 录入 字符串 集合")
+				fmt.Println("puti32set key [v1,...,vn] [sharechan] -- 录入 int32 集合")
+				fmt.Println("puti64set key [v1,...,vn] [sharechan] -- 录入 int64 集合")
+				fmt.Println("get key [channame] -- 获取数据")
+				fmt.Println("del key [channame] -- 删除数据")
 				fmt.Println("isaccountant --是否有记账权力")
 				fmt.Println("print_quorum --打印集群信息")
-				fmt.Println("detail -- 查看区块信息")
+				fmt.Println("detail blockid-- 查看区块信息")
 				fmt.Println("togglemode -- 切换strict")
 				fmt.Println("print_global_wallet -- 查看全部用户地址")
 				fmt.Println("print_local_wallet -- 查看本地用户地址")
@@ -321,9 +319,10 @@ func runLocalTestCli() {
 			case "listchan":
 				_map := make(map[string]bool)
 				arrage := []string{}
-				localBlockChain.Traverse(func(block *BC.Block, err error) bool {
+				LocalBlockChain.Traverse(func(block *BC.Block, err error) bool {
 					if block != nil {
-						for _, tx := range block.TxInfos {
+						for i := len(block.TxInfos) - 1; i >= 0; i-- {
+							tx := block.TxInfos[i]
 							if tx.DataType == Type.NEW_CHAN {
 								_, ok := _map[tx.Key]
 								if !ok {
@@ -783,8 +782,8 @@ func runLocalTestCli() {
 					fmt.Println("<nil>")
 				}
 			case "print_quorum":
-				for _, node := range localNode.Quorum {
-					if node.LocalIp == localNode.LocalIp {
+				for _, node := range LocalNode.Quorum {
+					if node.LocalIp == LocalNode.LocalIp {
 						fmt.Println(node.LocalIp, "(本机)")
 					}
 				}
@@ -793,12 +792,15 @@ func runLocalTestCli() {
 					fmt.Println("格式错误  detail BlockId")
 					break
 				}
-				localBlockChain.Traverse(func(block *BC.Block, err error) bool {
+				LocalBlockChain.Traverse(func(block *BC.Block, err error) bool {
+					if err != nil {
+						return true
+					}
 					if fmt.Sprintf("%d", block.BlockId) == cmds[1] {
 						fmt.Println("blockid", block.BlockId)
-						fmt.Println("hash", block.Hash)
-						fmt.Println("prevhash", block.PreBlockHash)
-						fmt.Println("Timestamp", block.Timestamp)
+						fmt.Println("hash", base64.RawStdEncoding.EncodeToString(block.Hash))
+						fmt.Println("prevhash", base64.RawStdEncoding.EncodeToString(block.PreBlockHash))
+						fmt.Println("timestamp", block.Timestamp)
 						fmt.Println("txnums", len(block.TxInfos))
 						// for i, tx := range block.TxInfos {
 						// 	fmt.Println("交易索引:", i)
@@ -814,7 +816,7 @@ func runLocalTestCli() {
 			case "isaccountant":
 				fmt.Println(quorum.LocalNodeIsAccount())
 			case "print":
-				localBlockChain.Traverse(func(block *BC.Block, err error) bool {
+				LocalBlockChain.Traverse(func(block *BC.Block, err error) bool {
 					if block != nil {
 						fmt.Println("---------------------------")
 						fmt.Println("blockid:", block.BlockId)
@@ -838,7 +840,7 @@ func runLocalTestCli() {
 				fmt.Printf("---------------------------\n\n")
 
 			case "latestblock":
-				b, _ := localBlockChain.GetTailBlock()
+				b, _ := LocalBlockChain.GetTailBlock()
 				fmt.Println("BlockId:", b.BlockId)
 				fmt.Println("PreBLockHash:", base64.RawStdEncoding.EncodeToString(b.PreBlockHash))
 				fmt.Println("Hash:", base64.RawStdEncoding.EncodeToString(b.Hash))
@@ -852,7 +854,7 @@ func runLocalTestCli() {
 				// 判断用户是否创建
 				_hash, _ := BC.LocalWallets.GetUserTailBlockHash(user_address)
 
-				b, e := localBlockChain.GetBlockByHash(_hash)
+				b, e := LocalBlockChain.GetBlockByHash(_hash)
 				if e != nil {
 					break
 				}
@@ -865,7 +867,7 @@ func runLocalTestCli() {
 						fmt.Println(tx.Key, strings.Split(string(tx.Value), " ")[1])
 
 					}
-					b, _ = localBlockChain.GetBlockByHash(_hash)
+					b, _ = LocalBlockChain.GetBlockByHash(_hash)
 				}
 			case "print_local_wallet":
 				for addr, w := range BC.LocalWallets.WalletsMap {
@@ -899,54 +901,54 @@ func main() {
 	var genesis_file_name string
 	var err error
 	flag.StringVar(&genesis_file_name, "f", "./genesis", "genesis文件")
-	localNode, err = quorum.LoadGenesisFile(genesis_file_name)
-	fmt.Println("监听地址:", localNode.LocalIp, localNode.LocalPort)
+	LocalNode, err = quorum.LoadGenesisFile(genesis_file_name)
+	fmt.Println("监听地址:", LocalNode.LocalIp, LocalNode.LocalPort)
 	fmt.Println("localNode.Quorum:")
-	for _, v := range localNode.Quorum {
+	for _, v := range LocalNode.Quorum {
 		fmt.Println(v.LocalIp)
 	}
 	if err != nil {
 		panic(err)
 	}
 
-	localBlockChain = BC.NewBlockChain(
-		localNode.BCInfo.BlockTailHashKey,
+	LocalBlockChain = BC.NewBlockChain(
+		LocalNode.BCInfo.BlockTailHashKey,
 
-		localNode.BCInfo.BlockChainDB,
+		LocalNode.BCInfo.BlockChainDB,
 		func(name string) {
 			quorum.GetShareChan(name)
 		},
 	)
 
 	BC.LoadLocalWallets()
-	_, err = localBlockChain.GetAddressFromUsername("liangchen")
+	_, err = LocalBlockChain.GetAddressFromUsername("liangchen")
 	if err != nil {
-		wa := BC.NewWallet("liangchen", localNode.BCInfo.PassWorld)
-		wa.Private = localNode.BCInfo.PriKey
-		wa.PubKey = localNode.BCInfo.PubKey
+		wa := BC.NewWallet("liangchen", LocalNode.BCInfo.PassWorld)
+		wa.Private = LocalNode.BCInfo.PriKey
+		wa.PubKey = LocalNode.BCInfo.PubKey
 		BC.LocalWallets.WalletsMap[wa.NewAddress()] = wa
 		BC.LocalWallets.SaveToFile()
 	}
-	quorum.Broadcast(localBlockChain)
+	quorum.Broadcast(LocalBlockChain)
 
 	newbllocks, e := quorum.BlockSynchronization()
 	if e == nil {
 		addblocks(newbllocks)
 	}
 
-	_tailblock, _ := localBlockChain.GetTailBlock()
+	_tailblock, _ := LocalBlockChain.GetTailBlock()
 	if _tailblock == nil {
 		// 创建创世块
 		genesis_block := BC.NewGenesisBlock()
 		genesis_block.BlockId = 1
 
 		rw := BC.LocalWallets.GetBlockChainRootWallet()
-		localBlockChain.SignBlock(rw.Private, true, genesis_block)
-		flag := localBlockChain.VerifyBlock(rw.PubKey, genesis_block)
+		LocalBlockChain.SignBlock(rw.Private, true, genesis_block)
+		flag := LocalBlockChain.VerifyBlock(rw.PubKey, genesis_block)
 		if !flag {
 			fmt.Println("创世块校验失败")
 		}
-		err = localBlockChain.AddBlock(genesis_block)
+		err = LocalBlockChain.AddBlock(genesis_block)
 		if err != nil {
 			panic(err)
 		}
@@ -955,15 +957,11 @@ func main() {
 		BC.LocalWallets.SaveToFile()
 	}
 
-	_nodes := []string{}
-	for _, v := range localNode.Quorum {
-		_nodes = append(_nodes, v.LocalIp)
-	}
-	go view.Run(localBlockChain, _nodes)
+	go view.Run(LocalBlockChain, LocalNode)
 	quorum.StartGrpcWork()
 	StartDraftWork()
 
-	db.Run(localBlockChain, localNode)
+	db.Run(LocalBlockChain, LocalNode)
 	go uc.Run()
 	// fmt.Println("hello world")
 	// Test.Test1()

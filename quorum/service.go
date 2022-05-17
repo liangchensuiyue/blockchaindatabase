@@ -4,14 +4,12 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"fmt"
 	BC "go_code/基于区块链的非关系型数据库/blockchain"
 	bcgrpc "go_code/基于区块链的非关系型数据库/proto/blockchain"
 	Type "go_code/基于区块链的非关系型数据库/type"
 	util "go_code/基于区块链的非关系型数据库/util"
-	view "go_code/基于区块链的非关系型数据库/view"
 	"time"
 )
 
@@ -110,13 +108,7 @@ func (this *Server) JoinGroup(ctx context.Context, req *bcgrpc.NodeInfo) (info *
 	for _, v := range localNode.Quorum {
 		_nodes = append(_nodes, v.LocalIp)
 	}
-	data, _ := json.Marshal(map[string]interface{}{
-		"Nodes": _nodes,
-	})
-	view.MsgQueue <- view.Message{
-		Type:       "quorum",
-		MsgJsonStr: string(data),
-	}
+
 	if err != nil {
 		return
 	}

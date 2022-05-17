@@ -50,7 +50,6 @@ func testget(name, pass string) {
 
 	//获得grpc句柄
 	c := ucgrpc.NewUserClientServiceClient(conn)
-
 	//通过句柄调用函数
 	client, err := c.Get(context.Background())
 	if err != nil {
@@ -166,7 +165,7 @@ func main() {
 	var mode string
 	flag.StringVar(&mode, "mod", "put", "模式put/get")
 	flag.Int64Var(&u_num, "unum", 1, "并发数量")
-	flag.Int64Var(&txnum, "tnum", 100000, "请求数量")
+	flag.Int64Var(&txnum, "tnum", 10000, "请求数量")
 	flag.Parse()
 	switch mode {
 	case "put":

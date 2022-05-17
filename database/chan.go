@@ -255,8 +255,8 @@ func UserIsInChan(username, channame string) bool {
 		return false
 	}
 	localBlockChain.Traverse(func(block *BC.Block, err error) bool {
-		for _, tx := range block.TxInfos {
-
+		for i := len(block.TxInfos) - 1; i >= 0; i-- {
+			tx := block.TxInfos[i]
 			//
 			if tx.Key == channame {
 				if tx.DataType == Type.EXIT_CHAN && BC.GenerateAddressFromPubkey(tx.PublicKey) == addr {
@@ -284,8 +284,8 @@ func UserIsInChan(username, channame string) bool {
 func IsExsistChan(name string, address string) bool {
 	flag := true
 	localBlockChain.Traverse(func(block *BC.Block, err error) bool {
-		for _, tx := range block.TxInfos {
-
+		for i := len(block.TxInfos) - 1; i >= 0; i-- {
+			tx := block.TxInfos[i]
 			//
 			if tx.Key == name && BC.GenerateAddressFromPubkey(tx.PublicKey) == address {
 				if tx.DataType == Type.NEW_CHAN {

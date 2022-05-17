@@ -114,6 +114,36 @@ func CreateUser(username string, passworld string) error {
 	return nil
 }
 
+// 检测用户是否存在
+func IsExsistUser(username string) bool {
+	user_address := BC.LocalWallets.GetBlockChainRootWallet().NewAddress()
+
+	// 判断用户是否创建
+	_hash, _ := BC.LocalWallets.GetUserTailBlockHash(user_address)
+
+	b, e := localBlockChain.GetBlockByHash(_hash)
+	if e != nil {
+		return false
+	}
+	for {
+		if b.IsGenesisBlock() {
+			break
+		}
+		for _, tx := range b.TxInfos {
+			_hash = tx.PreBlockHash
+			if tx.Key == username && tx.DataType == Type.DEL_USER {
+				return false
+			}
+			if tx.Key == username && tx.DataType == Type.NEW_USER {
+				return true
+			}
+		}
+		b, _ = localBlockChain.GetBlockByHash(_hash)
+	}
+	return false
+}
+
+// 判断用户密码
 func VeriftUser(username string, passworld string) error {
 	user_address := BC.LocalWallets.GetBlockChainRootWallet().NewAddress()
 
@@ -130,7 +160,10 @@ func VeriftUser(username string, passworld string) error {
 		}
 		for _, tx := range b.TxInfos {
 			_hash = tx.PreBlockHash
-			if tx.Key == username {
+			if tx.Key == username && tx.DataType == Type.DEL_USER {
+				return errors.New("该用户已被删除")
+			}
+			if tx.Key == username && tx.DataType == Type.NEW_USER {
 				passw := strings.Split(string(tx.Value), " ")[0]
 				if passw == base64.RawStdEncoding.EncodeToString([]byte(passworld)) {
 					return nil
