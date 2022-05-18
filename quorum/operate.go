@@ -11,44 +11,41 @@ import (
 	"google.golang.org/grpc"
 )
 
-var localBlockChain *BC.BlockChain
-var localNode *BlockChainNode
-
-func Broadcast(lbc *BC.BlockChain) {
-	localBlockChain = lbc
-	for _, node := range localNode.Quorum {
-		if node.LocalIp == localNode.LocalIp && node.LocalPort == localNode.LocalPort {
+func Broadcast() {
+	length := len(LocalNode.Quorum)
+	for i := 0; i < length; i++ {
+		node := LocalNode.Quorum[i]
+		if node.LocalIp == LocalNode.LocalIp && node.LocalPort == LocalNode.LocalPort {
 			continue
 		}
 		conn, err := grpc.Dial(fmt.Sprintf("%s:%d", node.LocalIp, node.LocalPort), grpc.WithInsecure())
 		if err != nil {
 			fmt.Printf("%s:%d 网络异常", node.LocalIp, node.LocalPort)
 		}
-		//网络延迟关闭
-		defer conn.Close()
 
 		//获得grpc句柄
 		c := bcgrpc.NewBlockChainServiceClient(conn)
 
 		//通过句柄调用函数
 		re, err := c.JoinGroup(context.Background(), &bcgrpc.NodeInfo{
-			Passworld: localNode.BCInfo.PassWorld,
-			LocalIp:   localNode.LocalIp,
-			LocalPort: int32(localNode.LocalPort),
+			Passworld: LocalNode.BCInfo.PassWorld,
+			LocalIp:   LocalNode.LocalIp,
+			LocalPort: int32(LocalNode.LocalPort),
 		})
 		if err != nil {
-			fmt.Println("JoinGroup 服务调用失败")
+			// fmt.Println("JoinGroup 服务调用失败")
 		} else {
 			for _, n := range re.Nodes {
-				JointoGroup(localNode.BCInfo.PassWorld, n.LocalIp, n.LocalPort)
+				JointoGroup(LocalNode.BCInfo.PassWorld, n.LocalIp, n.LocalPort)
 			}
 		}
+		conn.Close()
 	}
 
 }
 func GetShareChan(name string) {
-	for _, node := range localNode.Quorum {
-		if node.LocalIp == localNode.LocalIp && node.LocalPort == localNode.LocalPort {
+	for _, node := range LocalNode.Quorum {
+		if node.LocalIp == LocalNode.LocalIp && node.LocalPort == LocalNode.LocalPort {
 			continue
 		}
 		conn, err := grpc.Dial(fmt.Sprintf("%s:%d", node.LocalIp, node.LocalPort), grpc.WithInsecure())
@@ -81,8 +78,8 @@ func GetShareChan(name string) {
 
 }
 func Request(useraddress string, strict bool, tx *BC.Transaction) error {
-	for _, rnode := range localNode.Quorum {
-		if rnode.LocalIp == localNode.LocalIp && rnode.LocalPort == localNode.LocalPort {
+	for _, rnode := range LocalNode.Quorum {
+		if rnode.LocalIp == LocalNode.LocalIp && rnode.LocalPort == LocalNode.LocalPort {
 			continue
 		}
 		conn, err := grpc.Dial(fmt.Sprintf("%s:%d", rnode.LocalIp, rnode.LocalPort), grpc.WithInsecure())
@@ -122,11 +119,11 @@ func Request(useraddress string, strict bool, tx *BC.Transaction) error {
 
 func BlockSynchronization() ([]*BC.Block, error) {
 	var blockId_map map[int]uint64 = make(map[int]uint64)
-	if len(localNode.Quorum) == 0 {
+	if len(LocalNode.Quorum) == 0 {
 		return []*BC.Block{}, nil
 	}
-	for index, rnode := range localNode.Quorum {
-		if rnode.LocalIp == localNode.LocalIp && rnode.LocalPort == localNode.LocalPort {
+	for index, rnode := range LocalNode.Quorum {
+		if rnode.LocalIp == LocalNode.LocalIp && rnode.LocalPort == LocalNode.LocalPort {
 			continue
 		}
 		conn, err := grpc.Dial(fmt.Sprintf("%s:%d", rnode.LocalIp, rnode.LocalPort), grpc.WithInsecure())
@@ -148,7 +145,7 @@ func BlockSynchronization() ([]*BC.Block, error) {
 		blockId_map[index] = re.BlockId
 
 	}
-	local_tailblock, _e := localBlockChain.GetTailBlock()
+	local_tailblock, _e := LocalBlockChain.GetTailBlock()
 	if _e != nil {
 		local_tailblock = &BC.Block{}
 		local_tailblock.BlockId = 0
@@ -164,7 +161,7 @@ func BlockSynchronization() ([]*BC.Block, error) {
 	if _id <= local_tailblock.BlockId {
 		return []*BC.Block{}, nil
 	}
-	conn, err := grpc.Dial(fmt.Sprintf("%s:%d", localNode.Quorum[_index].LocalIp, localNode.Quorum[_index].LocalPort), grpc.WithInsecure())
+	conn, err := grpc.Dial(fmt.Sprintf("%s:%d", LocalNode.Quorum[_index].LocalIp, LocalNode.Quorum[_index].LocalPort), grpc.WithInsecure())
 	if err != nil {
 		fmt.Println("网络异常", err)
 	}
@@ -181,7 +178,7 @@ func BlockSynchronization() ([]*BC.Block, error) {
 		Hash:    local_tailblock.Hash,
 	})
 	if err != nil {
-		fmt.Printf("%s:%d  BlockSynchronization 服务调用失败\n", localNode.Quorum[_index].LocalIp, localNode.Quorum[_index].LocalPort)
+		fmt.Printf("%s:%d  BlockSynchronization 服务调用失败\n", LocalNode.Quorum[_index].LocalIp, LocalNode.Quorum[_index].LocalPort)
 		return nil, errors.New("区块同步失败")
 	}
 	Blocks := []*BC.Block{}

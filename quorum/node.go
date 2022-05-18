@@ -34,8 +34,11 @@ type BlockChainNode struct {
 }
 
 var isAccountant bool = false
+var LocalBlockChain *BC.BlockChain
+var LocalNode *BlockChainNode
 
-func StartGrpcWork() {
+func StartGrpcWork(lbc *BC.BlockChain) {
+	LocalBlockChain = lbc
 	go _startServer()
 
 	go _starDistributeBlock()
@@ -64,7 +67,7 @@ func SaveGenesisFileToDisk() {
 	var buffer bytes.Buffer
 	gob.Register(elliptic.P256())
 	encoder := gob.NewEncoder(&buffer)
-	err := encoder.Encode(localNode)
+	err := encoder.Encode(LocalNode)
 	if err != nil {
 		fmt.Println("SaveGenesisFileToDisk 失败")
 		panic(err)
@@ -95,30 +98,30 @@ func LoadGenesisFile(filename string) (*BlockChainNode, error) {
 	if err != nil {
 		panic(err)
 	}
-	localNode = &info
+	LocalNode = &info
 	// ip, e := util.GetLocalIp()
 	// if e != nil {
 	// 	return nil, e
 	// }
-	localNode.LocalIp = "10.0.0.1"
+	LocalNode.LocalIp = "10.0.0.1"
 	// localNode.LocalIp = ip.String()
 	// JointoGroup(localNode.BCInfo.PassWorld, ip.String(), int32(localNode.LocalPort))
-	JointoGroup(localNode.BCInfo.PassWorld, "10.0.0.1", int32(localNode.LocalPort))
-	return localNode, nil
+	JointoGroup(LocalNode.BCInfo.PassWorld, "10.0.0.1", int32(LocalNode.LocalPort))
+	return LocalNode, nil
 }
 func JointoGroup(passworld, local_ip string, local_port int32) error {
-	if passworld != localNode.BCInfo.PassWorld {
+	if passworld != LocalNode.BCInfo.PassWorld {
 		return errors.New("访问密码错误")
 	}
 	flag := false
-	for _, node := range localNode.Quorum {
+	for _, node := range LocalNode.Quorum {
 		if node.LocalIp == local_ip {
 			node.LocalPort = int(local_port)
 			flag = true
 		}
 	}
 	if !flag {
-		localNode.Quorum = append(localNode.Quorum, &BlockChainNode{
+		LocalNode.Quorum = append(LocalNode.Quorum, &BlockChainNode{
 			LocalIp:   local_ip,
 			LocalPort: int(local_port),
 		})

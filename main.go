@@ -96,7 +96,7 @@ func addblocks(blocks []*BC.Block) {
 			}
 			BC.LocalWallets.SaveToFile()
 		} else {
-			fmt.Println("同步区块", newblock.BlockId, "校验失败")
+			// fmt.Println("同步区块", newblock.BlockId, "校验失败")
 			return
 		}
 	}
@@ -919,6 +919,7 @@ func main() {
 			quorum.GetShareChan(name)
 		},
 	)
+	quorum.StartGrpcWork(LocalBlockChain)
 
 	BC.LoadLocalWallets()
 	_, err = LocalBlockChain.GetAddressFromUsername("liangchen")
@@ -929,11 +930,16 @@ func main() {
 		BC.LocalWallets.WalletsMap[wa.NewAddress()] = wa
 		BC.LocalWallets.SaveToFile()
 	}
-	quorum.Broadcast(LocalBlockChain)
+	go func() {
+		for {
+			time.Sleep(time.Second * 2)
+			quorum.Broadcast()
+		}
+	}()
 
-	newbllocks, e := quorum.BlockSynchronization()
+	newblocks, e := quorum.BlockSynchronization()
 	if e == nil {
-		addblocks(newbllocks)
+		addblocks(newblocks)
 	}
 
 	_tailblock, _ := LocalBlockChain.GetTailBlock()
@@ -958,7 +964,6 @@ func main() {
 	}
 
 	go view.Run(LocalBlockChain, LocalNode)
-	quorum.StartGrpcWork()
 	StartDraftWork()
 
 	db.Run(LocalBlockChain, LocalNode)

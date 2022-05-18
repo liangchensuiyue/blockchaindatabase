@@ -8,13 +8,15 @@
     <link /><link>
     <style>
         body{
-            background-color: #eee
+            background-color: #eee;
+            height:700px;
+            overflow: hidden;
         }
         *{
             margin:0px;
             padding:0px;
         }
-        .nav-bar{
+        #nav-bar{
             width:100%;
             display: flex;
             height:50px;
@@ -22,7 +24,7 @@
 
             border-bottom: 1px solid black;
         }
-        .nav-bar a{
+        #nav-bar a{
             padding:5px;
             height:20px;
             width: 150px;
@@ -36,7 +38,7 @@
             font-size: 20px;
             font-weight: bold;
         }
-        .nav-bar a:hover{
+        #nav-bar a:hover{
             background-color: gray;
             color: white;
         }
@@ -44,27 +46,28 @@
             width:700px;
             float: left;
             height:500px;
-            border:1px solid red;
+    
     
         }
         .fra p{
             padding:3px;
             color:gray;
         }
+        #nav-bar .current{
+            color: red
+        }
     </style>
 </head>
 <body>
-    <div class="nav-bar">
-        <a href="http://10.0.0.1:3400" target="_blank">10.0.0.1</a>
-        <a href="http://10.0.0.1:3400" target="_blank">10.10.10.11</a>
+    <div id="nav-bar">
     </div>
     <div class="fra" id="f1">
   
     </div>
     <div class="fra" id="f2">
-        <input style="width:100px" id="f2_input1" value="2" placeholder="查询区块信息"/><button id="f2_button1">提交</button>
-        <input style="width:100px" id="f2_input2" value="gds.kaoyan" placeholder="查询管道信息"/><button id="f2_button2">提交</button>
-        <input style="width:100px" id="f2_input3" value="gds" placeholder="查询用户信息"/><button id="f2_button3">提交</button>
+        <input style="width:100px" id="f2_input1" value="" placeholder="查询区块信息"/><button id="f2_button1">提交</button>
+        <input style="width:100px" id="f2_input2" value="" placeholder="查询管道信息"/><button id="f2_button2">提交</button>
+        <input style="width:100px" id="f2_input3" value="" placeholder="查询用户信息"/><button id="f2_button3">提交</button>
          <button id="f2_button4">查看所有区块</button>
         <div id="fra2-text">
 
@@ -102,6 +105,28 @@
             f2_button4.onclick = function(){
                 window.open("/GetAllBlock")
             }
+        }
+        function GetQuorum(){
+            var xhr = new XMLHttpRequest()
+            xhr.open("get","/GetQuorum")
+            xhr.onload = function(){
+                var data = JSON.parse(this.response)
+                var fra = document.getElementById("nav-bar")
+                var pa = document.createDocumentFragment()
+                for (var i =0;i<data['Quorums'].length;i++){
+                    var p = document.createElement("a")
+                    p.target = '_blank'
+                    if(location.hostname == data['Quorums'][i]['Ip']){
+                        p.className += ' current'
+                    }
+                    p.href = 'http://' + data['Quorums'][i]['Ip'] + ':3400'
+                    p.textContent = data['Quorums'][i]['Ip']
+                    pa.appendChild(p)
+                }
+                fra.textContent = ""
+                fra.appendChild(pa)
+            }
+            xhr.send()
         }
         function GetBlockInfo(id){
             var xhr = new XMLHttpRequest()
@@ -148,7 +173,8 @@
             }
             xhr.send()
         }
-        setInterval(GetNodeInfo,1300)
+        setInterval(GetNodeInfo,500)
+        setInterval(GetQuorum,1000)
     </script>
 </body>
 </html>

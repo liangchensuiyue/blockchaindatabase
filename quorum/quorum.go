@@ -14,7 +14,7 @@ import (
 func _startServer() {
 	//创建网络
 	// fmt.Println("网络")
-	ln, err := net.Listen("tcp", fmt.Sprintf(":%d", localNode.LocalPort))
+	ln, err := net.Listen("tcp", fmt.Sprintf(":%d", LocalNode.LocalPort))
 	if err != nil {
 		fmt.Println("网络错误", err)
 	}
@@ -38,8 +38,8 @@ func _startHeartbeat() {
 
 		nodes := []*bcgrpc.Heartbeat{}
 		flag := false
-		for _, node := range localNode.Quorum {
-			if node.LocalIp == localNode.LocalIp {
+		for _, node := range LocalNode.Quorum {
+			if node.LocalIp == LocalNode.LocalIp {
 				continue
 			}
 			conn, err := grpc.Dial(fmt.Sprintf("%s:%d", node.LocalIp, node.LocalPort), grpc.WithInsecure())
@@ -52,7 +52,7 @@ func _startHeartbeat() {
 
 			//通过句柄调用函数
 			re, err := c.QuorumHeartbeat(context.Background(), &bcgrpc.NodeInfo{
-				Passworld: localNode.BCInfo.PassWorld,
+				Passworld: LocalNode.BCInfo.PassWorld,
 			})
 			if err != nil {
 				// fmt.Println("DistributeBlock 服务调用失败", err.Error())
@@ -69,8 +69,8 @@ func _startHeartbeat() {
 		if !flag && !isAccountant {
 			// 重新选择会计
 			nodes = append(nodes, &bcgrpc.Heartbeat{
-				LocalIp:   localNode.LocalIp,
-				LocalPort: int32(localNode.LocalPort),
+				LocalIp:   LocalNode.LocalIp,
+				LocalPort: int32(LocalNode.LocalPort),
 				BlockNums: int32(BC.BlockQueue.Len()),
 			})
 			winner := nodes[0]
@@ -86,15 +86,15 @@ func _startHeartbeat() {
 				}
 			}
 
-			if winner.LocalIp == localNode.LocalIp {
+			if winner.LocalIp == LocalNode.LocalIp {
 				isAccountant = true
 			}
 		}
 	}
 }
 func getAccountant() bool {
-	for _, node := range localNode.Quorum {
-		if node.LocalIp == localNode.LocalIp {
+	for _, node := range LocalNode.Quorum {
+		if node.LocalIp == LocalNode.LocalIp {
 			continue
 		}
 		conn, err := grpc.Dial(fmt.Sprintf("%s:%d", node.LocalIp, node.LocalPort), grpc.WithInsecure())
@@ -155,15 +155,15 @@ func _starDistributeBlock() {
 		fail := 0
 		rw := BC.LocalWallets.GetBlockChainRootWallet()
 		if block.IsGenesisBlock() {
-			localBlockChain.SignBlock(rw.Private, true, block)
+			LocalBlockChain.SignBlock(rw.Private, true, block)
 
 		} else {
-			localBlockChain.SignBlock(rw.Private, false, block)
+			LocalBlockChain.SignBlock(rw.Private, false, block)
 
 		}
 		// fmt.Printf("区块 %d 分发\n", block.BlockId)
-		for _, blockBlockChainNode := range localNode.Quorum {
-			if blockBlockChainNode.LocalIp == localNode.LocalIp {
+		for _, blockBlockChainNode := range LocalNode.Quorum {
+			if blockBlockChainNode.LocalIp == LocalNode.LocalIp {
 				continue
 			}
 			total++
@@ -185,9 +185,9 @@ func _starDistributeBlock() {
 		Total += time.Now().UnixNano() - pre
 		if el.Handle == nil {
 			rw := BC.LocalWallets.GetBlockChainRootWallet()
-			flag := localBlockChain.VerifyBlock(rw.PubKey, block)
+			flag := LocalBlockChain.VerifyBlock(rw.PubKey, block)
 			if flag {
-				e := localBlockChain.AddBlock(block)
+				e := LocalBlockChain.AddBlock(block)
 				if e != nil {
 					// fmt.Println(e)
 					return

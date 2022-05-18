@@ -28,8 +28,8 @@ func (this *Server) GetAccountant(ctx context.Context, req *bcgrpc.Heartbeat) (i
 }
 func (this *Server) QuorumHeartbeat(ctx context.Context, req *bcgrpc.NodeInfo) (info *bcgrpc.Heartbeat, err error) {
 	info = &bcgrpc.Heartbeat{}
-	// fmt.Println("心跳检测", req.Passworld == localNode.BCInfo.PassWorld)
-	if req.Passworld != localNode.BCInfo.PassWorld {
+	// fmt.Println("心跳检测", req.Passworld == LocalNode.BCInfo.PassWorld)
+	if req.Passworld != LocalNode.BCInfo.PassWorld {
 		return info, errors.New("没有访问权限")
 	}
 	info.IsAccountant = isAccountant
@@ -44,13 +44,13 @@ func (this *Server) DistributeBlock(ctx context.Context, req *bcgrpc.Block) (inf
 	err = nil
 	rw := BC.LocalWallets.GetBlockChainRootWallet()
 	newblock := CopyBlock2(req)
-	flag := localBlockChain.VerifyBlock(rw.PubKey, newblock)
+	flag := LocalBlockChain.VerifyBlock(rw.PubKey, newblock)
 	if !flag {
 		info.Info = "区块校验失败"
 		info.Status = false
 		return
 	}
-	e := localBlockChain.AddBlock(newblock)
+	e := LocalBlockChain.AddBlock(newblock)
 	if e != nil {
 		fmt.Println(e)
 		return
@@ -80,7 +80,7 @@ func (this *Server) DistributeBlock(ctx context.Context, req *bcgrpc.Block) (inf
 }
 
 func (this *Server) GetLatestBlock(ctx context.Context, req *bcgrpc.ReqBlock) (info *bcgrpc.Block, err error) {
-	latestblock, err := localBlockChain.GetTailBlock()
+	latestblock, err := LocalBlockChain.GetTailBlock()
 	if err != nil {
 		return nil, err
 	}
@@ -105,14 +105,13 @@ func (this *Server) JoinGroup(ctx context.Context, req *bcgrpc.NodeInfo) (info *
 	err = JointoGroup(req.Passworld, req.LocalIp, int32(req.LocalPort))
 
 	_nodes := []string{}
-	for _, v := range localNode.Quorum {
+	for _, v := range LocalNode.Quorum {
 		_nodes = append(_nodes, v.LocalIp)
 	}
-
 	if err != nil {
 		return
 	}
-	for _, node := range localNode.Quorum {
+	for _, node := range LocalNode.Quorum {
 		info.Nodes = append(info.Nodes, &bcgrpc.NodeInfo{
 			LocalIp:   node.LocalIp,
 			LocalPort: int32(node.LocalPort),
@@ -126,7 +125,7 @@ func VeriftUser(username string, passworld string) error {
 	// 判断用户是否创建
 	_hash, _ := BC.LocalWallets.GetUserTailBlockHash(user_address)
 
-	b, e := localBlockChain.GetBlockByHash(_hash)
+	b, e := LocalBlockChain.GetBlockByHash(_hash)
 	if e != nil {
 		return e
 	}
@@ -143,7 +142,7 @@ func VeriftUser(username string, passworld string) error {
 				return errors.New("密码错误")
 			}
 		}
-		b, _ = localBlockChain.GetBlockByHash(_hash)
+		b, _ = LocalBlockChain.GetBlockByHash(_hash)
 	}
 	return errors.New("未知的用户")
 }
@@ -179,13 +178,13 @@ func (this *Server) Request(ctx context.Context, req *bcgrpc.RequestBody) (info 
 		ShareChan: req.Tx.ShareChan,
 		Share:     req.Tx.Share,
 	}
-	if !tx.VerifySimple() {
-		return
-	}
+	// if !tx.VerifySimple() {
+	// 	return
+	// }
 	if req.Tx.DataType == Type.NEW_CHAN {
 		ok := BC.UserIsChanCreator(newchan.Channame, BC.GenerateAddressFromPubkey(uw.PubKey))
 		if ok {
-			fmt.Println("改chan已存在")
+			// fmt.Println("改chan已存在")
 			return
 		}
 		tx = &BC.Transaction{
@@ -202,13 +201,13 @@ func (this *Server) Request(ctx context.Context, req *bcgrpc.RequestBody) (info 
 		lcdraft := BC.GetLocalDraft()
 		newblock, _ := lcdraft.PackBlock(tx)
 		rw := BC.LocalWallets.GetBlockChainRootWallet()
-		// localBlockChain.SignBlock(rw.Private, false, newblock)
+		// LocalBlockChain.SignBlock(rw.Private, false, newblock)
 		BC.BlockQueue.Insert(BC.QueueObject{
 			TargetBlock: newblock,
 			Handle: func(total, fail int) {
-				flag := localBlockChain.VerifyBlock(rw.PubKey, newblock)
+				flag := LocalBlockChain.VerifyBlock(rw.PubKey, newblock)
 				if flag {
-					e := localBlockChain.AddBlock(newblock)
+					e := LocalBlockChain.AddBlock(newblock)
 					if e != nil {
 						fmt.Println(e)
 						return
@@ -237,10 +236,10 @@ func (this *Server) Request(ctx context.Context, req *bcgrpc.RequestBody) (info 
 					}
 					// }
 					BC.LocalWallets.SaveToFile()
-					fmt.Println("block:", newblock.BlockId, "校验成功")
+					// fmt.Println("block:", newblock.BlockId, "校验成功")
 					return
 				}
-				fmt.Println("block:", newblock.BlockId, "校验失败")
+				// fmt.Println("block:", newblock.BlockId, "校验失败")
 			},
 		})
 	} else {
@@ -253,7 +252,7 @@ func (this *Server) Request(ctx context.Context, req *bcgrpc.RequestBody) (info 
 func GetUserAddressByUsername(username string) (string, error) {
 	wa := BC.LocalWallets.GetBlockChainRootWallet()
 	_hash, _ := BC.LocalWallets.GetUserTailBlockHash(wa.NewAddress())
-	b, e := localBlockChain.GetBlockByHash(_hash)
+	b, e := LocalBlockChain.GetBlockByHash(_hash)
 	for {
 		if e != nil {
 			return "", e
@@ -264,19 +263,19 @@ func GetUserAddressByUsername(username string) (string, error) {
 				return string(BC.GenerateAddressFromPubkey(tx.PublicKey)), nil
 			}
 		}
-		b, e = localBlockChain.GetBlockByHash(_hash)
+		b, e = LocalBlockChain.GetBlockByHash(_hash)
 
 	}
 }
 func (this *Server) BlockSynchronization(ctx context.Context, req *bcgrpc.ReqBlock) (out *bcgrpc.ResBlocks, err error) {
-	fmt.Println("同步服务调用 blockid", req.BlockId)
+	// fmt.Println("同步服务调用 blockid", req.BlockId)
 	out = &bcgrpc.ResBlocks{}
 	if req.BlockId < 0 {
 		return
 	}
 	var b *BC.Block
 	var e error
-	b, e = localBlockChain.GetTailBlock()
+	b, e = LocalBlockChain.GetTailBlock()
 	if e != nil || b == nil {
 		return
 	}
@@ -284,16 +283,16 @@ func (this *Server) BlockSynchronization(ctx context.Context, req *bcgrpc.ReqBlo
 		if b.BlockId > req.BlockId {
 			out.Blocks = append(out.Blocks, CopyBlock(b))
 		} else {
-			fmt.Println("同步区块数量:", len(out.Blocks))
+			// fmt.Println("同步区块数量:", len(out.Blocks))
 			return
 		}
 		if b.IsGenesisBlock() {
-			fmt.Println("同步区块数量:", len(out.Blocks))
+			// fmt.Println("同步区块数量:", len(out.Blocks))
 			return
 		}
-		b, e = localBlockChain.GetBlockByHash(b.PreBlockHash)
+		b, e = LocalBlockChain.GetBlockByHash(b.PreBlockHash)
 		if e != nil || b.BlockId == 0 {
-			fmt.Println("同步区块数量:", len(out.Blocks))
+			// fmt.Println("同步区块数量:", len(out.Blocks))
 			return
 		}
 
