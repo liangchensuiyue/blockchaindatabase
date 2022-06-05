@@ -114,17 +114,6 @@ func (bc *BlockChain) GetTailBlock() (*Block, error) {
 	return bl, nil
 }
 
-// 获取关于用户信息的最后一个区块信息
-func (bc *BlockChain) GetTailUserBlock() (*Block, error) {
-	hash := bc.GetTailBlockHash()
-	bl, err := bc.GetBlockByHash(hash)
-	if err != nil {
-		// fmt.Println(err)
-		return bl, err
-	}
-	return bl, nil
-}
-
 // 遍历区块链
 func (bc *BlockChain) Traverse(handle func(*Block, error) bool) {
 	cur_block, err := bc.GetTailBlock()
@@ -187,6 +176,7 @@ func (bc *BlockChain) VerifyBlock(groupPubKey []byte, newblock *Block) bool {
 	pubKeyOrigin := ecdsa.PublicKey{Curve: elliptic.P256(), X: &X, Y: &Y}
 	bc_pre_block, _ := bc.GetTailBlock()
 	if newblock.BlockId == 1 {
+		// 区块为创始区块
 		r := big.Int{}
 		s := big.Int{}
 
@@ -253,6 +243,8 @@ func (bc *BlockChain) VerifyBlock(groupPubKey []byte, newblock *Block) bool {
 	return true
 }
 
+// 获取本地节点最后一个区块的hash
+
 func (bc *BlockChain) GetTailBlockHash() []byte {
 	var hashkey []byte
 	bc.Db.View(func(tx *bolt.Tx) error {
@@ -266,21 +258,9 @@ func (bc *BlockChain) GetTailBlockHash() []byte {
 	return hashkey
 }
 
-func (bc *BlockChain) GetTailUserBlockHash() []byte {
-	var hashkey []byte
-	bc.Db.View(func(tx *bolt.Tx) error {
-		bucket := tx.Bucket([]byte(bc.BlockBucket))
-		if bucket == nil {
-			panic("bucket is empty!")
-		}
-		hashkey = bucket.Get([]byte(bc.TailUserBlockHashkey))
-		return nil
-	})
-	return hashkey
-}
-
 var _lrulock *sync.Mutex = &sync.Mutex{}
 
+// 根据hash获取区块
 func (bc *BlockChain) GetBlockByHash(hash []byte) (*Block, error) {
 	block := Block{BlockId: 0}
 	if len(hash) == 0 {
@@ -313,6 +293,8 @@ func (bc *BlockChain) GetBlockByHash(hash []byte) (*Block, error) {
 	})
 	return &block, err
 }
+
+// 将用户名转换为地址
 func (bc *BlockChain) GetAddressFromUsername(username string) (string, error) {
 	rw := LocalWallets.GetBlockChainRootWallet()
 	if rw == nil {
@@ -342,6 +324,8 @@ func (bc *BlockChain) GetAddressFromUsername(username string) (string, error) {
 	}
 	return "", errors.New("未知的用户")
 }
+
+// 将地址转换为用户名
 func GetUsernameFromAddress(address string) (string, error) {
 	user_address := LocalWallets.GetBlockChainRootWallet().NewAddress()
 

@@ -270,6 +270,7 @@ func Put(key string, value []byte, datatype int32, user_address string, share bo
 	// 	// 交易校验失败
 	// }
 	if e != nil {
+		// 这里报错说明，用户的钱包并不在本节点，不能处理该用户请求，所以要转发此请求
 		quorum.Request(user_address, true, &BC.Transaction{
 			Key:       key,
 			Value:     value,
@@ -280,15 +281,23 @@ func Put(key string, value []byte, datatype int32, user_address string, share bo
 		})
 		return nil
 	}
+
+	// 严格模式就立即打包交易
 	if strict {
 		lcdraft := BC.GetLocalDraft()
 		newblock, _ := lcdraft.PackBlock(tx)
 		rw := BC.LocalWallets.GetBlockChainRootWallet()
 		// localBlockChain.SignBlock(rw.Private, false, newblock)
+
+		// 将交易放入字典
 		BC.Global_DICT.Put(tx.Key, tx)
+
+		// 将区块放入队列等待分发
 		BC.BlockQueue.Insert(BC.QueueObject{
 			TargetBlock: newblock,
 			Handle: func(total, fail int) {
+				// 当区块同步成功时将会执行该函数
+
 				flag := localBlockChain.VerifyBlock(rw.PubKey, newblock)
 				if flag {
 					e := localBlockChain.AddBlock(newblock)
@@ -299,6 +308,7 @@ func Put(key string, value []byte, datatype int32, user_address string, share bo
 
 					for _, tx := range newblock.TxInfos {
 
+						// 更新末端区块信息
 						// fmt.Println(tx.Share, tx.ShareAddress, base64.RawStdEncoding.EncodeToString(newblock.Hash))
 						if tx.Share {
 							scn := BC.LocalWallets.ShareChanMap[tx.ShareChan]

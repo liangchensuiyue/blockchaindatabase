@@ -35,6 +35,7 @@ type Transaction struct {
 	Hash      []byte
 	Share     bool
 	ShareChan string
+	DsValue   interface{}
 	// ShareAddress []string
 	// 当交易打包时在填上
 	PreBlockHash []byte
@@ -54,6 +55,7 @@ type Transaction struct {
 // 	tx.Hash = data
 // }
 
+// 生成交易的hash
 func (tx *Transaction) SetHash() {
 	data := []byte{}
 	data = append(data, []byte(tx.Key)...)
@@ -94,6 +96,7 @@ func NewTransaction(key string, value []byte, datatype int32, user_address strin
 	return Tx, nil
 }
 
+// 对交易签名
 func (tx *Transaction) Sign() {
 	user_address := GenerateAddressFromPubkey(tx.PublicKey)
 	var privateKey *ecdsa.PrivateKey
@@ -162,6 +165,8 @@ func GetAddressFromUsername(username string) (string, error) {
 	}
 	return "", errors.New("未知的用户")
 }
+
+// 验证用户加入管道的密钥
 func VerifyKeyChan(key []byte, channame string) bool {
 	flag := true
 	var okey []byte
@@ -190,6 +195,8 @@ func VerifyKeyChan(key []byte, channame string) bool {
 	fmt.Println(key, okey)
 	return false
 }
+
+// 判断用户是否在管道内
 func UserIsInChan(addr, creator, channame string) bool {
 	retrue := false
 	refalse := false
@@ -236,6 +243,8 @@ func UserIsInChan(addr, creator, channame string) bool {
 	}
 	return false
 }
+
+//  判断用户是否是管道的创建者
 func UserIsChanCreator(channame, useraddress string) bool {
 	flag := true
 	_localblockchain.Traverse(func(block *Block, err error) bool {
@@ -263,6 +272,8 @@ func UserIsChanCreator(channame, useraddress string) bool {
 	}
 	return false
 }
+
+// 判断是否存在管道
 func IsExsistChan(name string, address string) bool {
 	flag := true
 	_localblockchain.Traverse(func(block *Block, err error) bool {
@@ -287,6 +298,8 @@ func IsExsistChan(name string, address string) bool {
 	}
 	return false
 }
+
+// 对交易进行校验
 func (tx *Transaction) VerifySimple() bool {
 	user_address := GenerateAddressFromPubkey(tx.PublicKey)
 	rw := LocalWallets.GetBlockChainRootWallet()
@@ -339,6 +352,8 @@ func (tx *Transaction) VerifySimple() bool {
 	}
 	return true
 }
+
+// 对交易进行校验
 func (tx *Transaction) Verify() bool {
 	signature := tx.Signature
 	tx.Signature = []byte{}

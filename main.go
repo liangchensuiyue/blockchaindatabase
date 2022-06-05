@@ -901,6 +901,13 @@ func main() {
 	var genesis_file_name string
 	var err error
 	flag.StringVar(&genesis_file_name, "f", "./genesis", "genesis文件")
+	/*
+		加载genesis 文件
+		genesis 文件里面有集群的配置信息
+		比如，这个集群里面有哪些节点，
+		以及集群之间通信的密钥。
+		也记录了本地节点最后一个区块hash
+	*/
 	LocalNode, err = quorum.LoadGenesisFile(genesis_file_name)
 	fmt.Println("监听地址:", LocalNode.LocalIp, LocalNode.LocalPort)
 	fmt.Println("localNode.Quorum:")
@@ -919,11 +926,17 @@ func main() {
 			quorum.GetShareChan(name)
 		},
 	)
+
+	// 开启grpc服务端
 	quorum.StartGrpcWork(LocalBlockChain)
 
+	// 从本地加载钱包，也就是读取用户信息到内存
 	BC.LoadLocalWallets()
+
+	// 读取系统用户 "liangchen"
 	_, err = LocalBlockChain.GetAddressFromUsername("liangchen")
 	if err != nil {
+		// 不存在就创建一个
 		wa := BC.NewWallet("liangchen", LocalNode.BCInfo.PassWorld)
 		wa.Private = LocalNode.BCInfo.PriKey
 		wa.PubKey = LocalNode.BCInfo.PubKey
@@ -933,10 +946,12 @@ func main() {
 	go func() {
 		for {
 			time.Sleep(time.Second * 2)
+			// 向集群其它的节点广播，告知别人自己已经加入了集群
 			quorum.Broadcast()
 		}
 	}()
 
+	//同步区块。是自己的区块链保持最新的状态
 	newblocks, e := quorum.BlockSynchronization()
 	if e == nil {
 		addblocks(newblocks)
@@ -944,7 +959,7 @@ func main() {
 
 	_tailblock, _ := LocalBlockChain.GetTailBlock()
 	if _tailblock == nil {
-		// 创建创世块
+		// 没有区块，就创建创世块
 		genesis_block := BC.NewGenesisBlock()
 		genesis_block.BlockId = 1
 
@@ -963,13 +978,21 @@ func main() {
 		BC.LocalWallets.SaveToFile()
 	}
 
+	// 启动可视化界面
 	go view.Run(LocalBlockChain, LocalNode)
+
+	// 每隔一定时间就去打包"草稿本"中的交易
 	StartDraftWork()
 
+	// 将区块链相关的变量传递到 数据库业务层
 	db.Run(LocalBlockChain, LocalNode)
+
+	// 开启接受客户端请求的grpc服务端
 	go uc.Run()
 	// fmt.Println("hello world")
 	// Test.Test1()
 	// Test.Test3()
+
+	// 开启命令行
 	runLocalTestCli()
 }
