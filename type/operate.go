@@ -40,27 +40,37 @@ func ConvertToINT64_ARRAY(v []byte) []int64 {
 	return arr
 }
 func ConvertToSTRING_SET(v []byte) []string {
-	strarr := ConvertToSTRING_ARRAY(v)
-	for i := 1; i < len(strarr); i++ {
-		tempi := i
-		tempv := strarr[i]
-		for ; strarr[tempi] < strarr[tempi-1] && tempi > 0; tempi-- {
-			strarr[tempi] = strarr[tempi-1]
-		}
-		strarr[tempi] = tempv
+	data := []string{}
+	head := ByteToLink(v, func(vd []byte) interface{} {
+		return string(vd)
+	})
+	cur := head.Head
+	for cur != nil {
+		data = append(data, cur.Value.(string))
+		cur = cur.Next
 	}
-	restr := []string{}
-	for i := 0; i < len(strarr); i++ {
-		if i == len(strarr)-1 {
-			restr = append(restr, strarr[i])
-			break
-		}
-		if strarr[i] == strarr[i+1] {
-			continue
-		}
-		restr = append(restr, strarr[i])
-	}
-	return restr
+	return data
+	// strarr := ConvertToSTRING_ARRAY(v)
+	// for i := 1; i < len(strarr); i++ {
+	// 	tempi := i
+	// 	tempv := strarr[i]
+	// 	for ; strarr[tempi] < strarr[tempi-1] && tempi > 0; tempi-- {
+	// 		strarr[tempi] = strarr[tempi-1]
+	// 	}
+	// 	strarr[tempi] = tempv
+	// }
+	// restr := []string{}
+	// for i := 0; i < len(strarr); i++ {
+	// 	if i == len(strarr)-1 {
+	// 		restr = append(restr, strarr[i])
+	// 		break
+	// 	}
+	// 	if strarr[i] == strarr[i+1] {
+	// 		continue
+	// 	}
+	// 	restr = append(restr, strarr[i])
+	// }
+	// return restr
 }
 func ConvertToINT32_SET(v []byte) []int32 {
 	strarr := ConvertToINT32_ARRAY(v)

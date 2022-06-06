@@ -24,6 +24,17 @@ func (l *LinkHead) Exsist(handler func(interface{}) bool) bool {
 	}
 	return false
 }
+func (l *LinkHead) Insert(v interface{}) {
+	node := &LinkNode{nil, nil, v}
+	if l.Head == nil {
+		l.Head = node
+		l.Tail = node
+		return
+	}
+	node.Next = l.Head
+	l.Head.Prev = node
+	l.Head = node
+}
 func (l *LinkHead) Delete(handler func(interface{}) bool) {
 	pre := l.Head
 	cur := pre
@@ -55,21 +66,21 @@ func ByteToLink(data []byte, handler func([]byte) interface{}) *LinkHead {
 	}
 	var head *LinkHead = &LinkHead{nil, nil}
 	var cur int64 = 0
-	size := util.BytesToInt64(data[cur : cur+4])
+	size := util.BytesToInt64(data[cur : cur+8])
 	h := &LinkNode{}
 	h.Prev = nil
 	h.Next = nil
-	h.Value = handler(data[cur+4 : cur+4+size])
+	h.Value = handler(data[cur+8 : cur+8+size])
 	head.Head = h
-	cur = cur + 4 + size
+	cur = cur + 8 + size
 	for cur < length {
-		size := util.BytesToInt64(data[cur : cur+4])
+		size := util.BytesToInt64(data[cur : cur+8])
 		temp := &LinkNode{}
 		temp.Prev = h
 		temp.Next = nil
-		temp.Value = handler(data[cur+4 : cur+4+size])
+		temp.Value = handler(data[cur+8 : cur+8+size])
 		h.Next = temp
-		cur = cur + 4 + size
+		cur = cur + 8 + size
 		h = temp
 	}
 	head.Tail = h
@@ -86,6 +97,7 @@ func LinkToByte(head *LinkHead, handler func(interface{}) []byte) []byte {
 		size := int64(len(v))
 		data = append(data, util.Int64Tobyte(size)...)
 		data = append(data, v...)
+		cur = cur.Next
 	}
 	return data
 }

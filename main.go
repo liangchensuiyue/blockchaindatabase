@@ -583,12 +583,15 @@ func runLocalTestCli() {
 				vbyte := []byte{}
 				var err error
 				for i := 0; i < len(restr); i++ {
-					if i == len(restr)-1 {
-						vbyte = append(vbyte, []byte(restr[i])...)
-						break
-					}
-					vbyte = append(vbyte, []byte(restr[i])...)
-					vbyte = append(vbyte, byte(0))
+					_data := []byte(restr[i])
+					vbyte = append(vbyte, util.Int64Tobyte(int64(len(_data)))...)
+					vbyte = append(vbyte, _data...)
+					// if i == len(restr)-1 {
+					// 	vbyte = append(vbyte, []byte(restr[i])...)
+					// 	break
+					// }
+					// vbyte = append(vbyte, []byte(restr[i])...)
+					// vbyte = append(vbyte, byte(0))
 				}
 				if len(cmds) >= 4 {
 					err = db.Put(cmds[1], vbyte, Type.STRING_SET, login_useraddress, true, cmds[3], strictmode)
@@ -596,7 +599,7 @@ func runLocalTestCli() {
 				} else {
 					key := util.Yield16ByteKey([]byte(pass))
 					v := util.AesEncrypt((vbyte), key)
-					err = db.Put(cmds[1], v, Type.STRING_ARRAY, login_useraddress, false, "", strictmode)
+					err = db.Put(cmds[1], v, Type.STRING_SET, login_useraddress, false, "", strictmode)
 
 				}
 				if err != nil {
@@ -703,12 +706,12 @@ func runLocalTestCli() {
 					break
 				}
 				if len(cmds) >= 4 {
-					err = db.Put(cmds[1], vbyte, Type.INT64_ARRAY, login_useraddress, true, cmds[3], strictmode)
+					err = db.Put(cmds[1], vbyte, Type.INT64_SET, login_useraddress, true, cmds[3], strictmode)
 
 				} else {
 					key := util.Yield16ByteKey([]byte(pass))
 					v := util.AesEncrypt((vbyte), key)
-					err = db.Put(cmds[1], v, Type.INT64_ARRAY, login_useraddress, false, "", strictmode)
+					err = db.Put(cmds[1], v, Type.INT64_SET, login_useraddress, false, "", strictmode)
 
 				}
 				if err != nil {
